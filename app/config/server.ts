@@ -35,6 +35,9 @@ declare global {
       FAST_API_KEY?: string;
       FAST_BASE_URL?: string;
       FAST_MODELS?: string;
+
+      // google tag manager
+      GTM_ID?: string;
     }
   }
 }

@@ -1,13 +1,13 @@
-<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none">
+<svg width="26" height="26" xmlns="http://www.w3.org/2000/svg" fill="none">
  <defs>
-  <linearGradient y2="0" x2="0" y1="0" x1="0" id="r5">
+  <linearGradient id="r5" x1="0" y1="0" x2="0" y2="0">
    <stop stop-color="#e056fd"/>
-   <stop stop-color="#e056fd" offset="1"/>
+   <stop offset="1" stop-color="#e056fd"/>
   </linearGradient>
  </defs>
  <g>
   <title>Layer 1</title>
-  <rect stroke="#FFFFFF" paint-order="stroke" stroke-opacity="100%" stroke-width="0" fill="url(#r5)" rx="90" height="24.06452" width="24" id="r4"/>
-  <text id="svg_1" dy="0.35em" text-anchor="middle" font-family="math" fill="#7fded3" font-weight="600" font-size="10" y="12" x="12">plus</text>
+  <rect id="r4" width="26" height="26" rx="90" fill="url(#r5)" stroke-width="0" stroke-opacity="100%" paint-order="stroke" stroke="#FFFFFF"/>
+  <text style="cursor: move;" x="12" y="12" font-size="10" font-weight="600" fill="#7fded3" font-family="math" text-anchor="middle" dy="0.35em" id="svg_1">plus</text>
  </g>
 </svg>

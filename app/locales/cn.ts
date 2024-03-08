@@ -120,7 +120,7 @@ const cn = {
     ResetConfirm: "确认清空历史摘要？",
   },
   Home: {
-    FakeChat:"OpenAI免翻镜像站",
+    FakeChat:"官网镜像",
     NewChat: "新的聊天",
     DeleteChat: "确认删除选中的对话？",
     DeleteToast: "已删除会话",

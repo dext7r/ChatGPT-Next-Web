@@ -13,7 +13,7 @@ import MaskIcon from "../icons/mask.svg";
 import PluginIcon from "../icons/plugin.svg";
 import DragIcon from "../icons/drag.svg";
 import OpenAIIcon from "../icons/openai.svg";
-import PlusIcon from "../icons/plus.svg";
+import PlusIcon from "../icons/openai_plus.svg";
 
 import Locale from "../locales";
 
@@ -228,7 +228,7 @@ export function SideBar(props: { className?: string }) {
             </div>
             <div className={styles["sidebar-action"]}>
             <a href={PLUS_OPENAI_URL} target="_blank" rel="noopener noreferrer">
-              <IconButton icon={<PlusIcon />} shadow />
+              <IconButton icon={<PlusIcon />} text={shouldNarrow ? undefined : Locale.Home.PlusChat} shadow />
             </a>
             </div>
           {/* 隐藏github跳转，腾出空间 */}

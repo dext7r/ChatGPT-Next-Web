@@ -202,15 +202,6 @@ export function SideBar(props: { className?: string }) {
       </div>
 
       <div className={styles["sidebar-tail"]}>
-        <div className={styles["sidebar-actions"]}>
-        {/* 新增的跳转div */}
-        <div className={styles["sidebar-action"]}>
-            <a href={FAKE_OPENAI_URL} target="_blank" rel="noopener noreferrer">
-              <IconButton icon={<OpenAIIcon />} text={shouldNarrow ? undefined : Locale.Home.FakeChat} shadow />
-            </a>
-          </div>
-        </div>
-          {/* 原有图标 */}
           <div className={styles["sidebar-actions"]}>
           <div className={styles["sidebar-action"] + " " + styles.mobile}>
             <IconButton
@@ -227,11 +218,18 @@ export function SideBar(props: { className?: string }) {
               <IconButton icon={<SettingsIcon />} shadow />
             </Link>
           </div>
-          <div className={styles["sidebar-action"]}>
+            {/* 新增的跳转div */}
+            <div className={styles["sidebar-action"]}>
+            <a href={FAKE_OPENAI_URL} target="_blank" rel="noopener noreferrer">
+              <IconButton icon={<OpenAIIcon />} text={shouldNarrow ? undefined : Locale.Home.FakeChat} shadow />
+            </a>
+          </div>
+          {/* 隐藏github跳转，腾出空间 */}
+          {/* <div className={styles["sidebar-action"]}>
             <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
               <IconButton icon={<GithubIcon />} shadow />
             </a>
-          </div>
+          </div> */}
         </div>
         <div>
           <IconButton

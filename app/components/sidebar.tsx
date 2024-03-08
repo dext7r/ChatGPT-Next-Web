@@ -25,6 +25,7 @@ import {
   NARROW_SIDEBAR_WIDTH,
   Path,
   REPO_URL,
+  FAKE_OPENAI_URL
 } from "../constant";
 
 import { Link, useNavigate } from "react-router-dom";

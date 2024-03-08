@@ -203,13 +203,15 @@ export function SideBar(props: { className?: string }) {
 
       <div className={styles["sidebar-tail"]}>
         <div className={styles["sidebar-actions"]}>
-          {/* 新增的跳转div */}
-          <div className={styles["sidebar-action"]}>
+        {/* 新增的跳转div */}
+        <div className={styles["sidebar-action"]}>
             <a href={FAKE_OPENAI_URL} target="_blank" rel="noopener noreferrer">
               <IconButton icon={<OpenAIIcon />} text={shouldNarrow ? undefined : Locale.Home.FakeChat} shadow />
             </a>
           </div>
+        </div>
           {/* 原有图标 */}
+          <div className={styles["sidebar-actions"]}>
           <div className={styles["sidebar-action"] + " " + styles.mobile}>
             <IconButton
               icon={<DeleteIcon />}

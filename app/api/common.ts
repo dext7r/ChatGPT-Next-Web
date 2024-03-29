@@ -3,6 +3,7 @@ import { getServerSideConfig } from "../config/server";
 import { DEFAULT_MODELS, OPENAI_BASE_URL, GEMINI_BASE_URL } from "../constant";
 import { collectModelTable } from "../utils/model";
 import { makeAzurePath } from "../azure";
+import { useAppConfig } from "../store/config";
 
 const serverConfig = getServerSideConfig();
 
@@ -110,12 +111,16 @@ export async function requestOpenai(req: NextRequest) {
         );
       }
       // 增加fast api连接
-      const isMatchFastRoute = serverConfig.fastModels.split(",").includes(jsonBody?.model ?? "");
-      if (isMatchFastRoute) {
-        fetchUrl = `${serverConfig.fastBaseUrl}/${path}`;
-        (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey;
-        // console.log("[Fast API] ", fetchUrl);
-        console.log("[Fast Model Match] ", isMatchFastRoute);
+      const config = useAppConfig();
+      const useFastChannel = config.useFastChannel;
+      if (useFastChannel) {   // 是否启用快速通道
+        const isMatchFastRoute = serverConfig.fastModels.split(",").includes(jsonBody?.model ?? "");
+        if (isMatchFastRoute) {
+          fetchUrl = `${serverConfig.fastBaseUrl}/${path}`;
+          (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey;
+          // console.log("[Fast API] ", fetchUrl);
+          // console.log("[Fast Model Match] ", isMatchFastRoute);
+        }
       }
     } catch (e) {
       console.error("[OpenAI] gpt4 filter", e);

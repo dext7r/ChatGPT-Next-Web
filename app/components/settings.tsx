@@ -827,6 +827,22 @@ export function Settings() {
               }
             ></input>
           </ListItem>
+
+          <ListItem
+            title={Locale.Settings.UseFastChannel.Title}
+            subTitle={Locale.Settings.UseFastChannel.SubTitle}
+          >
+            <input
+              type="checkbox"
+              checked={config.useFastChannel}
+              onChange={(e) =>
+                updateConfig(
+                  (config) =>
+                    (config.useFastChannel = e.currentTarget.checked),
+                )
+              }
+            ></input>
+          </ListItem>
         </List>
 
         <SyncItems />

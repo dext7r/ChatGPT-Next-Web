@@ -180,6 +180,10 @@ const en: LocaleType = {
       Title: "Send Preview Bubble",
       SubTitle: "Preview markdown in bubble",
     },
+    UseFastChannel: {
+      Title: "Fast Channel",
+      SubTitle: "Whether to enable direct connection, fast lane mode (non-polling).",
+    },
     AutoGenerateTitle: {
       Title: "Auto Generate Title",
       SubTitle: "Generate a suitable title based on the conversation content",

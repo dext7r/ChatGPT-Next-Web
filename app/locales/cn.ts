@@ -178,6 +178,10 @@ const cn = {
       Title: "预览气泡",
       SubTitle: "在预览气泡中预览 Markdown 内容",
     },
+    UseFastChannel: {
+      Title: "快速通道",
+      SubTitle: "是否启用直连、快速通道模式（非轮询）",
+    },
     AutoGenerateTitle: {
       Title: "自动生成标题",
       SubTitle: "根据对话内容生成合适的标题",

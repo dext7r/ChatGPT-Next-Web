@@ -339,7 +339,6 @@ const cn = {
     },
 
     Model: "模型 (model)",
-    FastChannel: "快速通道 (fast_channel)",
     Temperature: {
       Title: "随机性 (temperature)",
       SubTitle: "值越大，回复越随机",

@@ -80,10 +80,8 @@ export const getServerSideConfig = () => {
   const randomIndex = Math.floor(Math.random() * apiKeys.length);
   const apiKey = apiKeys[randomIndex];
 
-  const fastApiKeyEnvVar = process.env.FAST_API_KEY ?? "";
-  const fastApiKey = fastApiKeyEnvVar.split(",").map((v) => v.trim());
-  const fastBaseUrlEnvVar = process.env.FAST_BASE_URL ?? "";
-  const fastBaseUrl = fastBaseUrlEnvVar.split(",").map((v) => v.trim());
+  const fastApiKey = process.env.FAST_API_KEY ?? "";
+  const fastBaseUrl = process.env.FAST_BASE_URL ?? "";
   const fastModels = process.env.FAST_MODELS ?? "";
   console.log(
     `[Server Config] using ${randomIndex + 1} of ${apiKeys.length} api key`,

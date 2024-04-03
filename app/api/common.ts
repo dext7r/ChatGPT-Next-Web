@@ -106,11 +106,10 @@ export async function requestOpenai(req: NextRequest) {
         );
       }
       // 增加fast api连接
-      // const fastChannel = jsonBody?.fastChannel ?? 0;
       const isMatchFastRoute = serverConfig.fastModels.split(",").includes(jsonBody?.model ?? "");
       if (isMatchFastRoute) {
-        fetchUrl = `${serverConfig.fastBaseUrl[0]}/${path}`;
-        (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey[0];
+        fetchUrl = `${serverConfig.fastBaseUrl}/${path}`;
+        (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey;
         // console.log("[Fast API] ", fetchUrl);
         console.log("[Fast Model Match] ", isMatchFastRoute);
       }
@@ -127,12 +126,12 @@ export async function requestOpenai(req: NextRequest) {
   const openaiOrganizationHeader = res.headers.get("OpenAI-Organization");
 
   // Check if serverConfig.openaiOrgId is defined and not an empty string
-  // if (serverConfig.openaiOrgId && serverConfig.openaiOrgId.trim() !== "") {
-  //   // If openaiOrganizationHeader is present, log it; otherwise, log that the header is not present
-  //   console.log("[Org ID]", openaiOrganizationHeader);
-  // } else {
-  //   console.log("[Org ID] is not set up.");
-  // }
+  if (serverConfig.openaiOrgId && serverConfig.openaiOrgId.trim() !== "") {
+    // If openaiOrganizationHeader is present, log it; otherwise, log that the header is not present
+    console.log("[Org ID]", openaiOrganizationHeader);
+  } else {
+    console.log("[Org ID] is not set up.");
+  }
 
     // to prevent browser prompt for credentials
     const newHeaders = new Headers(res.headers);

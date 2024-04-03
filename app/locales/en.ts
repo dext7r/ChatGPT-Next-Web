@@ -342,7 +342,6 @@ const en: LocaleType = {
     },
 
     Model: "Model",
-    FastChannel: "Fast Channel",
     Temperature: {
       Title: "Temperature",
       SubTitle: "A larger value makes the more random output",

@@ -34,6 +34,22 @@ export function ModelConfigList(props: {
             ))}
         </Select>
       </ListItem>
+      <ListItem title={Locale.Settings.FastChannel} >
+        <input 
+          type="number"
+          min={0}
+          max={3}
+          value={props.modelConfig.fastChannel}
+          onChange={(e) =>
+            props.updateConfig(
+              (config) =>
+                (config.fastChannel = ModalConfigValidator.fastChannel(
+                  e.currentTarget.valueAsNumber,
+                )),
+            )
+          }
+        ></input>
+      </ListItem>
       <ListItem
         title={Locale.Settings.Temperature.Title}
         subTitle={Locale.Settings.Temperature.SubTitle}

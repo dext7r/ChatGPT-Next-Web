@@ -57,6 +57,7 @@ export const DEFAULT_CONFIG = {
     compressMessageLengthThreshold: 1000,
     enableInjectSystemPrompts: false,
     template: DEFAULT_INPUT_TEMPLATE,
+    fastChannel: 0,
   },
 };
 
@@ -95,6 +96,9 @@ export const ModalConfigValidator = {
   },
   top_p(x: number) {
     return limitNumber(x, 0, 1, 1);
+  },
+  fastChannel(x: number) {
+    return limitNumber(x, 0, 3, 0);
   },
 };
 

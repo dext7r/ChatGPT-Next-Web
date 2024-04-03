@@ -84,7 +84,7 @@ export const getServerSideConfig = () => {
   const fastApiKey = fastApiKeyEnvVar.split(",").map((v) => v.trim());
   const fastBaseUrlEnvVar = process.env.FAST_BASE_URL ?? "";
   const fastBaseUrl = fastBaseUrlEnvVar.split(",").map((v) => v.trim());
-  const envFastChannel = parseInt(process.env.FAST_CHANNEL || 0);
+  const envFastChannel = parseInt(process.env.FAST_CHANNEL || '0');
   const fastChannel = (!isNaN(envFastChannel) && envFastChannel <= fastApiKey.length) ? envFastChannel: 0;
   const fastModels = process.env.FAST_MODELS ?? "";
   console.log(

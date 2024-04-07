@@ -124,5 +124,7 @@ export const getServerSideConfig = () => {
     fastBaseUrl,
     fastModels,
     fastChannel,
+    
+    defaultSelectModel: process.env.DEFAULT_SELECT_MODEL ?? "gpt-3.5-turbo",
   };
 };

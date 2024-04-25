@@ -42,7 +42,7 @@ export async function requestOpenai(req: NextRequest) {
   }
 
   console.log("[Proxy] ", path);
-  // console.log("[Base Url]", baseUrl);
+  console.log("[Base Url]", baseUrl);
 
   const timeoutId = setTimeout(
     () => {

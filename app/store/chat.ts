@@ -86,7 +86,7 @@ function createEmptySession(): ChatSession {
 
 function getSummarizeModel(currentModel: string) {
   // if it is using gpt-* models, force to use 3.5 to summarize
-  if (currentModel.startsWith("gemini-pro")) {
+  if (currentModel.startsWith("gemini")) {
     return GEMINI_SUMMARIZE_MODEL;
   }
   return SUMMARIZE_MODEL; //currentModel.startsWith("gpt") ? SUMMARIZE_MODEL : currentModel;

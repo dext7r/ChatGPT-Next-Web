@@ -10,7 +10,6 @@ import {
 } from "../constant";
 import { createPersistStore } from "../utils/store";
 
-const DEFAULT_SELECT_MODEL = getServerSideConfig()?.defaultSelectModel || "gpt-3.5-turbo";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
 
@@ -49,7 +48,7 @@ export const DEFAULT_CONFIG = {
   models: DEFAULT_MODELS as any as LLMModel[],
 
   modelConfig: {
-    model: DEFAULT_SELECT_MODEL as ModelType,
+    model: "gpt-3.5-turbo" as ModelType,
     temperature: 0.5,
     top_p: 0.99,
     max_tokens: 2000,

@@ -133,6 +133,7 @@ export const getServerSideConfig = () => {
     disableFastLink: !!process.env.DISABLE_FAST_LINK,
     customModels,
     defaultModel,
+    whiteWebDevEndpoints,
 
     fastApiKey,
     fastBaseUrl,

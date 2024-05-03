@@ -98,21 +98,21 @@ export class ClientApi {
     const clientConfig = getClientConfig();
     switch (provider) {
       case ModelProvider.GeminiPro:
-        console.log("[chatGeminiThroughOpenai]", clientConfig?.chatGeminiThroughOpenai);
         if (clientConfig?.chatGeminiThroughOpenai){
-          this.llm = new GeminiProApi();
+          this.llm = new ChatGPTApi();
+          console.log("[chatGeminiThroughOpenai]", clientConfig?.chatGeminiThroughOpenai);
         }
         else{
-          this.llm = new ChatGPTApi();
+          this.llm = new GeminiProApi();
         }
         break;
       case ModelProvider.Claude:
-        console.log("[chatClaudeThroughOpenai]", clientConfig?.chatClaudeThroughOpenai);
         if (clientConfig?.chatClaudeThroughOpenai){
-          this.llm = new ClaudeApi();
+          this.llm = new ChatGPTApi();
+          console.log("[chatClaudeThroughOpenai]", clientConfig?.chatClaudeThroughOpenai);
         }
         else{
-          this.llm = new ChatGPTApi();
+          this.llm = new ClaudeApi();
         }
         break;
       default:

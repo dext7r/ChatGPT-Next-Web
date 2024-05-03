@@ -1,7 +1,6 @@
 import { LLMModel } from "../client/api";
 import { isMacOS } from "../utils";
 import { getClientConfig } from "../config/client";
-import { getServerSideConfig } from "../config/server";
 import {
   DEFAULT_INPUT_TEMPLATE,
   DEFAULT_MODELS,

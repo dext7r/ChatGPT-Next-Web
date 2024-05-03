@@ -95,12 +95,25 @@ export class ClientApi {
   public llm: LLMApi;
 
   constructor(provider: ModelProvider = ModelProvider.GPT) {
+    const clientConfig = getClientConfig();
     switch (provider) {
       case ModelProvider.GeminiPro:
-        this.llm = new GeminiProApi();
+        console.log("[chatGeminiThroughOpenai]", clientConfig?.chatGeminiThroughOpenai);
+        if (clientConfig?.chatGeminiThroughOpenai){
+          this.llm = new GeminiProApi();
+        }
+        else{
+          this.llm = new ChatGPTApi();
+        }
         break;
       case ModelProvider.Claude:
-        this.llm = new ClaudeApi();
+        console.log("[chatClaudeThroughOpenai]", clientConfig?.chatClaudeThroughOpenai);
+        if (clientConfig?.chatClaudeThroughOpenai){
+          this.llm = new ClaudeApi();
+        }
+        else{
+          this.llm = new ChatGPTApi();
+        }
         break;
       default:
         this.llm = new ChatGPTApi();

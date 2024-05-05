@@ -15,6 +15,8 @@ FROM base AS builder
 
 RUN apk update && apk add --no-cache git
 
+ENV CHAT_GEMINI_THROUGH_OPENAI=""
+ENV CHAT_CLAUDE_THROUGH_OPENAI=""
 ENV OPENAI_API_KEY=""
 ENV GOOGLE_API_KEY=""
 ENV CODE=""

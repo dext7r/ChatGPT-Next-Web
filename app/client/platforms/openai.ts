@@ -107,7 +107,9 @@ export class ChatGPTApi implements LLMApi {
       role: v.role,
       content: visionModel ? v.content : getMessageTextContent(v),
     }));
-
+    if (messages[0]?.role === "assistant"){
+      messages.shift();
+    }
     const modelConfig = {
       ...useAppConfig.getState().modelConfig,
       ...useChatStore.getState().currentSession().mask.modelConfig,

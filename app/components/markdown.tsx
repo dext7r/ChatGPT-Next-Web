@@ -99,15 +99,60 @@ export function PreCode(props: { children: any }) {
   );
 }
 
+// function escapeDollarNumber(text: string) {
+//   let escapedText = "";
+
+//   for (let i = 0; i < text.length; i += 1) {
+//     let char = text[i];
+//     const nextChar = text[i + 1] || " ";
+
+//     if (char === "$" && nextChar >= "0" && nextChar <= "9") {
+//       char = "\\$";
+//     }
+
+//     escapedText += char;
+//   }
+
+//   return escapedText;
+// }
 function escapeDollarNumber(text: string) {
   let escapedText = "";
+  let isInMathExpression = false;
+  let isInCodeBlock = false;
 
-  for (let i = 0; i < text.length; i += 1) {
+  const codeBlockStartRegex = /^`{1,3}$/;
+
+  for (let i = 0; i < text.length; i++) {
     let char = text[i];
     const nextChar = text[i + 1] || " ";
 
-    if (char === "$" && nextChar >= "0" && nextChar <= "9") {
-      char = "\\$";
+    // Toggle the isInMathExpression flag when encountering a dollar sign
+    if (char === "$") {
+      isInMathExpression = !isInMathExpression;
+    }
+
+    // Toggle the isInCodeBlock flag when encountering a code block start indicator
+    if (codeBlockStartRegex.test(char + nextChar)) {
+      isInCodeBlock = !isInCodeBlock;
+    }
+
+    // If inside a code block, preserve the character as is
+    if (isInCodeBlock) {
+      escapedText += char;
+      continue;
+    }
+
+    // Preserve the double dollar sign in math expressions
+    if (char === "$" && nextChar === "$") {
+      escapedText += "$$"; // Preserve the double dollar sign
+      i++; // Skip the next dollar sign since we have already included it
+      continue;
+    }
+
+    // Escape a single dollar sign followed by a number outside of math expressions
+    if (char === "$" && nextChar >= "0" && nextChar <= "9" && !isInMathExpression) {
+      escapedText += "&#36;"; // Use HTML entity &#36; to represent the dollar sign
+      continue;
     }
 
     escapedText += char;
@@ -116,19 +161,57 @@ function escapeDollarNumber(text: string) {
   return escapedText;
 }
 
-function escapeBrackets(text: string) {
+// function escapeBrackets(text: string) {
+//   const pattern =
+//     /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g;
+//   return text.replace(
+//     pattern,
+//     (match, codeBlock, squareBracket, roundBracket) => {
+//       if (codeBlock) {
+//         return codeBlock;
+//       } else if (squareBracket) {
+//         return `$$${squareBracket}$$`;
+//       } else if (roundBracket) {
+//         return `$${roundBracket}$`;
+//       }
+//       return match;
+//     },
+//   );
+// }
+
+function replaceLatexEnvironments(text: string): string {
+  // 使用正则表达式替换 $$\begin{aligned} 为 $$
+  text = text.replace(/\$\$\s*\\begin\{aligned}/, '$$\\begin{aligned}');
+
+  // 使用正则表达式替换 \end{aligned}$$ 为 \end{aligned}$
+  text = text.replace(/\\end\{aligned}\s*\$\$/g, '\\end{aligned}$');
+
+  return text;
+}
+
+function escapeBrackets(text: string): string {
   const pattern =
-    /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g;
+    /(```[\s\S]*?```|`[^`]*`)|\\\[(.*?)\\\]|\\\[(\n\\begin\{[\s\S]*?\}\n)\\\]/g;
+  text =  replaceLatexEnvironments(text);
   return text.replace(
     pattern,
-    (match, codeBlock, squareBracket, roundBracket) => {
+    (match, codeBlock, simpleSquareBracketContent, complexSquareBracketContent) => {
       if (codeBlock) {
-        return codeBlock;
-      } else if (squareBracket) {
-        return `$$${squareBracket}$$`;
-      } else if (roundBracket) {
-        return `$${roundBracket}$`;
+        // 代码块，直接返回
+        return match;
+      } else if (simpleSquareBracketContent !== undefined) {
+        // 简单方括号内的内容，转换为 $...$ 形式
+        const regex = /\[(.*?)\s*(?=\+|=|{)/;
+        const isMatched = regex.test(match);
+        if(isMatched) { // 加一个约束条件
+            // 处理方括号内的内容，转换为 $...$ 形式
+            return `$${simpleSquareBracketContent}$`;
+        }
+      } else if (complexSquareBracketContent !== undefined) {
+        // 复杂方括号内容（包含 \begin{}），也转换为 $$...$$ 形式
+        return `$$${complexSquareBracketContent}$$`;
       }
+      // 默认返回匹配到的内容
       return match;
     },
   );

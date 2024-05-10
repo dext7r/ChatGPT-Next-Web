@@ -26,7 +26,7 @@ import {
   NARROW_SIDEBAR_WIDTH,
   Path,
   REPO_URL,
-  FAKE_OPENAI_URL,
+  // FAKE_OPENAI_URL,
   PLUS_OPENAI_URL
 } from "../constant";
 
@@ -221,11 +221,11 @@ export function SideBar(props: { className?: string }) {
             </Link>
           </div>
             {/* 新增的跳转div */}
-            <div className={styles["sidebar-action"]}>
+            {/* <div className={styles["sidebar-action"]}>
             <a href={FAKE_OPENAI_URL} target="_blank" rel="noopener noreferrer">
               <IconButton icon={<OpenAIIcon />} text={shouldNarrow ? undefined : Locale.Home.FakeChat} shadow />
             </a>
-            </div>
+            </div> */}
             <div className={styles["sidebar-action"]}>
             <a href={PLUS_OPENAI_URL} target="_blank" rel="noopener noreferrer">
               <IconButton icon={<PlusIcon />} text={shouldNarrow ? undefined : Locale.Home.PlusChat} shadow />

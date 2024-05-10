@@ -12,7 +12,7 @@ import DeleteIcon from "../icons/delete.svg";
 import MaskIcon from "../icons/mask.svg";
 import PluginIcon from "../icons/plugin.svg";
 import DragIcon from "../icons/drag.svg";
-import OpenAIIcon from "../icons/openai.svg";
+// import OpenAIIcon from "../icons/openai.svg";
 import PlusIcon from "../icons/openai_plus.svg";
 
 import Locale from "../locales";
@@ -220,7 +220,14 @@ export function SideBar(props: { className?: string }) {
               <IconButton icon={<SettingsIcon />} shadow />
             </Link>
           </div>
-            {/* 新增的跳转div */}
+          {/* 隐藏github跳转，腾出空间 */}
+          <div className={styles["sidebar-action"]}>
+            <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
+              <IconButton icon={<GithubIcon />} shadow />
+            </a>
+          </div>
+
+          {/* 新增的跳转div */}
             {/* <div className={styles["sidebar-action"]}>
             <a href={FAKE_OPENAI_URL} target="_blank" rel="noopener noreferrer">
               <IconButton icon={<OpenAIIcon />} text={shouldNarrow ? undefined : Locale.Home.FakeChat} shadow />
@@ -231,12 +238,7 @@ export function SideBar(props: { className?: string }) {
               <IconButton icon={<PlusIcon />} text={shouldNarrow ? undefined : Locale.Home.PlusChat} shadow />
             </a>
             </div>
-          {/* 隐藏github跳转，腾出空间 */}
-          {/* <div className={styles["sidebar-action"]}>
-            <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-              <IconButton icon={<GithubIcon />} shadow />
-            </a>
-          </div> */}
+            
         </div>
         <div>
           <IconButton

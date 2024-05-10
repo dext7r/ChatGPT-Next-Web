@@ -121,7 +121,7 @@ const cn = {
   },
   Home: {
     PlusChat: "Plus",
-    FakeChat:"镜像站",
+    // FakeChat:"镜像站",
     NewChat: "新聊天",
     DeleteChat: "确认删除选中的对话？",
     DeleteToast: "已删除会话",

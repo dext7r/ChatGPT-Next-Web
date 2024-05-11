@@ -108,8 +108,8 @@ export async function requestOpenai(req: NextRequest) {
       // 增加fast api连接
       const isMatchFastRoute = serverConfig.fastModels.split(",").includes(jsonBody?.model ?? "");
       if (isMatchFastRoute) {
-        fetchUrl = `${serverConfig.fastBaseUrl[serverConfig.fastChannel]}/${path}`;
-        (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey[serverConfig.fastChannel];
+        fetchUrl = `${serverConfig.fastBaseUrl}/${path}`;
+        (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey;
         // console.log("[Fast API] ", fetchUrl);
         console.log("[Fast Model Match] ", isMatchFastRoute);
       }

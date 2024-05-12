@@ -105,7 +105,7 @@ export async function requestOpenai(req: NextRequest) {
           },
         );
       }
-      const token = bearToken.trim().replaceAll("Bearer ", "").trim();
+      const token = authValue.trim().replaceAll("Bearer ", "").trim();
       // if (token === serverConfig.apiKey)
       console.log("authHeaderName",authHeaderName,authValue,token === serverConfig.apiKey);
       // 增加fast api连接

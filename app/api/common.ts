@@ -105,13 +105,14 @@ export async function requestOpenai(req: NextRequest) {
           },
         );
       }
+      console.log("authHeaderName",authHeaderName);
       // 增加fast api连接
       const isMatchFastRoute = serverConfig.fastModels.split(",").includes(jsonBody?.model ?? "");
       if (isMatchFastRoute) {
         fetchUrl = `${serverConfig.fastBaseUrl}/${path}`;
         (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey;
         // console.log("[Fast API] ", fetchUrl);
-        console.log("[Fast Model Match] ", isMatchFastRoute);
+        // console.log("[Fast Model Match] ", isMatchFastRoute);
       }
     } catch (e) {
       console.error("[OpenAI] gpt4 filter", e);

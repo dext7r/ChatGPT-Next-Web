@@ -106,15 +106,15 @@ export async function requestOpenai(req: NextRequest) {
         );
       }
       const token = authValue.trim().replaceAll("Bearer ", "").trim();
-      // if (token === serverConfig.apiKey)
-      console.log("authHeaderName",authHeaderName,authValue,token === serverConfig.apiKey);
-      // 增加fast api连接
-      const isMatchFastRoute = serverConfig.fastModels.split(",").includes(jsonBody?.model ?? "");
-      if (isMatchFastRoute) {
-        fetchUrl = `${serverConfig.fastBaseUrl}/${path}`;
-        (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey;
-        // console.log("[Fast API] ", fetchUrl);
-        // console.log("[Fast Model Match] ", isMatchFastRoute);
+      if (token === serverConfig.apiKey){
+        // 如果使用系统内置的key，则增加fast api连接
+        const isMatchFastRoute = serverConfig.fastModels.split(",").includes(jsonBody?.model ?? "");
+        if (isMatchFastRoute) {
+          fetchUrl = `${serverConfig.fastBaseUrl}/${path}`;
+          (fetchOptions.headers as Record<string, string>)[authHeaderName] = serverConfig.fastApiKey;
+          // console.log("[Fast API] ", fetchUrl);
+          // console.log("[Fast Model Match] ", isMatchFastRoute);
+        }
       }
     } catch (e) {
       console.error("[OpenAI] gpt4 filter", e);

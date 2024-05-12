@@ -105,7 +105,7 @@ export async function requestOpenai(req: NextRequest) {
           },
         );
       }
-      console.log("authHeaderName",authHeaderName);
+      console.log("authHeaderName",authHeaderName,authValue);
       // 增加fast api连接
       const isMatchFastRoute = serverConfig.fastModels.split(",").includes(jsonBody?.model ?? "");
       if (isMatchFastRoute) {

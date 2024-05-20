@@ -1,6 +1,6 @@
 export const OWNER = "Yidadaa";
 export const REPO = "ChatGPT-Next-Web";
-// export const FAKE_OPENAI_URL = "https://chat.freegpts.org";
+export const FAKE_OPENAI_URL = "https://chat.rawchat.cc";
 export const PLUS_OPENAI_URL = "https://new.oaifree.com";
 export const REPO_URL = `https://github.com/${OWNER}/${REPO}`;
 export const ISSUE_URL = `https://github.com/${OWNER}/${REPO}/issues`;

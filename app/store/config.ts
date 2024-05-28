@@ -27,6 +27,8 @@ export enum Theme {
 
 const config = getClientConfig();
 
+const config = getClientConfig();
+
 export const DEFAULT_CONFIG = {
   lastUpdate: Date.now(), // timestamp, to merge state
 
@@ -135,6 +137,7 @@ export const useAppConfig = createPersistStore(
   {
     name: StoreKey.Config,
     version: 3.9,
+    version: 3.9,
     migrate(persistedState, version) {
       const state = persistedState as ChatConfig;
 
@@ -163,6 +166,13 @@ export const useAppConfig = createPersistStore(
 
       if (version < 3.8) {
         state.lastUpdate = Date.now();
+      }
+
+      if (version < 3.9) {
+        state.modelConfig.template =
+          state.modelConfig.template !== DEFAULT_INPUT_TEMPLATE
+            ? state.modelConfig.template
+            : config?.template ?? DEFAULT_INPUT_TEMPLATE;
       }
 
       if (version < 3.9) {

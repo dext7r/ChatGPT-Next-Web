@@ -11,6 +11,9 @@ COPY package.json yarn.lock ./
 RUN yarn config set registry 'https://registry.npmmirror.com/'
 RUN yarn install
 
+# 安装 sharp 用于图像优化
+RUN npm install sharp
+
 FROM base AS builder
 
 RUN apk update && apk add --no-cache git

@@ -27,8 +27,6 @@ export enum Theme {
 
 const config = getClientConfig();
 
-const config = getClientConfig();
-
 export const DEFAULT_CONFIG = {
   lastUpdate: Date.now(), // timestamp, to merge state
 

@@ -45,7 +45,6 @@ export const getBuildConfig = () => {
 
     chatGeminiThroughOpenai,
     chatClaudeThroughOpenai,
-    template: process.env.DEFAULT_INPUT_TEMPLATE ?? DEFAULT_INPUT_TEMPLATE,
   };
 };
 

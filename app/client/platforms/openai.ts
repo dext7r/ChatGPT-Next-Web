@@ -113,18 +113,15 @@ export class ChatGPTApi implements LLMApi {
     // For claude model: roles must alternate between "user" and "assistant" in claude, so add a fake assistant message between two user messages
     const keys = ["system", "user"];
     if (options.config.model.includes("claude")){
-      for (let i = 0; i < messages.length - 1; i++) {
+      for (let i=messages.length-2; i>=0; i--) {
         const message = messages[i];
         const nextMessage = messages[i + 1];
   
         if (keys.includes(message.role) && keys.includes(nextMessage.role)) {
-          messages[i] = [
-            message,
-            {
-              role: "assistant",
-              content: ";",
-            },
-          ] as any;
+          messages.splice(i + 1, 0, {
+            role: "assistant",
+            content: ";"
+          });
         }
       }
     }

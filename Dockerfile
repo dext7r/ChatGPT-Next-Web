@@ -33,7 +33,7 @@ RUN yarn build
 FROM base AS runner
 WORKDIR /app
 
-RUN apk add proxychains-ng
+RUN apk add git proxychains-ng
 
 ENV CHAT_GEMINI_THROUGH_OPENAI=1
 ENV CHAT_CLAUDE_THROUGH_OPENAI=1

@@ -141,8 +141,8 @@ export class ChatGPTApi implements LLMApi {
       }
       // 检查消息的顺序，添加或删除消息以确保 user 和 assistant 交替出现
       let i = 0;
-      while (i < messages.length - 1) {
-        if (messages[i].role === messages[i + 1].role) {
+      while (i < messages.length) {
+        if (i < messages.length -1 && messages[i].role === messages[i + 1].role) {
           if (messages[i].role === "user") {
             // 插入一个含分号的 assistant 消息
             messages.splice(i + 1, 0, {
@@ -158,7 +158,7 @@ export class ChatGPTApi implements LLMApi {
         }
         i++; // 正常移动到下一个元素
       }
-      while (messages[messages.length - 1].role !== "user") {
+      while (messages.length > 0 && messages[messages.length - 1].role !== "user") {
         messages.pop(); // 删除非 user 消息
       }
     }

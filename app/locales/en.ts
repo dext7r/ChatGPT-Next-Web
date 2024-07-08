@@ -123,7 +123,7 @@ const en: LocaleType = {
       "Resetting will clear the current conversation history and historical memory. Are you sure you want to reset?",
   },
   Home: {
-    PlusChat: "Plus",
+    // PlusChat: "Plus",
     FakeChat: "Mirror",
     NewChat: "New Chat",
     DeleteChat: "Confirm to delete the selected conversation?",

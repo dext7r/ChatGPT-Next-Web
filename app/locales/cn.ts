@@ -120,7 +120,7 @@ const cn = {
     ResetConfirm: "确认清空历史摘要？",
   },
   Home: {
-    PlusChat: "Plus",
+    // PlusChat: "Plus",
     FakeChat:"镜像站",
     NewChat: "新聊天",
     DeleteChat: "确认删除选中的对话？",

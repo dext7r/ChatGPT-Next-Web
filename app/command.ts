@@ -41,13 +41,15 @@ interface ChatCommands {
   del?: Command;
 }
 
-export const ChatCommandPrefix = ":";
+export const ChatCommandPrefix = /^[:：]/;
 
 export function useChatCommand(commands: ChatCommands = {}) {
   function extract(userInput: string) {
-    return (
-      userInput.startsWith(ChatCommandPrefix) ? userInput.slice(1) : userInput
-    ) as keyof ChatCommands;
+    const match = userInput.match(ChatCommandPrefix);
+    if (match) {
+      return userInput.slice(1) as keyof ChatCommands;
+    }
+    return userInput as keyof ChatCommands;
   }
 
   function search(userInput: string) {
@@ -57,7 +59,7 @@ export function useChatCommand(commands: ChatCommands = {}) {
       .filter((c) => c.startsWith(input))
       .map((c) => ({
         title: desc[c as keyof ChatCommands],
-        content: ChatCommandPrefix + c,
+        content: ":" + c,
       }));
   }
 

@@ -134,7 +134,7 @@ function escapeDollarNumber(text: string) {
     }
 
     // Toggle the isInInlineCode flag when encountering a single backtick
-    if (char === "`") {
+    if (char === "`" && !isInCodeBlock) {
       isInInlineCode = !isInInlineCode;
       escapedText += "`";
       continue;
@@ -147,8 +147,10 @@ function escapeDollarNumber(text: string) {
     }
 
     // Toggle the isInMathExpression flag when encountering a dollar sign
-    if (char === "$") {
-      isInMathExpression = !isInMathExpression;
+    if (char === "$" && nextChar !== "$" && !isInMathExpression) {
+      isInMathExpression = true;
+    } else if (char === "$" && nextChar !== "$" && isInMathExpression) {
+      isInMathExpression = false;
     }
 
     // Preserve the double dollar sign in math expressions

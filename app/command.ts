@@ -42,6 +42,7 @@ interface ChatCommands {
 }
 
 export const ChatCommandPrefix = /^[:：]/;
+export const MaskCommandPrefix = /^[/、]/;
 
 export function useChatCommand(commands: ChatCommands = {}) {
   function extract(userInput: string) {

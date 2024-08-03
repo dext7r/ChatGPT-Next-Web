@@ -119,8 +119,7 @@ function escapeDollarNumber(text: string) {
   let escapedText = "";
   let isInMathExpression = false;
   let isInCodeBlock = false;
-
-  const codeBlockStartRegex = /^`{3}$/;
+  let isInInlineCode = false;
 
   for (let i = 0; i < text.length; i++) {
     let char = text[i];
@@ -134,8 +133,15 @@ function escapeDollarNumber(text: string) {
       continue;
     }
 
+    // Toggle the isInInlineCode flag when encountering a single backtick
+    if (char === "`") {
+      isInInlineCode = !isInInlineCode;
+      escapedText += "`";
+      continue;
+    }
+
     // If inside a code block, preserve the character as is
-    if (isInCodeBlock) {
+    if (isInCodeBlock || isInInlineCode) {
       escapedText += char;
       continue;
     }
@@ -144,17 +150,6 @@ function escapeDollarNumber(text: string) {
     if (char === "$") {
       isInMathExpression = !isInMathExpression;
     }
-
-    // // Toggle the isInCodeBlock flag when encountering a code block start indicator
-    // if (codeBlockStartRegex.test(char + nextChar)) {
-    //   isInCodeBlock = !isInCodeBlock;
-    // }
-
-    // // If inside a code block, preserve the character as is
-    // if (isInCodeBlock) {
-    //   escapedText += char;
-    //   continue;
-    // }
 
     // Preserve the double dollar sign in math expressions
     if (char === "$" && nextChar === "$") {

@@ -120,20 +120,18 @@ function escapeDollarNumber(text: string) {
   let isInMathExpression = false;
   let isInCodeBlock = false;
 
-  const codeBlockStartRegex = /^`{1,3}$/;
+  const codeBlockStartRegex = /^`{3}$/;
 
   for (let i = 0; i < text.length; i++) {
     let char = text[i];
     const nextChar = text[i + 1] || " ";
 
-    // Toggle the isInMathExpression flag when encountering a dollar sign
-    if (char === "$") {
-      isInMathExpression = !isInMathExpression;
-    }
-
-    // Toggle the isInCodeBlock flag when encountering a code block start indicator
-    if (codeBlockStartRegex.test(char + nextChar)) {
+    // Toggle the isInCodeBlock flag when encountering a code block start or end indicator
+    if (text.substring(i, i + 3) === "```") {
       isInCodeBlock = !isInCodeBlock;
+      escapedText += "```";
+      i += 2; // Skip the next two characters since we have already included them
+      continue;
     }
 
     // If inside a code block, preserve the character as is
@@ -141,6 +139,22 @@ function escapeDollarNumber(text: string) {
       escapedText += char;
       continue;
     }
+
+    // Toggle the isInMathExpression flag when encountering a dollar sign
+    if (char === "$") {
+      isInMathExpression = !isInMathExpression;
+    }
+
+    // // Toggle the isInCodeBlock flag when encountering a code block start indicator
+    // if (codeBlockStartRegex.test(char + nextChar)) {
+    //   isInCodeBlock = !isInCodeBlock;
+    // }
+
+    // // If inside a code block, preserve the character as is
+    // if (isInCodeBlock) {
+    //   escapedText += char;
+    //   continue;
+    // }
 
     // Preserve the double dollar sign in math expressions
     if (char === "$" && nextChar === "$") {

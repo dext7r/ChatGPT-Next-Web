@@ -78,6 +78,32 @@ export function PreCode(props: { children: any }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refText]);
 
+  
+  //Wrap the paragraph for plain-text
+  useEffect(() => {
+    if (ref.current) {
+      const codeElements = ref.current.querySelectorAll(
+        "code",
+      ) as NodeListOf<HTMLElement>;
+      const wrapLanguages = [
+        "",
+        "md",
+        "markdown",
+        "text",
+        "txt",
+        "plaintext",
+        "tex",
+        "latex",
+      ];
+      codeElements.forEach((codeElement) => {
+        let languageClass = codeElement.className.match(/language-(\w+)/);
+        let name = languageClass ? languageClass[1] : "";
+        if (wrapLanguages.includes(name)) {
+          codeElement.style.whiteSpace = "pre-wrap";
+        }
+      });
+    }
+  }, []);
   return (
     <>
       {mermaidCode.length > 0 && (

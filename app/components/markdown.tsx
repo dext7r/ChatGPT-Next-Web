@@ -216,39 +216,19 @@ function escapeDollarNumber(text: string) {
 //   );
 // }
 
-function replaceLatexEnvironments(text: string): string {
-  // 使用正则表达式替换 $$\begin{aligned} 为 $$
-  text = text.replace(/\$\$\s*\\begin\{aligned}/, '$$\\begin{aligned}');
-
-  // 使用正则表达式替换 \end{aligned}$$ 为 \end{aligned}$
-  text = text.replace(/\\end\{aligned}\s*\$\$/g, '\\end{aligned}$');
-
-  return text;
-}
-
-function escapeBrackets(text: string): string {
+function escapeBrackets(text: string) {
   const pattern =
-    /(```[\s\S]*?```|`[^`]*`)|\\\[(.*?)\\\]|\\\[(\n\\begin\{[\s\S]*?\}\n)\\\]/g;
-  text =  replaceLatexEnvironments(text);
+    /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g;
   return text.replace(
     pattern,
-    (match, codeBlock, simpleSquareBracketContent, complexSquareBracketContent) => {
+    (match, codeBlock, squareBracket, roundBracket) => {
       if (codeBlock) {
-        // 代码块，直接返回
-        return match;
-      } else if (simpleSquareBracketContent !== undefined) {
-        // 简单方括号内的内容，转换为 $...$ 形式
-        const regex = /\[(.*?)\s*(?=\+|=|{)/;
-        const isMatched = regex.test(match);
-        if(isMatched) { // 加一个约束条件
-            // 处理方括号内的内容，转换为 $...$ 形式
-            return `$${simpleSquareBracketContent}$`;
-        }
-      } else if (complexSquareBracketContent !== undefined) {
-        // 复杂方括号内容（包含 \begin{}），也转换为 $$...$$ 形式
-        return `$$${complexSquareBracketContent}$$`;
+        return codeBlock;
+      } else if (squareBracket) {
+        return `$$${squareBracket}$$`;
+      } else if (roundBracket) {
+        return `$${roundBracket}$`;
       }
-      // 默认返回匹配到的内容
       return match;
     },
   );

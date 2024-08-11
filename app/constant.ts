@@ -15,6 +15,9 @@ export const ANTHROPIC_BASE_URL = "https://api.anthropic.com";
 
 export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/";
 
+export const CACHE_URL_PREFIX = "/api/cache";
+export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
+
 export enum Path {
   Home = "/",
   Chat = "/chat",
@@ -28,6 +31,7 @@ export enum ApiPath {
   Cors = "",
   OpenAI = "/api/openai",
   Anthropic = "/api/anthropic",
+  Google = "/api/google",
 }
 
 export enum SlotID {
@@ -88,6 +92,7 @@ export const Anthropic = {
 
 export const OpenaiPath = {
   ChatPath: "v1/chat/completions",
+  ImagePath: "v1/images/generations",
   UsagePath: "dashboard/billing/usage",
   SubsPath: "dashboard/billing/subscription",
   ListModelPath: "v1/models",
@@ -169,10 +174,10 @@ const anthropicModels = [
   "claude-instant-1.2",
   "claude-2.0",
   "claude-2.1",
+  "claude-3-5-sonnet-20240620",
   "claude-3-sonnet-20240229",
   "claude-3-opus-20240229",
   "claude-3-haiku-20240307",
-  "claude-3-5-sonnet-20240620",
 ];
 
 export const DEFAULT_MODELS = [

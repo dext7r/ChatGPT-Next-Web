@@ -1,6 +1,7 @@
 export const OWNER = "Yidadaa";
 export const REPO = "ChatGPT-Next-Web";
 export const FAKE_OPENAI_URL = "https://new.oaifree.com";
+export const FILEBOX_URL = "https://filebox.ai-october.win";
 export const REPO_URL = `https://github.com/${OWNER}/${REPO}`;
 export const ISSUE_URL = `https://github.com/${OWNER}/${REPO}/issues`;
 export const UPDATE_URL = `${REPO_URL}#keep-updated`;

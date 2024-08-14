@@ -233,10 +233,18 @@ function escapeBrackets(text: string) {
     },
   );
 }
-
+function formatBoldText(text: string) {
+  const pattern = /\*\*(.*?)([:：])\*\*/g;
+  return text.replace(
+    pattern,
+    (match, boldText, colon) => {
+      return `**${boldText}**${colon}`;
+    },
+  );
+}
 function _MarkDownContent(props: { content: string }) {
   const escapedContent = useMemo(() => {
-    return escapeBrackets(escapeDollarNumber(props.content));
+    return formatBoldText(escapeBrackets(escapeDollarNumber(props.content)));
   }, [props.content]);
 
   return (

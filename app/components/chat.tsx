@@ -1357,6 +1357,11 @@ function _Chat() {
                         </>
                       )}
                     </div>
+                    {!isUser && (
+                      <div className={styles["chat-model-name"]}>
+                        {message.model}
+                      </div>
+                    )}
 
                     {showActions && (
                       <div className={styles["chat-message-actions"]}>
@@ -1458,9 +1463,7 @@ function _Chat() {
                   <div className={styles["chat-message-action-date"]}>
                     {isContext
                       ? Locale.Chat.IsContext
-                      : `${message.date.toLocaleString()}${
-                        message.model ? ` - Model: ${message.model}` : ''
-                      }`}
+                      : message.date.toLocaleString()}
                   </div>
                 </div>
               </div>

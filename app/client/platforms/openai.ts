@@ -48,8 +48,8 @@ interface RequestPayload {
   stream?: boolean;
   model: string;
   temperature: number;
-  presence_penalty: number;
-  frequency_penalty: number;
+  presence_penalty?: number;
+  frequency_penalty?: number;
   top_p: number;
   max_tokens?: number;
 }
@@ -176,8 +176,6 @@ export class ChatGPTApi implements LLMApi {
       stream: options.config.stream,
       model: modelConfig.model,
       temperature: modelConfig.temperature,
-      presence_penalty: modelConfig.presence_penalty,
-      frequency_penalty: modelConfig.frequency_penalty,
       top_p: modelConfig.top_p,
       // max_tokens: Math.max(modelConfig.max_tokens, 1024),
       // Please do not ask me why not send max_tokens, no reason, this param is just shit, I dont want to explain anymore.
@@ -194,6 +192,10 @@ export class ChatGPTApi implements LLMApi {
       //   writable: true,
       //   value: modelConfig.max_tokens,
       // });
+    }
+    if (!modelConfig.model.startsWith("mistral")){
+      requestPayload["presence_penalty"] = modelConfig.presence_penalty;
+      requestPayload["frequency_penalty"] = modelConfig.frequency_penalty;
     }
 
     console.log("[Request] openai payload: ", requestPayload);

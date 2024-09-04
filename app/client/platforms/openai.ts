@@ -30,6 +30,7 @@ import {
   getMessageImages,
   isVisionModel,
 } from "@/app/utils";
+import { preProcessImageContent } from "@/app/utils/chat";
 
 export interface OpenAIListModelResponse {
   object: string;
@@ -103,10 +104,14 @@ export class ChatGPTApi implements LLMApi {
 
   async chat(options: ChatOptions) {
     const visionModel = isVisionModel(options.config.model);
-    const messages = options.messages.map((v) => ({
-      role: v.role,
-      content: visionModel ? v.content : getMessageTextContent(v),
-    }));
+    const messages: ChatOptions["messages"] = [];
+    for (const v of options.messages) {
+      const content = visionModel
+        ? await preProcessImageContent(v.content)
+        : getMessageTextContent(v);
+      messages.push({ role: v.role, content});
+    }
+    
     // For claude model: roles must alternate between "user" and "assistant" in claude, so add a fake assistant message between two user messages
     const keys = ["system", "user"];
     if (options.config.model.includes("claude")){

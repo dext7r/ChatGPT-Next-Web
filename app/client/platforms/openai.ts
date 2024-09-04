@@ -193,7 +193,7 @@ export class ChatGPTApi implements LLMApi {
       //   value: modelConfig.max_tokens,
       // });
     }
-    if (!modelConfig.model.startsWith("mistral")){
+    if (!modelConfig.model.toLowerCase().startsWith("mistral")){
       requestPayload["presence_penalty"] = modelConfig.presence_penalty;
       requestPayload["frequency_penalty"] = modelConfig.frequency_penalty;
     }

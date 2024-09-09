@@ -23,7 +23,10 @@ import { createPersistStore } from "../utils/store";
 import { identifyDefaultClaudeModel } from "../utils/checkers";
 import { collectModelsWithDefaultModel } from "../utils/model";
 import { useAccessStore } from "./access";
+import { safeLocalStorage } from "../utils";
 import { indexedDBStorage } from "@/app/utils/indexedDB-storage";
+
+const localStorage = safeLocalStorage();
 
 export type ChatMessage = RequestMessage & {
   date: string;
@@ -162,6 +165,7 @@ function fillTemplateWith(input: string, modelConfig: ModelConfig) {
 const DEFAULT_CHAT_STATE = {
   sessions: [createEmptySession()],
   currentSessionIndex: 0,
+  lastInput: "",
 };
 
 export const useChatStore = createPersistStore(
@@ -179,6 +183,7 @@ export const useChatStore = createPersistStore(
         set(() => ({
           sessions: [createEmptySession()],
           currentSessionIndex: 0,
+          lastInput: "",
         }));
       },
 
@@ -395,7 +400,7 @@ export const useChatStore = createPersistStore(
             ChatControllerPool.remove(session.id, botMessage.id);
           },
           onError(error) {
-            const isAborted = error.message.includes("aborted");
+            const isAborted = error.message?.includes?.("aborted");
             botMessage.content +=
               "\n\n" +
               prettyObject({
@@ -675,6 +680,11 @@ export const useChatStore = createPersistStore(
         await indexedDBStorage.clear();
         localStorage.clear();
         location.reload();
+      },
+      setLastInput(lastInput: string) {
+        set({
+          lastInput,
+        });
       },
     };
 

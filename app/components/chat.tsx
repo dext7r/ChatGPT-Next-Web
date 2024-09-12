@@ -733,15 +733,15 @@ function _Chat() {
   // chat commands shortcuts
   const chatCommands = useChatCommand({
     new: () => chatStore.newSession(),
+    search: () => navigate(Path.SearchChat),
     newm: () => navigate(Path.NewChat),
-    prev: () => chatStore.nextSession(-1),
-    next: () => chatStore.nextSession(1),
     clear: () =>
       chatStore.updateCurrentSession(
         (session) => (session.clearContextIndex = session.messages.length),
       ),
+    prev: () => chatStore.nextSession(-1),
+    next: () => chatStore.nextSession(1),
     del: () => chatStore.deleteSession(chatStore.currentSessionIndex),
-    search: () => navigate(Path.SearchChat),
   });
 
   // only search prompts when user input is short

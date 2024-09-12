@@ -51,6 +51,7 @@ const pt: PartialLocaleType = {
       prev: "Chat Anterior",
       clear: "Limpar Contexto",
       del: "Deletar Chat",
+      search: "Buscar Chat",
     },
     InputActions: {
       Stop: "Parar",

@@ -52,6 +52,7 @@ const en: LocaleType = {
       prev: "Previous Chat",
       clear: "Clear Context",
       del: "Delete Chat",
+      search: "Search Chat",
     },
     InputActions: {
       Stop: "Stop",

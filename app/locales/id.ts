@@ -40,6 +40,7 @@ const id: PartialLocaleType = {
       prev: "Chat Sebelumnya",
       clear: "Bersihkan Percakapan",
       del: "Hapus Chat",
+      search: "Cari Chat",
     },
     InputActions: {
       Stop: "Berhenti",

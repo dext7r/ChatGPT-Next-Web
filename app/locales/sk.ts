@@ -53,6 +53,7 @@ const sk: PartialLocaleType = {
       prev: "Predchádzajúci Chat",
       clear: "Vymazať kontext",
       del: "Vymazať Chat",
+      search: "Vyhľadávanie Chat",
     },
     InputActions: {
       Stop: "Zastaviť",

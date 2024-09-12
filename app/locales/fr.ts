@@ -32,6 +32,7 @@ const fr: PartialLocaleType = {
       prev: "Conversation précédente",
       clear: "Effacer le contexte",
       del: "Supprimer la Conversation",
+      search: "Rechercher dans le chat"
     },
     InputActions: {
       Stop: "Stop",

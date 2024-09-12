@@ -50,6 +50,7 @@ const cn = {
       prev: "上一个聊天",
       clear: "清除上下文",
       del: "删除聊天",
+      search: "搜索聊天",
     },
     InputActions: {
       Stop: "停止响应",

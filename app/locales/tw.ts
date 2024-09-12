@@ -51,6 +51,7 @@ const tw = {
       prev: "上一個聊天",
       clear: "清除上下文",
       del: "刪除聊天",
+      search: "搜尋聊天",
     },
     InputActions: {
       Stop: "停止回應",

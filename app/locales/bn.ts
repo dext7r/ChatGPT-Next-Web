@@ -40,6 +40,7 @@ const bn: PartialLocaleType = {
       prev: "পূর্ববর্তী চ্যাট",
       clear: "সংশ্লিষ্টতাবদ্ধকরণ পরিষ্কার করুন",
       del: "চ্যাট মুছুন",
+      search: "চ্যাট অনুসন্ধান",
     },
     InputActions: {
       Stop: "বন্ধ করুন",

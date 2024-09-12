@@ -175,11 +175,26 @@ const vi: PartialLocaleType = {
     Edit: "Thiết lập ngữ cảnh và bộ nhớ",
     Add: "Thêm tin nhắn",
   },
-  Plugin: {
+  Discovery: {
     Name: "Plugin",
   },
   FineTuned: {
     Sysmessage: "Bạn là một trợ lý",
+  },
+  SearchChat: {
+    Name: "Tìm kiếm",
+    Page: {
+      Title: "Tìm kiếm lịch sử trò chuyện",
+      Search: "Nhập từ khóa tìm kiếm",
+      NoResult: "Không tìm thấy kết quả",
+      NoData: "Không có dữ liệu",
+      Loading: "Đang tải",
+
+      SubTitle: (count: number) => `Tìm thấy ${count} kết quả`,
+    },
+    Item: {
+      View: "Xem",
+    },
   },
   Mask: {
     Name: "Mẫu",

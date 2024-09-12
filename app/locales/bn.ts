@@ -257,11 +257,26 @@ const bn: PartialLocaleType = {
     Clear: "সঙ্গতি পরিস্কার করুন",
     Revert: "পূর্ববর্তী অবস্থানে ফিরে যান",
   },
-  Plugin: {
+  Discovery: {
     Name: "প্লাগইন",
   },
   FineTuned: {
     Sysmessage: "আপনি একটি সহকারী যা",
+  },
+  SearchChat: {
+    Name: "অনুসন্ধান",
+    Page: {
+      Title: "চ্যাট রেকর্ড অনুসন্ধান করুন",
+      Search: "অনুসন্ধান কীওয়ার্ড লিখুন",
+      NoResult: "কোন ফলাফল পাওয়া যায়নি",
+      NoData: "কোন তথ্য নেই",
+      Loading: "লোড হচ্ছে",
+
+      SubTitle: (count: number) => `${count} টি ফলাফল পাওয়া গেছে`,
+    },
+    Item: {
+      View: "দেখুন",
+    },
   },
   Mask: {
     Name: "মাস্ক",

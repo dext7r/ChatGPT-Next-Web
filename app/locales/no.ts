@@ -150,6 +150,27 @@ const no: PartialLocaleType = {
     Edit: "Kontekstuelle -og minneinstrukser",
     Add: "Legg til",
   },
+  Discovery: {
+    Name: "Plugin",
+  },
+  FineTuned: {
+    Sysmessage: "Du er en assistent",
+  },
+  SearchChat: {
+    Name: "Søk",
+    Page: {
+      Title: "Søk i chatthistorikk",
+      Search: "Skriv inn søkeord",
+      NoResult: "Ingen resultater funnet",
+      NoData: "Ingen data",
+      Loading: "Laster inn",
+
+      SubTitle: (count: number) => `Fant ${count} resultater`,
+    },
+    Item: {
+      View: "Vis",
+    },
+  },
   Exporter: {
     Model: "Model",
     Messages: "Meldingar",

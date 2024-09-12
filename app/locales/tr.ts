@@ -180,11 +180,26 @@ const tr: PartialLocaleType = {
     Edit: "Bağlamsal ve Bellek Komutları",
     Add: "Yeni Ekle",
   },
-  Plugin: {
+  Discovery: {
     Name: "Plugin",
   },
   FineTuned: {
     Sysmessage: "Sen bir asistansın",
+  },
+  SearchChat: {
+    Name: "Ara",
+    Page: {
+      Title: "Sohbet geçmişini ara",
+      Search: "Arama anahtar kelimelerini girin",
+      NoResult: "Sonuç bulunamadı",
+      NoData: "Veri yok",
+      Loading: "Yükleniyor",
+
+      SubTitle: (count: number) => `${count} sonuç bulundu`,
+    },
+    Item: {
+      View: "Görüntüle",
+    },
   },
   Mask: {
     Name: "Mask",

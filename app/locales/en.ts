@@ -417,11 +417,26 @@ const en: LocaleType = {
     Clear: "Context Cleared",
     Revert: "Revert",
   },
-  Plugin: {
-    Name: "Plugin",
+  Discovery: {
+    Name: "Discovery",
   },
   FineTuned: {
     Sysmessage: "You are an assistant that",
+  },
+  SearchChat: {
+    Name: "Search",
+    Page: {
+      Title: "Search Chat History",
+      Search: "Enter search query to search chat history",
+      NoResult: "No results found",
+      NoData: "No data",
+      Loading: "Loading...",
+
+      SubTitle: (count: number) => `Found ${count} results`,
+    },
+    Item: {
+      View: "View",
+    },
   },
   Mask: {
     Name: "Mask",

@@ -219,11 +219,26 @@ ${builtin} مدمجة، ${custom} تم تعريفها من قبل المستخد
     Clear: "مسح السياق",
     Revert: "التراجع",
   },
-  Plugin: {
-    Name: "المكوّن الإضافي",
+  Discovery: {
+    Name: "الإضافات",
   },
   FineTuned: {
     Sysmessage: "أنت مساعد ي",
+  },
+  SearchChat: {
+    Name: "بحث",
+    Page: {
+      Title: "البحث في سجلات الدردشة",
+      Search: "أدخل كلمات البحث",
+      NoResult: "لم يتم العثور على نتائج",
+      NoData: "لا توجد بيانات",
+      Loading: "جارٍ التحميل",
+
+      SubTitle: (count: number) => `تم العثور على ${count} نتائج`,
+    },
+    Item: {
+      View: "عرض",
+    },
   },
   Mask: {
     Name: "الأقنعة",

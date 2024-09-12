@@ -1,3 +1,5 @@
+import path from "path";
+
 export const OWNER = "Yidadaa";
 export const REPO = "ChatGPT-Next-Web";
 export const FAKE_OPENAI_URL = "https://new.oaifree.com";
@@ -26,6 +28,7 @@ export enum Path {
   NewChat = "/new-chat",
   Masks = "/masks",
   Auth = "/auth",
+  SearchChat = "/search-chat",
 }
 
 export enum ApiPath {
@@ -228,4 +231,8 @@ export const internalAllowedWebDavEndpoints = [
   "https://dav.idrivesync.com",
   "https://webdav.yandex.com",
   "https://app.koofr.net/dav/Koofr",
+];
+
+export const PLUGINS = [
+  { name: "Search Chat", path: Path.SearchChat },
 ];

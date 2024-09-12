@@ -177,11 +177,26 @@ const cs: PartialLocaleType = {
     Edit: "Kontextové a paměťové pokyny",
     Add: "Přidat pokyn",
   },
-  Plugin: {
+  Discovery: {
     Name: "Plugin",
   },
   FineTuned: {
     Sysmessage: "Jste asistent, který",
+  },
+  SearchChat: {
+    Name: "Hledat",
+    Page: {
+      Title: "Hledat v historii chatu",
+      Search: "Zadejte hledané klíčové slovo",
+      NoResult: "Nebyly nalezeny žádné výsledky",
+      NoData: "Žádná data",
+      Loading: "Načítání",
+
+      SubTitle: (count: number) => `Nalezeno ${count} výsledků`,
+    },
+    Item: {
+      View: "Zobrazit",
+    },
   },
   Mask: {
     Name: "Maska",

@@ -180,11 +180,26 @@ const ru: PartialLocaleType = {
     Edit: "Контекстные и памятные подсказки",
     Add: "Добавить подсказку",
   },
-  Plugin: {
+  Discovery: {
     Name: "Плагин",
   },
   FineTuned: {
     Sysmessage: "Вы - ассистент, который",
+  },
+  SearchChat: {
+    Name: "Поиск",
+    Page: {
+      Title: "Поиск в истории чатов",
+      Search: "Введите ключевые слова для поиска",
+      NoResult: "Результатов не найдено",
+      NoData: "Нет данных",
+      Loading: "Загрузка",
+
+      SubTitle: (count: number) => `Найдено ${count} результатов`,
+    },
+    Item: {
+      View: "Просмотр",
+    },
   },
   Mask: {
     Name: "Маска",

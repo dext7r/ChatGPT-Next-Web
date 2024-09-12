@@ -233,11 +233,26 @@ const fr: PartialLocaleType = {
     Edit: "Contextes et mémoires de prompts",
     Add: "Ajouter un prompt",
   },
-  Plugin: {
+  Discovery: {
     Name: "Extension",
   },
   FineTuned: {
     Sysmessage: "Eres un asistente que",
+  },
+  SearchChat: {
+    Name: "Recherche",
+    Page: {
+      Title: "Rechercher dans l'historique des discussions",
+      Search: "Entrez le mot-clé de recherche",
+      NoResult: "Aucun résultat trouvé",
+      NoData: "Aucune donnée",
+      Loading: "Chargement",
+
+      SubTitle: (count: number) => `${count} résultats trouvés`,
+    },
+    Item: {
+      View: "Voir",
+    },
   },
   Mask: {
     Name: "Masque",

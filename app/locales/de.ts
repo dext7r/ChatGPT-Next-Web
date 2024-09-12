@@ -179,11 +179,26 @@ const de: PartialLocaleType = {
     Edit: "Kontext- und Gedächtnis-Prompts",
     Add: "Hinzufügen",
   },
-  Plugin: {
+  Discovery: {
     Name: "Plugin",
   },
   FineTuned: {
     Sysmessage: "Du bist ein Assistent, der",
+  },
+  SearchChat: {
+    Name: "Suche",
+    Page: {
+      Title: "Chatverlauf durchsuchen",
+      Search: "Suchbegriff eingeben",
+      NoResult: "Keine Ergebnisse gefunden",
+      NoData: "Keine Daten",
+      Loading: "Laden",
+
+      SubTitle: (count: number) => `${count} Ergebnisse gefunden`,
+    },
+    Item: {
+      View: "Ansehen",
+    },
   },
   Mask: {
     Name: "Mask",

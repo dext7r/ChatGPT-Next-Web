@@ -410,11 +410,26 @@ const cn = {
     Clear: "上下文已清除",
     Revert: "恢复上下文",
   },
-  Plugin: {
-    Name: "插件",
+  Discovery: {
+    Name: "搜索",
   },
   FineTuned: {
     Sysmessage: "你是一个助手",
+  },
+  SearchChat: {
+    Name: "搜索",
+    Page: {
+      Title: "搜索聊天记录",
+      Search: "输入搜索关键词",
+      NoResult: "没有找到结果",
+      NoData: "没有数据",
+      Loading: "加载中",
+
+      SubTitle: (count: number) => `搜索到 ${count} 条结果`,
+    },
+    Item: {
+      View: "查看",
+    },
   },
   Mask: {
     Name: "面具",

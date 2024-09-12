@@ -411,11 +411,26 @@ const sk: PartialLocaleType = {
     Clear: "Kontext vyčistený",
     Revert: "Vrátiť späť",
   },
-  Plugin: {
+  Discovery: {
     Name: "Plugin",
   },
   FineTuned: {
     Sysmessage: "Ste asistent, ktorý",
+  },
+  SearchChat: {
+    Name: "Hľadať",
+    Page: {
+      Title: "Hľadať v histórii chatu",
+      Search: "Zadajte kľúčové slová na vyhľadávanie",
+      NoResult: "Nenašli sa žiadne výsledky",
+      NoData: "Žiadne údaje",
+      Loading: "Načítava sa",
+
+      SubTitle: (count: number) => `Nájdených ${count} výsledkov`,
+    },
+    Item: {
+      View: "Zobraziť",
+    },
   },
   Mask: {
     Name: "Maska",

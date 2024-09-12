@@ -301,11 +301,26 @@ const id: PartialLocaleType = {
     Clear: "Bersihkan Konteks",
     Revert: "Kembali ke Posisi Sebelumnya",
   },
-  Plugin: {
+  Discovery: {
     Name: "Plugin",
   },
   FineTuned: {
     Sysmessage: "Anda adalah asisten yang",
+  },
+  SearchChat: {
+    Name: "Cari",
+    Page: {
+      Title: "Cari riwayat obrolan",
+      Search: "Masukkan kata kunci pencarian",
+      NoResult: "Tidak ada hasil ditemukan",
+      NoData: "Tidak ada data",
+      Loading: "Memuat",
+
+      SubTitle: (count: number) => `Ditemukan ${count} hasil`,
+    },
+    Item: {
+      View: "Lihat",
+    },
   },
   Mask: {
     Name: "Masks",

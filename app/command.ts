@@ -39,6 +39,7 @@ interface ChatCommands {
   prev?: Command;
   clear?: Command;
   del?: Command;
+  search?: Command;
 }
 
 export const ChatCommandPrefix = /^[:：]/;

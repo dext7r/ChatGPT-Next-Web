@@ -741,6 +741,7 @@ function _Chat() {
         (session) => (session.clearContextIndex = session.messages.length),
       ),
     del: () => chatStore.deleteSession(chatStore.currentSessionIndex),
+    search: () => navigate(Path.SearchChat),
   });
 
   // only search prompts when user input is short

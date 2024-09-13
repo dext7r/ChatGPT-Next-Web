@@ -52,6 +52,13 @@ const NewChat = dynamic(async () => (await import("./new-chat")).NewChat, {
   loading: () => <Loading noLogo />,
 });
 
+const CloudBackup = dynamic(
+  async () => (await import("./cloud-backup")).CloudBackupPage,
+  {
+    loading: () => <Loading noLogo />,
+  },
+);
+
 const MaskPage = dynamic(async () => (await import("./mask")).MaskPage, {
   loading: () => <Loading noLogo />,
 });
@@ -166,6 +173,7 @@ function Screen() {
               <Route path={Path.NewChat} element={<NewChat />} />
               <Route path={Path.Masks} element={<MaskPage />} />
               <Route path={Path.SearchChat} element={<SearchChat />} />
+              <Route path={Path.CloudBackup} element={<CloudBackup />} />
               <Route path={Path.Chat} element={<Chat />} />
               <Route path={Path.Settings} element={<Settings />} />
             </Routes>

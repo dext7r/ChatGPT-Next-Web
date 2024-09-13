@@ -29,6 +29,7 @@ export enum Path {
   Masks = "/masks",
   Auth = "/auth",
   SearchChat = "/search-chat",
+  CloudBackup = "/cloud-backup",
 }
 
 export enum ApiPath {
@@ -165,7 +166,7 @@ const openaiModels = [
   "gpt-4-vision-preview",
   "gpt-4-1106-preview",
   "gpt-4-0125-preview",
-  "chatgpt-4o-latest"
+  "chatgpt-4o-latest",
 ];
 
 const googleModels = [
@@ -233,6 +234,4 @@ export const internalAllowedWebDavEndpoints = [
   "https://app.koofr.net/dav/Koofr",
 ];
 
-export const PLUGINS = [
-  { name: "Search Chat", path: Path.SearchChat },
-];
+export const PLUGINS = [{ name: "Search Chat", path: Path.SearchChat }];

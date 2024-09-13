@@ -67,6 +67,7 @@ const en: LocaleType = {
       Clear: "Clear Context",
       Settings: "Settings",
       UploadImage: "Upload Images",
+      CloudBackup: "Backup by Cloud",
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
@@ -301,11 +302,12 @@ const en: LocaleType = {
           Title: "OpenAI Endpoint",
           SubTitle: "Must start with http(s):// or use /api/openai as default",
         },
-        AvailableModels:{
+        AvailableModels: {
           Title: "Available Models",
           SubTitle: "Click to get the list of available models.",
           Action: "One-click model extraction.",
-          Confirm: "Confirm fetching the list of available models and entering the custom model name?"
+          Confirm:
+            "Confirm fetching the list of available models and entering the custom model name?",
         },
       },
       Azure: {

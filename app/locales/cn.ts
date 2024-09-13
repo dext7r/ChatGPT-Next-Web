@@ -65,6 +65,7 @@ const cn = {
       Clear: "清除聊天",
       Settings: "对话设置",
       UploadImage: "上传图片",
+      CloudBackup: "云备份",
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
@@ -73,7 +74,10 @@ const cn = {
       if (submitKey === String(SubmitKey.Enter)) {
         inputHints += "，Shift + Enter 换行";
       }
-      return inputHints + "，/ 触发补全，: 触发命令（已支持通过关键词搜索并跳转聊天窗口）";
+      return (
+        inputHints +
+        "，/ 触发补全，: 触发命令（已支持通过关键词搜索并跳转聊天窗口）"
+      );
     },
     Send: "发送",
     Config: {
@@ -122,7 +126,7 @@ const cn = {
   },
   Home: {
     // PlusChat: "Plus",
-    FakeChat:"镜像站",
+    FakeChat: "镜像站",
     NewChat: "新聊天",
     DeleteChat: "确认删除选中的对话？",
     DeleteToast: "已删除会话",
@@ -298,11 +302,11 @@ const cn = {
           Title: "接口地址",
           SubTitle: "除默认地址外，必须包含 http(s)://",
         },
-        AvailableModels:{
+        AvailableModels: {
           Title: "可用模型",
           SubTitle: "点击获取可用模型列表",
           Action: "一键提取模型",
-          Confirm: "确认拉取可用模型列表并填入自定义模型名？"
+          Confirm: "确认拉取可用模型列表并填入自定义模型名？",
         },
       },
       Azure: {

@@ -39,6 +39,7 @@ import StopIcon from "../icons/pause.svg";
 import RobotIcon from "../icons/robot.svg";
 
 import FileExpressIcon from "../icons/upload-and-download.svg";
+import SearchChatIcon from "../icons/zoom.svg";
 
 import {
   ChatMessage,
@@ -601,6 +602,13 @@ export function ChatActions(props: {
         )}
       </div>
       <div>
+        <ChatAction
+          onClick={() => {
+            navigate(Path.SearchChat);
+          }}
+          text={Locale.SearchChat.Page.Title}
+          icon={<SearchChatIcon />}
+        />
         <ChatAction
           onClick={() => {
             navigate(Path.CloudBackup);

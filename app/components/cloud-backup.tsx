@@ -136,6 +136,14 @@ export function CloudBackupPage() {
     setRenameInputs((prev) => ({ ...prev, [fileName]: fileName }));
   };
 
+  const handleCancelRename = (fileName: string) => {
+    setRenamingFileNames((prev) => {
+      const newSet = new Set(prev); // 创建一个新的 Set
+      newSet.delete(fileName); // 从新的 Set 中删除元素
+      return newSet; // 返回新的 Set 作为新的状态
+    });
+  };
+
   const handleRenameChange = (fileName: string, newName: string) => {
     setRenameInputs((prev) => ({ ...prev, [fileName]: newName }));
   };
@@ -192,6 +200,11 @@ export function CloudBackupPage() {
   };
 
   const handleFileImport = async (fileName: string) => {
+    const confirmFileImport = window.confirm(
+      "确定要导入该文件吗？该操作将覆盖本地对话记录，且不可撤回！",
+    );
+    if (!confirmFileImport) return;
+
     if (serverAddress.trim() === "") {
       setMessage("文件服务器地址不能为空。");
       return;
@@ -347,13 +360,22 @@ export function CloudBackupPage() {
                 {/* 操作按钮 */}
                 <div className={styles.fileActions}>
                   {renamingFileNames.has(file) ? (
-                    <button
-                      onClick={() => handleRenameSubmit(file)}
-                      disabled={loading}
-                      className={styles.actionButton}
-                    >
-                      确认
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleRenameSubmit(file)}
+                        disabled={loading}
+                        className={styles.actionButton}
+                      >
+                        确认
+                      </button>
+                      <button
+                        onClick={() => handleCancelRename(file)}
+                        disabled={loading}
+                        className={styles.actionButton}
+                      >
+                        取消
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={() => handleRename(file)}

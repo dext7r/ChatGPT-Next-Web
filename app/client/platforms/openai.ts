@@ -104,36 +104,27 @@ export class ChatGPTApi implements LLMApi {
 
   async chat(options: ChatOptions) {
     const visionModel = isVisionModel(options.config.model);
+    const isO1 = options.config.model.startsWith("o1");
+
     const messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
       const content = visionModel
         ? await preProcessImageContent(v.content)
         : getMessageTextContent(v);
-      messages.push({ role: v.role, content});
+      if (!(isO1 && v.role === "system"))
+        messages.push({ role: v.role, content });
     }
-    
+
     // For claude model: roles must alternate between "user" and "assistant" in claude, so add a fake assistant message between two user messages
     const keys = ["system", "user"];
-    if (options.config.model.includes("claude")){
-      // // 处理 assistant message
-      // while (messages[0]?.role === "assistant"){
-      //   messages.shift();
-      // }
-      // for (let i=messages.length-2; i>=0; i--) {
-      //   const message = messages[i];
-      //   const nextMessage = messages[i + 1];
-  
-      //   if (keys.includes(message.role) && keys.includes(nextMessage.role)) {
-      //     messages.splice(i + 1, 0, {
-      //       role: "assistant",
-      //       content: ";"
-      //     });
-      //   }
-      // }
-
+    if (options.config.model.includes("claude")) {
       // 新的处理方式
       // 忽略所有不是 user 或 system 的开头消息
-      while (messages.length > 0 && messages[0].role !== "user" && messages[0].role !== "system") {
+      while (
+        messages.length > 0 &&
+        messages[0].role !== "user" &&
+        messages[0].role !== "system"
+      ) {
         messages.shift();
       }
 
@@ -147,12 +138,15 @@ export class ChatGPTApi implements LLMApi {
       // 检查消息的顺序，添加或删除消息以确保 user 和 assistant 交替出现
       let i = 0;
       while (i < messages.length) {
-        if (i < messages.length -1 && messages[i].role === messages[i + 1].role) {
+        if (
+          i < messages.length - 1 &&
+          messages[i].role === messages[i + 1].role
+        ) {
           if (messages[i].role === "user") {
             // 插入一个含分号的 assistant 消息
             messages.splice(i + 1, 0, {
               role: "assistant",
-              content: ";"
+              content: ";",
             });
             i++; // 跳过新插入的 assistant 消息
           } else if (messages[i].role === "assistant") {
@@ -163,7 +157,10 @@ export class ChatGPTApi implements LLMApi {
         }
         i++; // 正常移动到下一个元素
       }
-      while (messages.length > 0 && messages[messages.length - 1].role !== "user") {
+      while (
+        messages.length > 0 &&
+        messages[messages.length - 1].role !== "user"
+      ) {
         messages.pop(); // 删除非 user 消息
       }
     }
@@ -176,36 +173,36 @@ export class ChatGPTApi implements LLMApi {
       },
     };
 
-    const requestPayload: RequestPayload = {
+    // O1 not support image, tools (plugin in ChatGPTNextWeb) and system, stream, logprobs, temperature, top_p, n, presence_penalty, frequency_penalty yet.
+    let requestPayload: RequestPayload;
+    requestPayload = {
       messages,
-      stream: options.config.stream,
+      stream: !isO1 ? options.config.stream : false,
       model: modelConfig.model,
-      temperature: modelConfig.temperature,
-      top_p: modelConfig.top_p,
-      // max_tokens: Math.max(modelConfig.max_tokens, 1024),
-      // Please do not ask me why not send max_tokens, no reason, this param is just shit, I dont want to explain anymore.
+      temperature: !isO1 ? modelConfig.temperature : 1,
+      top_p: !isO1 ? modelConfig.top_p : 1,
     };
 
     // add max_tokens to vision model
     // if (visionModel && modelConfig.model.includes("preview")) {
-    if ((visionModel && modelConfig.model !== 'gpt-4-turbo') || modelConfig.model.startsWith('abab')){
+    if (
+      (visionModel && modelConfig.model !== "gpt-4-turbo") ||
+      modelConfig.model.startsWith("abab")
+    ) {
       requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
-      // requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
-      // Object.defineProperty(requestPayload, "max_tokens", {
-      //   enumerable: true,
-      //   configurable: true,
-      //   writable: true,
-      //   value: modelConfig.max_tokens,
-      // });
     }
-    if (!modelConfig.model.toLowerCase().startsWith("mistral")){
+    if (!modelConfig.model.toLowerCase().startsWith("mistral")) {
       requestPayload["presence_penalty"] = modelConfig.presence_penalty;
       requestPayload["frequency_penalty"] = modelConfig.frequency_penalty;
+      if (isO1) {
+        requestPayload["presence_penalty"] = 0;
+        requestPayload["frequency_penalty"] = 0;
+      }
     }
 
     console.log("[Request] openai payload: ", requestPayload);
 
-    const shouldStream = !!options.config.stream;
+    const shouldStream = !!options.config.stream && !!isO1;
     const controller = new AbortController();
     options.onController?.(controller);
 
@@ -221,7 +218,7 @@ export class ChatGPTApi implements LLMApi {
       // make a fetch request
       const requestTimeoutId = setTimeout(
         () => controller.abort(),
-        REQUEST_TIMEOUT_MS,
+        isO1 ? REQUEST_TIMEOUT_MS * 2 : REQUEST_TIMEOUT_MS,
       );
 
       if (shouldStream) {

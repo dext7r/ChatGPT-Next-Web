@@ -45,6 +45,7 @@
     margin-right: 0.5rem;
     box-sizing: border-box;
     transition: border-color 0.3s ease;
+    display: flex;
 
     &:focus {
       border-color: #007bff;
@@ -86,9 +87,8 @@
   .message {
     margin-top: 15px;
     text-align: center;
-    color: #28a745;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 16px;
   }
 }
 

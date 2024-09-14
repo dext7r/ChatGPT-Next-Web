@@ -9,11 +9,18 @@ import {
   setLocalAppState,
 } from "../utils/sync";
 import { getClientConfig } from "../config/client";
+import { IconButton } from "./button";
+import Locale from "../locales";
+import { showConfirm, showToast } from "./ui-lib";
+import { useChatStore } from "../store";
 
 export function CloudBackupPage() {
   const [serverAddress, setServerAddress] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
   const [files, setFiles] = useState<string[]>([]);
   const [importingFileNames, setImportingFileNames] = useState<Set<string>>(
     new Set(),
@@ -25,6 +32,7 @@ export function CloudBackupPage() {
     {},
   );
   const accessStore = useAccessStore();
+  const chatStore = useChatStore();
   var collisionString = "";
 
   useEffect(() => {
@@ -32,6 +40,10 @@ export function CloudBackupPage() {
     const savedAddress = localStorage.getItem("serverAddress");
     if (savedAddress) {
       setServerAddress(savedAddress);
+      // 使用 setTimeout 确保“云导入”在下一个事件循环中执行
+      // setTimeout(() => {
+      //   handleImport();
+      // }, 0);
     }
   }, []);
 
@@ -39,16 +51,17 @@ export function CloudBackupPage() {
     setServerAddress(address);
     localStorage.setItem("serverAddress", address); // 保存到 localStorage
   };
+
   const handleBackup = async () => {
     if (serverAddress.trim() === "") {
-      setMessage("文件服务器地址不能为空。");
+      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage("无效的文件服务器地址。");
+      setMessage({ text: "无效的文件服务器地址。", type: "error" });
       return;
     }
     setLoading(true);
@@ -83,13 +96,17 @@ export function CloudBackupPage() {
         throw new Error(errorData.message || "备份失败");
       }
       const data = await response.json();
-      setMessage(data.message || "云备份成功！");
+      // setMessage({ text: data.message || "云备份成功！", type: "success" });
+      showToast(data.message || "云备份成功！");
 
       // 执行一次云导入更新列表
       await handleImport();
     } catch (error: any) {
       console.error(error);
-      setMessage(error.message || "云备份失败，请重试。");
+      setMessage({
+        text: error.message || "云备份失败，请重试。",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -97,14 +114,14 @@ export function CloudBackupPage() {
 
   const handleImport = async () => {
     if (serverAddress.trim() === "") {
-      setMessage("文件服务器地址不能为空。");
+      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage("无效的文件服务器地址。");
+      setMessage({ text: "无效的文件服务器地址。", type: "error" });
       return;
     }
     setLoading(true);
@@ -122,10 +139,13 @@ export function CloudBackupPage() {
       }
       const data: string[] = await response.json();
       setFiles(data);
-      setMessage("文件列表加载成功！");
+      setMessage({ text: "文件列表加载成功！", type: "success" });
     } catch (error: any) {
       console.error(error);
-      setMessage(error.message || "获取文件列表失败，请重试。");
+      setMessage({
+        text: error.message || "获取文件列表失败，请重试。",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -151,7 +171,7 @@ export function CloudBackupPage() {
   const handleRenameSubmit = async (fileName: string) => {
     const newName = renameInputs[fileName]?.trim();
     if (!newName) {
-      setMessage("文件名不能为空。");
+      setMessage({ text: "文件名不能为空。", type: "error" });
       return;
     }
     setRenamingFileNames((prev) => {
@@ -160,14 +180,14 @@ export function CloudBackupPage() {
       return newSet;
     });
     if (serverAddress.trim() === "") {
-      setMessage("文件服务器地址不能为空。");
+      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage("无效的文件服务器地址。");
+      setMessage({ text: "无效的文件服务器地址。", type: "error" });
       return;
     }
     setLoading(true);
@@ -190,30 +210,36 @@ export function CloudBackupPage() {
       setFiles((prevFiles) =>
         prevFiles.map((file) => (file === fileName ? newName : file)),
       );
-      setMessage(data.message || "文件重命名成功！");
+      setMessage({ text: data.message || "文件重命名成功！", type: "success" });
     } catch (error: any) {
       console.error(error);
-      setMessage(error.message || "文件重命名失败，请重试。");
+      setMessage({
+        text: error.message || "文件重命名失败，请重试。",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleFileImport = async (fileName: string) => {
-    const confirmFileImport = window.confirm(
-      "确定要导入该文件吗？该操作将覆盖本地对话记录，且不可撤回！",
-    );
-    if (!confirmFileImport) return;
+    if (
+      !(await showConfirm(
+        "确定要导入该文件吗？该操作将覆盖本地对话记录，且不可撤回！",
+      ))
+    ) {
+      return;
+    }
 
     if (serverAddress.trim() === "") {
-      setMessage("文件服务器地址不能为空。");
+      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage("无效的文件服务器地址。");
+      setMessage({ text: "无效的文件服务器地址。", type: "error" });
       return;
     }
     setImportingFileNames((prev) => new Set(prev).add(fileName));
@@ -240,10 +266,16 @@ export function CloudBackupPage() {
       mergeAppState(localState, data);
       setLocalAppState(localState); // 更新本地状态
 
-      setMessage(data.message || `文件 ${fileName} 导入成功！`);
+      setMessage({
+        text: data.message || `文件 ${fileName} 导入成功！`,
+        type: "success",
+      });
     } catch (error: any) {
       console.error(error);
-      setMessage(error.message || `文件 ${fileName} 导入失败，请重试。`);
+      setMessage({
+        text: error.message || `文件 ${fileName} 导入失败，请重试。`,
+        type: "error",
+      });
     } finally {
       setImportingFileNames((prev) => {
         const newSet = new Set(prev);
@@ -254,19 +286,19 @@ export function CloudBackupPage() {
   };
 
   const handleFileDelete = async (fileName: string) => {
-    const confirmDelete =
-      window.confirm("确定要删除该文件吗？该操作不可撤回！");
-    if (!confirmDelete) return;
+    if (!(await showConfirm("确定要删除该文件吗？该操作不可撤回！"))) {
+      return;
+    }
 
     if (serverAddress.trim() === "") {
-      setMessage("文件服务器地址不能为空。");
+      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage("无效的文件服务器地址。");
+      setMessage({ text: "无效的文件服务器地址。", type: "error" });
       return;
     }
     setLoading(true);
@@ -286,10 +318,64 @@ export function CloudBackupPage() {
       }
       const data = await response.json();
       setFiles((prevFiles) => prevFiles.filter((file) => file !== fileName));
-      setMessage(data.message || `文件 ${fileName} 删除成功！`);
+      setMessage({
+        text: data.message || `文件 ${fileName} 删除成功！`,
+        type: "success",
+      });
     } catch (error: any) {
       console.error(error);
-      setMessage(error.message || `文件 ${fileName} 删除失败，请重试。`);
+      setMessage({
+        text: error.message || `文件 ${fileName} 删除失败，请重试。`,
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleALLFileDelete = async () => {
+    if (
+      !(await showConfirm("确定要删除云端所有对话记录吗？该操作不可撤回！"))
+    ) {
+      return;
+    }
+
+    if (serverAddress.trim() === "") {
+      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
+      return;
+    }
+    try {
+      const parsedUrl = new URL(serverAddress);
+      collisionString = parsedUrl.hostname;
+    } catch (error) {
+      setMessage({ text: "无效的文件服务器地址。", type: "error" });
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`${serverAddress}/api/deleteALL`, {
+        method: "DELETE",
+        headers: {
+          accessCode: accessStore.accessCode,
+          collisionString: collisionString,
+        },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "文件删除失败");
+      }
+      const data = await response.json();
+      setFiles([]);
+      setMessage({
+        text: data.message || `所有云端对话记录已成功清除！`,
+        type: "success",
+      });
+    } catch (error: any) {
+      console.error(error);
+      setMessage({
+        text: error.message || `云端对话记录已成功清除删除失败，请重试。`,
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -313,9 +399,33 @@ export function CloudBackupPage() {
             disabled={loading}
             className={styles.input}
           />
-          <button onClick={clearServerAddress} className={styles.button}>
-            清除地址
-          </button>
+          <IconButton
+            text={"清除文件服务器地址"}
+            onClick={async () => {
+              clearServerAddress();
+            }}
+            type="primary"
+            style={{ marginRight: "10px" }}
+          />
+          <IconButton
+            text={"清除本地所有对话和设置"}
+            onClick={async () => {
+              if (await showConfirm(Locale.Settings.Danger.Clear.Confirm)) {
+                chatStore.clearAllData();
+              }
+            }}
+            type="danger"
+            style={{ marginRight: "10px" }}
+          />
+          <IconButton
+            text={"清除云端所有对话记录"}
+            onClick={async () => {
+              if (await showConfirm(Locale.Settings.Danger.Clear.Confirm)) {
+                await handleALLFileDelete();
+              }
+            }}
+            type="danger"
+          />
         </div>
         <div className={styles.buttonGroup}>
           <button
@@ -333,7 +443,17 @@ export function CloudBackupPage() {
             {loading ? "加载中..." : "云导入(加载云端记录)"}
           </button>
         </div>
-        {message && <p className={styles.message}>{message}</p>}
+        {/* {message && <p className={styles.message}>{message}</p>} */}
+        {message && (
+          <div
+            className={styles.message}
+            style={{
+              color: message.type === "success" ? "green" : "red",
+            }}
+          >
+            {message.text}
+          </div>
+        )}
       </div>
 
       {/* 文件列表展示，独立滑动区域 */}

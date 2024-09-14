@@ -14,6 +14,11 @@ import Locale from "../locales";
 import { showConfirm, showToast } from "./ui-lib";
 import { useChatStore } from "../store";
 
+interface FileInfo {
+  name: string;
+  size: number;
+}
+
 export function CloudBackupPage() {
   const [serverAddress, setServerAddress] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,7 +26,7 @@ export function CloudBackupPage() {
     text: string;
     type: "success" | "error";
   } | null>(null);
-  const [files, setFiles] = useState<string[]>([]);
+  const [files, setFiles] = useState<FileInfo[]>([]);
   const [importingFileNames, setImportingFileNames] = useState<Set<string>>(
     new Set(),
   );
@@ -140,7 +145,7 @@ export function CloudBackupPage() {
         const errorData = await response.json();
         throw new Error(errorData.message || "获取文件列表失败");
       }
-      const data: string[] = await response.json();
+      const data: FileInfo[] = await response.json();
       setFiles(data);
       setMessage({ text: "文件列表加载成功！", type: "success" });
     } catch (error: any) {
@@ -211,7 +216,9 @@ export function CloudBackupPage() {
       }
       const data = await response.json();
       setFiles((prevFiles) =>
-        prevFiles.map((file) => (file === fileName ? newName : file)),
+        prevFiles.map((file) =>
+          file.name === fileName ? { ...file, name: newName } : file,
+        ),
       );
       setMessage({ text: data.message || "文件重命名成功！", type: "success" });
     } catch (error: any) {
@@ -320,7 +327,9 @@ export function CloudBackupPage() {
         throw new Error(errorData.message || "文件删除失败");
       }
       const data = await response.json();
-      setFiles((prevFiles) => prevFiles.filter((file) => file !== fileName));
+      setFiles((prevFiles) =>
+        prevFiles.filter((file) => file.name !== fileName),
+      );
       setMessage({
         text: data.message || `文件 ${fileName} 删除成功！`,
         type: "success",
@@ -386,6 +395,15 @@ export function CloudBackupPage() {
   const clearServerAddress = () => {
     setServerAddress("");
     localStorage.removeItem("serverAddress"); // 从 localStorage 删除
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const size = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
+    return `${size} ${sizes[i]}`;
   };
 
   return (
@@ -473,34 +491,38 @@ export function CloudBackupPage() {
           <h3 className={styles.subtitle}>文件列表</h3>
           <ul className={styles.list}>
             {files.map((file) => (
-              <li key={file} className={styles.listItem}>
+              <li key={file.name} className={styles.listItem}>
                 {/* 文件名显示或编辑 */}
                 <div className={styles.fileInfo}>
-                  {renamingFileNames.has(file) ? (
+                  {renamingFileNames.has(file.name) ? (
                     <input
                       type="text"
-                      value={renameInputs[file] || file}
-                      onChange={(e) => handleRenameChange(file, e.target.value)}
+                      value={renameInputs[file.name] || file.name}
+                      onChange={(e) =>
+                        handleRenameChange(file.name, e.target.value)
+                      }
                       className={styles.renameInput}
                     />
                   ) : (
-                    <span>{file}</span>
+                    <span>
+                      {file.name} ({formatFileSize(file.size)})
+                    </span>
                   )}
                 </div>
 
                 {/* 操作按钮 */}
                 <div className={styles.fileActions}>
-                  {renamingFileNames.has(file) ? (
+                  {renamingFileNames.has(file.name) ? (
                     <>
                       <button
-                        onClick={() => handleRenameSubmit(file)}
+                        onClick={() => handleRenameSubmit(file.name)}
                         disabled={loading}
                         className={styles.actionButton}
                       >
                         确认
                       </button>
                       <button
-                        onClick={() => handleCancelRename(file)}
+                        onClick={() => handleCancelRename(file.name)}
                         disabled={loading}
                         className={styles.actionButton}
                       >
@@ -509,7 +531,7 @@ export function CloudBackupPage() {
                     </>
                   ) : (
                     <button
-                      onClick={() => handleRename(file)}
+                      onClick={() => handleRename(file.name)}
                       disabled={loading}
                       className={styles.actionButton}
                     >
@@ -517,14 +539,14 @@ export function CloudBackupPage() {
                     </button>
                   )}
                   <button
-                    onClick={() => handleFileImport(file)}
-                    disabled={importingFileNames.has(file) || loading}
+                    onClick={() => handleFileImport(file.name)}
+                    disabled={importingFileNames.has(file.name) || loading}
                     className={styles.actionButton}
                   >
-                    {importingFileNames.has(file) ? "导入中..." : "导入"}
+                    {importingFileNames.has(file.name) ? "导入中..." : "导入"}
                   </button>
                   <button
-                    onClick={() => handleFileDelete(file)}
+                    onClick={() => handleFileDelete(file.name)}
                     disabled={loading}
                     className={styles.actionButton}
                   >

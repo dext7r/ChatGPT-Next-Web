@@ -98,8 +98,11 @@ export class ChatGPTApi implements LLMApi {
     return [baseUrl, path].join("/");
   }
 
-  extractMessage(res: any) {
-    return res.choices?.at(0)?.message?.content ?? "";
+  async extractMessage(res: any) {
+    if (res.error) {
+      return "```\n" + JSON.stringify(res, null, 4) + "\n```";
+    }
+    return res.choices?.at(0)?.message?.content ?? res;
   }
 
   async chat(options: ChatOptions) {
@@ -202,7 +205,7 @@ export class ChatGPTApi implements LLMApi {
 
     console.log("[Request] openai payload: ", requestPayload);
 
-    const shouldStream = !!options.config.stream && !!isO1;
+    const shouldStream = !!options.config.stream && !isO1;
     const controller = new AbortController();
     options.onController?.(controller);
 
@@ -349,7 +352,7 @@ export class ChatGPTApi implements LLMApi {
         clearTimeout(requestTimeoutId);
 
         const resJson = await res.json();
-        const message = this.extractMessage(resJson);
+        const message = await this.extractMessage(resJson);
         options.onFinish(message);
       }
     } catch (e) {

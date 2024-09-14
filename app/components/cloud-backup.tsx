@@ -49,7 +49,10 @@ export function CloudBackupPage() {
 
   const handleServerAddressChange = (address: string) => {
     setServerAddress(address);
-    localStorage.setItem("serverAddress", address); // 保存到 localStorage
+    if (typeof window !== "undefined") {
+      // 安全地使用 localStorage
+      localStorage.setItem("serverAddress", address); // 保存到 localStorage
+    }
   };
 
   const handleBackup = async () => {

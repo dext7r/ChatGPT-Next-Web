@@ -405,7 +405,11 @@ export function CloudBackupPage() {
               clearServerAddress();
             }}
             type="primary"
-            style={{ marginRight: "10px" }}
+            style={{
+              marginRight: "10px",
+              marginTop: "5px",
+              marginBottom: "10px",
+            }}
           />
           <IconButton
             text={"清除本地所有对话和设置"}
@@ -415,7 +419,11 @@ export function CloudBackupPage() {
               }
             }}
             type="danger"
-            style={{ marginRight: "10px" }}
+            style={{
+              marginRight: "10px",
+              marginTop: "5px",
+              marginBottom: "10px",
+            }}
           />
           <IconButton
             text={"清除云端所有对话记录"}

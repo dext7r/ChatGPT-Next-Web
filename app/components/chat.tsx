@@ -724,7 +724,7 @@ export function ShortcutKeyModal(props: { onClose: () => void }) {
     },
     {
       title: Locale.Chat.ShortcutKey.searchChat,
-      keys: isMac ? ["⌘", "Shift", "F"] : ["Ctrl", "Shift", "F"],
+      keys: isMac ? ["⌘", "Alt", "F"] : ["Ctrl", "Alt", "F"],
     },
   ];
   return (
@@ -1368,7 +1368,7 @@ function _Chat() {
       // 搜索聊天记录 command + shift + f
       else if (
         (event.metaKey || event.ctrlKey) &&
-        event.shiftKey &&
+        event.altKey &&
         event.key.toLowerCase() === "f"
       ) {
         event.preventDefault();

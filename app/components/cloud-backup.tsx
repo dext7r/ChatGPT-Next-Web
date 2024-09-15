@@ -454,6 +454,11 @@ export function CloudBackupPage() {
               }
             }}
             type="danger"
+            style={{
+              marginRight: "10px",
+              marginTop: "5px",
+              marginBottom: "10px",
+            }}
           />
         </div>
         <div className={styles.buttonGroup}>

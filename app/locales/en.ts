@@ -84,6 +84,15 @@ const en: LocaleType = {
       SaveAs: "Save as Mask",
     },
     IsContext: "Contextual Prompt",
+    ShortcutKey: {
+      Title: "Keyboard Shortcuts",
+      newChat: "Open New Chat",
+      focusInput: "Focus Input Field",
+      copyLastMessage: "Copy Last Reply",
+      copyLastCode: "Copy Last Code Block",
+      showShortcutKey: "Show Shortcuts",
+      searchChat: "Search Chat History",
+    },
   },
   Export: {
     Title: "Export Messages",

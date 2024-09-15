@@ -40,6 +40,7 @@ import RobotIcon from "../icons/robot.svg";
 
 import FileExpressIcon from "../icons/upload-and-download.svg";
 import SearchChatIcon from "../icons/zoom.svg";
+import ShortcutkeyIcon from "../icons/shortcutkey.svg";
 
 import {
   ChatMessage,
@@ -438,6 +439,7 @@ export function ChatActions(props: {
   showPromptHints: () => void;
   hitBottom: boolean;
   uploading: boolean;
+  setShowShortcutKeyModal: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const config = useAppConfig();
   const navigate = useNavigate();
@@ -476,6 +478,8 @@ export function ChatActions(props: {
   }, [allModels]);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showUploadImage, setShowUploadImage] = useState(false);
+
+  const isMobileScreen = useMobileScreen();
 
   useEffect(() => {
     const show = isVisionModel(currentModel);
@@ -602,6 +606,13 @@ export function ChatActions(props: {
         )}
       </div>
       <div>
+        {!isMobileScreen && (
+          <ChatAction
+            onClick={() => props.setShowShortcutKeyModal(true)}
+            text={Locale.Chat.ShortcutKey.Title}
+            icon={<ShortcutkeyIcon />}
+          />
+        )}
         <ChatAction
           onClick={() => {
             navigate(Path.SearchChat);
@@ -687,6 +698,71 @@ export function DeleteImageButton(props: { deleteImage: () => void }) {
   return (
     <div className={styles["delete-image"]} onClick={props.deleteImage}>
       <DeleteIcon />
+    </div>
+  );
+}
+
+export function ShortcutKeyModal(props: { onClose: () => void }) {
+  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+  const shortcuts = [
+    {
+      title: Locale.Chat.ShortcutKey.newChat,
+      keys: isMac ? ["⌘", "Shift", "O"] : ["Ctrl", "Shift", "O"],
+    },
+    { title: Locale.Chat.ShortcutKey.focusInput, keys: ["Shift", "Esc"] },
+    {
+      title: Locale.Chat.ShortcutKey.copyLastCode,
+      keys: isMac ? ["⌘", "Shift", ";"] : ["Ctrl", "Shift", ";"],
+    },
+    {
+      title: Locale.Chat.ShortcutKey.copyLastMessage,
+      keys: isMac ? ["⌘", "Shift", "C"] : ["Ctrl", "Shift", "C"],
+    },
+    {
+      title: Locale.Chat.ShortcutKey.showShortcutKey,
+      keys: isMac ? ["⌘", "/"] : ["Ctrl", "/"],
+    },
+    {
+      title: Locale.Chat.ShortcutKey.searchChat,
+      keys: isMac ? ["⌘", "Shift", "F"] : ["Ctrl", "Shift", "F"],
+    },
+  ];
+  return (
+    <div className="modal-mask">
+      <Modal
+        title={Locale.Chat.ShortcutKey.Title}
+        onClose={props.onClose}
+        actions={[
+          <IconButton
+            type="primary"
+            text={Locale.UI.Confirm}
+            icon={<ConfirmIcon />}
+            key="ok"
+            onClick={() => {
+              props.onClose();
+            }}
+          />,
+        ]}
+      >
+        <div className={styles["shortcut-key-container"]}>
+          <div className={styles["shortcut-key-grid"]}>
+            {shortcuts.map((shortcut, index) => (
+              <div key={index} className={styles["shortcut-key-item"]}>
+                <div className={styles["shortcut-key-title"]}>
+                  {shortcut.title}
+                </div>
+                <div className={styles["shortcut-key-keys"]}>
+                  {shortcut.keys.map((key, i) => (
+                    <div key={i} className={styles["shortcut-key"]}>
+                      <span>{key}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -1234,6 +1310,80 @@ function _Chat() {
     }
     setAttachImages(images);
   }
+  // 快捷键 shortcut keys
+  const [showShortcutKeyModal, setShowShortcutKeyModal] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: any) => {
+      // 打开新聊天 command + shift + o
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        event.key.toLowerCase() === "o"
+      ) {
+        event.preventDefault();
+        setTimeout(() => {
+          chatStore.newSession();
+          navigate(Path.Chat);
+        }, 10);
+      }
+      // 聚焦聊天输入 shift + esc
+      else if (event.shiftKey && event.key.toLowerCase() === "escape") {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+      // 复制最后一个代码块 command + shift + ;
+      else if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        event.code === "Semicolon"
+      ) {
+        event.preventDefault();
+        const copyCodeButton =
+          document.querySelectorAll<HTMLElement>(".copy-code-button");
+        if (copyCodeButton.length > 0) {
+          copyCodeButton[copyCodeButton.length - 1].click();
+        }
+      }
+      // 复制最后一个回复 command + shift + c
+      else if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        event.key.toLowerCase() === "c"
+      ) {
+        event.preventDefault();
+        const lastNonUserMessage = messages
+          .filter((message) => message.role !== "user")
+          .pop();
+        if (lastNonUserMessage) {
+          const lastMessageContent = getMessageTextContent(lastNonUserMessage);
+          copyToClipboard(lastMessageContent);
+        }
+      }
+      // 展示快捷键 command + /
+      else if ((event.metaKey || event.ctrlKey) && event.key === "/") {
+        event.preventDefault();
+        setShowShortcutKeyModal(true);
+      }
+      // 搜索聊天记录 command + shift + f
+      else if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        event.key.toLowerCase() === "f"
+      ) {
+        event.preventDefault();
+        setTimeout(() => {
+          navigate(Path.SearchChat);
+        }, 10);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [messages, chatStore, navigate]);
 
   return (
     <div className={styles.chat} key={session.id}>
@@ -1526,6 +1676,7 @@ function _Chat() {
             setUserInput("/");
             onSearch("");
           }}
+          setShowShortcutKeyModal={setShowShortcutKeyModal}
         />
         <label
           className={`${styles["chat-input-panel-inner"]} ${
@@ -1595,6 +1746,10 @@ function _Chat() {
             setIsEditingMessage(false);
           }}
         />
+      )}
+
+      {showShortcutKeyModal && (
+        <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
       )}
     </div>
   );

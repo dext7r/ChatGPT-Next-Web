@@ -1,3 +1,5 @@
+import { ShortcutKeyModal } from "../components/chat";
+import { SearchChatPage } from "../components/search-chat";
 import { getClientConfig } from "../config/client";
 import { SubmitKey } from "../store/config";
 
@@ -82,6 +84,15 @@ const cn = {
       SaveAs: "存为面具",
     },
     IsContext: "预设提示词",
+    ShortcutKey: {
+      Title: "键盘快捷方式",
+      newChat: "打开新聊天",
+      focusInput: "聚焦输入框",
+      copyLastMessage: "复制最后一个回复",
+      copyLastCode: "复制最后一个代码块",
+      showShortcutKey: "显示快捷方式",
+      searchChat: "搜索聊天记录",
+    },
   },
   Export: {
     Title: "分享聊天记录",

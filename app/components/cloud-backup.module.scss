@@ -105,7 +105,29 @@
   max-height: 40vh;
   overflow-y: auto;
   background-color: #fafafa;
+
+  // 滚动条样式
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #3298eb #f1f1f1; /* Firefox */
   
+  .fileListContainer::-webkit-scrollbar {
+    width: 16px;
+  }
+  
+  .fileListContainer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 8px;
+  }
+  
+  .fileListContainer::-webkit-scrollbar-thumb {
+    background:  #3298eb;
+    border-radius: 8px;
+  }
+  
+  .fileListContainer::-webkit-scrollbar-thumb:hover {
+    background: #499ee5;
+  }
+
   .subtitle {
     font-size: 18px;
     color: #333333;

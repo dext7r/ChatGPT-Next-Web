@@ -22,10 +22,18 @@ interface FileInfo {
 export function CloudBackupPage() {
   const [serverAddress, setServerAddress] = useState("");
   const [loading, setLoading] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
   const [message, setMessage] = useState<{
     text: string;
-    type: "success" | "error";
+    type: "info" | "success" | "error";
   } | null>(null);
+  const messageColors = {
+    info: "blue",
+    success: "green",
+    error: "red",
+  };
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [importingFileNames, setImportingFileNames] = useState<Set<string>>(
     new Set(),
@@ -45,10 +53,6 @@ export function CloudBackupPage() {
     const savedAddress = localStorage.getItem("serverAddress");
     if (savedAddress) {
       setServerAddress(savedAddress);
-      // 使用 setTimeout 确保“云导入”在下一个事件循环中执行
-      // setTimeout(() => {
-      //   handleImport();
-      // }, 0);
     }
   }, []);
 
@@ -72,8 +76,9 @@ export function CloudBackupPage() {
       setMessage({ text: "无效的文件服务器地址。", type: "error" });
       return;
     }
-    setLoading(true);
+    setBackupLoading(true);
     setMessage(null);
+    setUploadProgress(0);
 
     const isApp = !!getClientConfig()?.isApp;
     const datePart = isApp
@@ -87,37 +92,60 @@ export function CloudBackupPage() {
     const jsonBlob = new Blob([JSON.stringify(state)], {
       type: "application/json",
     });
+
+    // 获取并格式化文件大小
+    const fileSize = formatFileSize(jsonBlob.size);
+
+    // 显示待上传文件的大小
+    setMessage({ text: `准备上传文件，大小：${fileSize}`, type: "info" });
+
     const formData = new FormData();
     formData.append("file", jsonBlob, fileName);
 
-    try {
-      const response = await fetch(`${serverAddress}/api/backup`, {
-        method: "POST",
-        headers: {
-          accessCode: accessStore.accessCode,
-          collisionString: collisionString,
-        },
-        body: formData, //TODO - 这里换成要上传的对话文件
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "备份失败");
-      }
-      const data = await response.json();
-      // setMessage({ text: data.message || "云备份成功！", type: "success" });
-      showToast(data.message || "云备份成功！");
+    // 创建 XMLHttpRequest 对象
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${serverAddress}/api/backup`, true);
+    // 设置请求头
+    xhr.setRequestHeader("accessCode", accessStore.accessCode);
+    xhr.setRequestHeader("collisionString", collisionString);
 
-      // 执行一次云导入更新列表
-      await handleImport();
-    } catch (error: any) {
-      console.error(error);
+    // 监听上传进度事件
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
+      }
+    };
+
+    // 监听请求完成
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText);
+        showToast(data.message || "云备份成功！");
+        setMessage({ text: data.message || "云备份成功！", type: "success" });
+        // 执行一次云导入更新列表
+        handleImport();
+      } else {
+        const errorData = JSON.parse(xhr.responseText);
+        setMessage({
+          text: errorData.message || "备份失败",
+          type: "error",
+        });
+      }
+      setBackupLoading(false);
+    };
+
+    // 监听请求错误
+    xhr.onerror = () => {
       setMessage({
-        text: error.message || "云备份失败，请重试。",
+        text: "云备份失败，请重试。",
         type: "error",
       });
-    } finally {
-      setLoading(false);
-    }
+      setBackupLoading(false);
+    };
+
+    // 发送请求
+    xhr.send(formData);
   };
 
   const handleImport = async () => {
@@ -132,7 +160,7 @@ export function CloudBackupPage() {
       setMessage({ text: "无效的文件服务器地址。", type: "error" });
       return;
     }
-    setLoading(true);
+    setImportLoading(true);
     setMessage(null);
     try {
       const response = await fetch(`${serverAddress}/api/getlist`, {
@@ -155,7 +183,7 @@ export function CloudBackupPage() {
         type: "error",
       });
     } finally {
-      setLoading(false);
+      setImportLoading(false);
     }
   };
 
@@ -464,25 +492,34 @@ export function CloudBackupPage() {
         <div className={styles.buttonGroup}>
           <button
             onClick={handleBackup}
-            disabled={loading}
+            disabled={backupLoading}
             className={styles.button}
           >
-            {loading ? "备份中..." : "云备份(本地记录上传云端)"}
+            {backupLoading ? "上传中..." : "云备份(本地记录上传云端)"}
+            {backupLoading && (
+              <div style={{ margin: "10px 0" }}>
+                <progress
+                  value={uploadProgress}
+                  max="100"
+                  style={{ width: "100%" }}
+                />
+                <span>{uploadProgress}%</span>
+              </div>
+            )}
           </button>
           <button
             onClick={handleImport}
-            disabled={loading}
+            disabled={importLoading}
             className={styles.button}
           >
-            {loading ? "加载中..." : "云导入(加载云端记录)"}
+            {importLoading ? "加载中..." : "云导入(加载云端记录)"}
           </button>
         </div>
-        {/* {message && <p className={styles.message}>{message}</p>} */}
         {message && (
           <div
             className={styles.message}
             style={{
-              color: message.type === "success" ? "green" : "red",
+              color: messageColors[message.type] || "black",
             }}
           >
             {message.text}

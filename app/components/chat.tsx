@@ -7,6 +7,7 @@ import React, {
   useCallback,
   Fragment,
   RefObject,
+  useLayoutEffect,
 } from "react";
 
 import SendWhiteIcon from "../icons/send-white.svg";
@@ -352,14 +353,22 @@ function ClearContextDivider() {
 function ChatAction(props: {
   text: string;
   icon: JSX.Element;
+  alwaysShowText?: boolean;
   onClick: () => void;
 }) {
+  const isMobileScreen = useMobileScreen();
+  const shouldAlawayShowText = !isMobileScreen && props.alwaysShowText;
+
   const iconRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState({
     full: 16,
     icon: 16,
   });
+  const { text, icon } = props;
+  useLayoutEffect(() => {
+    updateWidth();
+  }, [shouldAlawayShowText, text, icon]);
 
   function updateWidth() {
     if (!iconRef.current || !textRef.current) return;
@@ -374,13 +383,15 @@ function ChatAction(props: {
 
   return (
     <div
-      className={`${styles["chat-input-action"]} clickable`}
+      className={`${styles["chat-input-action"]} clickable ${
+        shouldAlawayShowText ? styles["always-show-text"] : ""
+      }`}
       onClick={() => {
         props.onClick();
         setTimeout(updateWidth, 1);
       }}
-      onMouseEnter={updateWidth}
-      onTouchStart={updateWidth}
+      onMouseEnter={!shouldAlawayShowText ? updateWidth : undefined}
+      onTouchStart={!shouldAlawayShowText ? updateWidth : undefined}
       style={
         {
           "--icon-width": `${width.icon}px`,
@@ -391,8 +402,16 @@ function ChatAction(props: {
       <div ref={iconRef} className={styles["icon"]}>
         {props.icon}
       </div>
-      <div className={styles["text"]} ref={textRef}>
-        {props.text}
+      <div
+        className={styles["text"]}
+        ref={textRef}
+        style={
+          shouldAlawayShowText
+            ? { opacity: 1, transform: "translate(0)", pointerEvents: "auto" }
+            : {}
+        }
+      >
+        {text}
       </div>
     </div>
   );
@@ -480,13 +499,14 @@ export function ChatActions(props: {
   const [showUploadImage, setShowUploadImage] = useState(false);
 
   const isMobileScreen = useMobileScreen();
+  const { setAttachImages, setUploading } = props;
 
   useEffect(() => {
     const show = isVisionModel(currentModel);
     setShowUploadImage(show);
     if (!show) {
-      props.setAttachImages([]);
-      props.setUploading(false);
+      setAttachImages([]);
+      setUploading(false);
     }
 
     // if current model is not available
@@ -502,7 +522,7 @@ export function ChatActions(props: {
       );
       showToast(nextModel);
     }
-  }, [chatStore, currentModel, models]);
+  }, [chatStore, currentModel, models, setAttachImages, setUploading]);
 
   return (
     <div className={styles["chat-input-actions"]}>
@@ -582,6 +602,7 @@ export function ChatActions(props: {
 
         <ChatAction
           onClick={() => setShowModelSelector(true)}
+          alwaysShowText={true}
           text={currentModel}
           icon={<RobotIcon />}
         />

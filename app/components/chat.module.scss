@@ -95,6 +95,17 @@
       justify-content: center;
     }
   }
+  /* 新增样式: 始终显示文本 */
+  .chat-input-action.always-show-text {
+    width: var(--full-width) !important;
+    transition: none; /* 取消过渡效果 */
+  }
+
+  .chat-input-action.always-show-text .text {
+    opacity: 1;
+    transform: translate(0);
+    pointer-events: auto;
+  }
 }
 
 .prompt-toast {

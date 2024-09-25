@@ -510,7 +510,7 @@ export const useChatStore = createPersistStore(
         const reversedRecentMessages = [];
         for (
           let i = totalMessageCount - 1, tokenCount = 0;
-          i >= contextStartIndex;// && tokenCount < maxTokenThreshold;
+          i >= contextStartIndex; // && tokenCount < maxTokenThreshold;
           i -= 1
         ) {
           const msg = messages[i];
@@ -585,6 +585,7 @@ export const useChatStore = createPersistStore(
               stream: false,
             },
             onFinish(message) {
+              if (!isValidMessage(message)) return;
               get().updateCurrentSession(
                 (session) =>
                   (session.topic =
@@ -659,6 +660,9 @@ export const useChatStore = createPersistStore(
               console.error("[Summarize] ", err);
             },
           });
+        }
+        function isValidMessage(message: any): boolean {
+          return typeof message === "string" && !message.startsWith("```json");
         }
       },
 

@@ -78,7 +78,6 @@ export function PreCode(props: { children: any }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refText]);
 
-  
   //Wrap the paragraph for plain-text
   useEffect(() => {
     if (ref.current) {
@@ -187,7 +186,12 @@ function escapeDollarNumber(text: string) {
     }
 
     // Escape a single dollar sign followed by a number outside of math expressions
-    if (char === "$" && nextChar >= "0" && nextChar <= "9" && !isInMathExpression) {
+    if (
+      char === "$" &&
+      nextChar >= "0" &&
+      nextChar <= "9" &&
+      !isInMathExpression
+    ) {
       escapedText += "&#36;"; // Use HTML entity &#36; to represent the dollar sign
       continue;
     }
@@ -235,12 +239,9 @@ function escapeBrackets(text: string) {
 }
 function formatBoldText(text: string) {
   const pattern = /\*\*(.*?)([:：])\*\*/g;
-  return text.replace(
-    pattern,
-    (match, boldText, colon) => {
-      return `**${boldText}**${colon}`;
-    },
-  );
+  return text.replace(pattern, (match, boldText, colon) => {
+    return `**${boldText}**${colon}`;
+  });
 }
 function _MarkDownContent(props: { content: string }) {
   const escapedContent = useMemo(() => {
@@ -265,6 +266,20 @@ function _MarkDownContent(props: { content: string }) {
         p: (pProps) => <p {...pProps} dir="auto" />,
         a: (aProps) => {
           const href = aProps.href || "";
+          if (/\.(aac|mp3|opus|wav)$/.test(href)) {
+            return (
+              <figure>
+                <audio controls src={href}></audio>
+              </figure>
+            );
+          }
+          if (/\.(3gp|3g2|webm|ogv|mpeg|mp4|avi)$/.test(href)) {
+            return (
+              <video controls width="99.9%">
+                <source src={href} />
+              </video>
+            );
+          }
           const isInternal = /^\/#/i.test(href);
           const target = isInternal ? "_self" : aProps.target ?? "_blank";
           return <a {...aProps} target={target} />;

@@ -173,12 +173,19 @@ const openaiModels = [
   "gpt-4-turbo-2024-04-09",
   "gpt-4-turbo-preview",
   "gpt-4-vision-preview",
+  // 非标准模型
+  "gpt-4o-plus",
+  "gpt-o1-mini",
+  "gpt-o1-preview",
 ];
 
 const googleModels = [
+  "gemini-1.5-flash-8b-exp-0924",
   "gemini-1.5-flash-8b-exp-0827",
   "gemini-1.5-flash-exp-0827",
+  "gemini-1.5-flash-002",
   "gemini-1.5-flash-latest",
+  "gemini-1.5-pro-002",
   "gemini-1.5-pro-latest",
   "gemini-1.5-pro-exp-0801",
   "gemini-1.5-pro-exp-0827",

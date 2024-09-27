@@ -68,6 +68,7 @@ const cn = {
       Settings: "对话设置",
       UploadImage: "上传图片",
       CloudBackup: "云备份",
+      Translate: "中英互译",
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
@@ -76,7 +77,10 @@ const cn = {
       if (submitKey === String(SubmitKey.Enter)) {
         inputHints += "，Shift + Enter 换行";
       }
-      return inputHints + "，/ 触发补全，: 触发命令";
+      return (
+        inputHints +
+        "，/ 触发补全，: 触发命令\nCtrl + Shift + ;  快速复制最后一个代码块"
+      );
     },
     Send: "发送",
     Config: {
@@ -116,6 +120,10 @@ const cn = {
     Image: {
       Toast: "正在生成截图",
       Modal: "长按或右键保存图片",
+    },
+    Artifacts: {
+      Title: "分享页面",
+      Error: "分享失败",
     },
   },
   Select: {
@@ -478,6 +486,10 @@ const cn = {
         Title: "隐藏预设对话",
         SubTitle: "隐藏后预设对话不会出现在聊天界面",
       },
+      Artifacts: {
+        Title: "启用Artifacts",
+        SubTitle: "启用之后可以直接渲染HTML页面",
+      },
       Share: {
         Title: "分享此面具",
         SubTitle: "生成此面具的直达链接",
@@ -493,6 +505,7 @@ const cn = {
     Title: "挑选一个面具",
     SubTitle: "现在开始，与面具背后的灵魂思维碰撞",
     More: "查看全部",
+    Less: "折叠代码",
   },
 
   URLCommand: {

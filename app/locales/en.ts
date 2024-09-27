@@ -68,6 +68,7 @@ const en: LocaleType = {
       Settings: "Settings",
       UploadImage: "Upload Images",
       CloudBackup: "Backup by Cloud",
+      Translate: "Translate between ZH-EN",
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
@@ -116,6 +117,10 @@ const en: LocaleType = {
     Image: {
       Toast: "Capturing Image...",
       Modal: "Long press or right click to save image",
+    },
+    Artifacts: {
+      Title: "Share Artifacts",
+      Error: "Share Error",
     },
   },
   Select: {
@@ -484,6 +489,10 @@ const en: LocaleType = {
         Title: "Hide Context Prompts",
         SubTitle: "Do not show in-context prompts in chat",
       },
+      Artifacts: {
+        Title: "Enable Artifacts",
+        SubTitle: "Can render HTML page when enable artifacts.",
+      },
       Share: {
         Title: "Share This Mask",
         SubTitle: "Generate a link to this mask",
@@ -497,6 +506,7 @@ const en: LocaleType = {
     Title: "Pick a Mask",
     SubTitle: "Chat with the Soul behind the Mask",
     More: "Find More",
+    Less: "Fold Code",
     NotShow: "Never Show Again",
     ConfirmNoShow: "Confirm to disable？You can enable it in settings later.",
   },

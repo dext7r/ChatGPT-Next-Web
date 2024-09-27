@@ -828,6 +828,23 @@ export function Settings() {
               }
             ></input>
           </ListItem>
+
+          <ListItem
+            title={Locale.Mask.Config.Artifacts.Title}
+            subTitle={Locale.Mask.Config.Artifacts.SubTitle}
+          >
+            <input
+              aria-label={Locale.Mask.Config.Artifacts.Title}
+              type="checkbox"
+              checked={config.enableArtifacts}
+              onChange={(e) =>
+                updateConfig(
+                  (config) =>
+                    (config.enableArtifacts = e.currentTarget.checked),
+                )
+              }
+            ></input>
+          </ListItem>
         </List>
 
         <SyncItems />
@@ -1004,15 +1021,33 @@ export function Settings() {
                       </ListItem>
                       {/* 获取可用模型列表功能 */}
                       <ListItem
-                        title={Locale.Settings.Access.OpenAI.AvailableModels.Title}
-                        subTitle={Locale.Settings.Access.OpenAI.AvailableModels.SubTitle}
+                        title={
+                          Locale.Settings.Access.OpenAI.AvailableModels.Title
+                        }
+                        subTitle={
+                          Locale.Settings.Access.OpenAI.AvailableModels.SubTitle
+                        }
                       >
                         <IconButton
-                          text={Locale.Settings.Access.OpenAI.AvailableModels.Action}
+                          text={
+                            Locale.Settings.Access.OpenAI.AvailableModels.Action
+                          }
                           onClick={async () => {
-                            if (await showConfirm(Locale.Settings.Access.OpenAI.AvailableModels.Confirm)) {
-                              const availableModelsStr = await accessStore.fetchAvailableModels(accessStore.openaiUrl, accessStore.openaiApiKey);
-                              config.update((config) => (config.customModels = availableModelsStr));
+                            if (
+                              await showConfirm(
+                                Locale.Settings.Access.OpenAI.AvailableModels
+                                  .Confirm,
+                              )
+                            ) {
+                              const availableModelsStr =
+                                await accessStore.fetchAvailableModels(
+                                  accessStore.openaiUrl,
+                                  accessStore.openaiApiKey,
+                                );
+                              config.update(
+                                (config) =>
+                                  (config.customModels = availableModelsStr),
+                              );
                             }
                           }}
                           type="primary"

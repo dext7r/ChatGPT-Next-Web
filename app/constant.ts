@@ -30,6 +30,7 @@ export enum Path {
   Auth = "/auth",
   SearchChat = "/search-chat",
   CloudBackup = "/cloud-backup",
+  Artifacts = "/artifacts",
 }
 
 export enum ApiPath {
@@ -37,6 +38,7 @@ export enum ApiPath {
   OpenAI = "/api/openai",
   Anthropic = "/api/anthropic",
   Google = "/api/google",
+  Artifacts = "/api/artifacts",
 }
 
 export enum SlotID {

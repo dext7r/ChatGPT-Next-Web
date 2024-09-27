@@ -295,13 +295,58 @@ pre {
     transition: all ease 0.3s;
 
     &:after {
-      content: "copy";
+      content: "复制代码";
     }
 
     &:hover {
       opacity: 1;
     }
   }
+}
+
+pre {
+  .show-hide-button {
+    border-radius: 10px;
+    position: absolute;
+    inset: 0 0 auto 0;
+    width: 100%;
+    margin: auto;
+    height: fit-content;
+    display: inline-flex;
+    justify-content: center;
+    pointer-events: none;
+    button{
+      pointer-events: auto;
+      margin-top: 3em;
+      margin-bottom: 4em;
+      padding: 5px 16px;
+      border: 0;
+      cursor: pointer;
+      border-radius: 14px;
+      text-align: center;
+      color: white;
+      background: #464e4e;
+    } 
+  }
+  
+  .expanded {
+    background-image: none;
+    justify-content: flex-end;
+  }
+  .collapsed {
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.06));
+  }
+}
+
+/* 提示文字的样式 */
+.button-description {
+  color: #07725e; /* 白色文字 */
+  font-size: 16px; /* 字体大小 */
+  font-weight: 600; /* 字体粗细 */
+  font-family: 'Arial', sans-serif; /* 字体类型 */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* 文字阴影提高可读性 */
+  white-space: nowrap; /* 防止文字换行 */
+  transition: color 0.3s ease, transform 0.3s ease; /* 过渡效果 */
 }
 
 .clickable {

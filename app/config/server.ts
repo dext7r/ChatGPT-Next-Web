@@ -93,11 +93,11 @@ export const getServerSideConfig = () => {
     )
       .map((m) => "-" + m.name)
       .join(",");
-      if (
-        defaultModel.startsWith("gpt-4") &&
-        !defaultModel.startsWith("gpt-4o-mini")
-      )
-        defaultModel = "";
+    if (
+      defaultModel.startsWith("gpt-4") &&
+      !defaultModel.startsWith("gpt-4o-mini")
+    )
+      defaultModel = "";
   }
 
   const isAzure = !!process.env.AZURE_URL;
@@ -113,8 +113,11 @@ export const getServerSideConfig = () => {
   const fastApiKeys = fastApiKeyEnvVar.split(",").map((v) => v.trim());
   const fastBaseUrlEnvVar = process.env.FAST_BASE_URL ?? "";
   const fastBaseUrls = fastBaseUrlEnvVar.split(",").map((v) => v.trim());
-  const envFastChannel = parseInt(process.env.FAST_CHANNEL || '0');
-  const fastChannel = (!isNaN(envFastChannel) && envFastChannel <= fastApiKeys.length) ? envFastChannel: 0;
+  const envFastChannel = parseInt(process.env.FAST_CHANNEL || "0");
+  const fastChannel =
+    !isNaN(envFastChannel) && envFastChannel <= fastApiKeys.length
+      ? envFastChannel
+      : 0;
   const fastApiKey = fastApiKeys[fastChannel];
   const fastBaseUrl = fastBaseUrls[fastChannel];
   const fastModels = process.env.FAST_MODELS ?? "";
@@ -145,6 +148,11 @@ export const getServerSideConfig = () => {
     anthropicApiVersion: process.env.ANTHROPIC_API_VERSION,
     anthropicUrl: process.env.ANTHROPIC_URL,
 
+    cloudflareAccountId: process.env.CLOUDFLARE_ACCOUNT_ID,
+    cloudflareKVNamespaceId: process.env.CLOUDFLARE_KV_NAMESPACE_ID,
+    cloudflareKVApiKey: getApiKey(process.env.CLOUDFLARE_KV_API_KEY),
+    cloudflareKVTTL: process.env.CLOUDFLARE_KV_TTL,
+
     gtmId: process.env.GTM_ID,
 
     needCode: ACCESS_CODES.size > 0,
@@ -166,6 +174,5 @@ export const getServerSideConfig = () => {
     fastBaseUrl,
     fastModels,
     fastChannel,
-
   };
 };

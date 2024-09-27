@@ -17,6 +17,7 @@ export type Mask = {
   modelConfig: ModelConfig;
   lang: Lang;
   builtin: boolean;
+  enableArtifacts?: boolean;
 };
 
 export const DEFAULT_MASK_STATE = {

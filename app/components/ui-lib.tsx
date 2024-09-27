@@ -60,7 +60,11 @@ export function ListItem(props: {
 }) {
   return (
     <div
-      className={styles["list-item"] + ` ${props.className || ""}`}
+      className={
+        styles["list-item"] +
+        ` ${props.vertical ? styles["vertical"] : ""} ` +
+        ` ${props.className || ""}`
+      }
       onClick={props.onClick}
     >
       <div className={styles["list-header"]}>

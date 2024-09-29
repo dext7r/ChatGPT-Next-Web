@@ -13,6 +13,8 @@ import { IconButton } from "./button";
 import Locale from "../locales";
 import { showConfirm, showToast } from "./ui-lib";
 import { useChatStore } from "../store";
+import { useNavigate } from "react-router-dom";
+import CloseIcon from "../icons/close.svg";
 
 interface FileInfo {
   name: string;
@@ -20,6 +22,7 @@ interface FileInfo {
 }
 
 export function CloudBackupPage() {
+  const navigate = useNavigate();
   const [serverAddress, setServerAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
@@ -438,6 +441,13 @@ export function CloudBackupPage() {
     <div className={styles["backup-page"]}>
       <div className={styles["backup-header"]}>
         <h2 className={styles.title}>云备份管理</h2>
+        <div className={styles["window-action-button"]}>
+          <IconButton
+            icon={<CloseIcon />}
+            bordered
+            onClick={() => navigate(-1)}
+          />
+        </div>
         <div className={styles.inputGroup}>
           <input
             type="text"

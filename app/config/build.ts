@@ -7,8 +7,6 @@ export const getBuildConfig = () => {
       "[Server Config] you are importing a nodejs-only module outside of nodejs",
     );
   }
-  const chatGeminiThroughOpenai = !!process.env.CHAT_GEMINI_THROUGH_OPENAI;
-  const chatClaudeThroughOpenai = !!process.env.CHAT_CLAUDE_THROUGH_OPENAI;
 
   const buildMode = process.env.BUILD_MODE ?? "standalone";
   const isApp = !!process.env.BUILD_APP;
@@ -46,9 +44,6 @@ export const getBuildConfig = () => {
     buildMode,
     isApp,
     template: process.env.DEFAULT_INPUT_TEMPLATE ?? DEFAULT_INPUT_TEMPLATE,
-
-    chatGeminiThroughOpenai,
-    chatClaudeThroughOpenai,
   };
 };
 

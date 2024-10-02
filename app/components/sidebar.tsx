@@ -29,8 +29,8 @@ import {
   Path,
   PLUGINS,
   REPO_URL,
-  FAKE_OPENAI_URL,
-  FILEBOX_URL
+  // FAKE_OPENAI_URL,
+  // FILEBOX_URL
   // PLUS_OPENAI_URL
 } from "../constant";
 

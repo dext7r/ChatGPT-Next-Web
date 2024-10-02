@@ -239,6 +239,7 @@ function DangerItems() {
         subTitle={Locale.Settings.Danger.Reset.SubTitle}
       >
         <IconButton
+          aria={Locale.Settings.Danger.Reset.Title}
           text={Locale.Settings.Danger.Reset.Action}
           onClick={async () => {
             if (await showConfirm(Locale.Settings.Danger.Reset.Confirm)) {
@@ -253,6 +254,7 @@ function DangerItems() {
         subTitle={Locale.Settings.Danger.Clear.SubTitle}
       >
         <IconButton
+          aria={Locale.Settings.Danger.Clear.Title}
           text={Locale.Settings.Danger.Clear.Action}
           onClick={async () => {
             if (await showConfirm(Locale.Settings.Danger.Clear.Confirm)) {
@@ -506,6 +508,7 @@ function SyncItems() {
         >
           <div style={{ display: "flex" }}>
             <IconButton
+              aria={Locale.Settings.Sync.CloudState + Locale.UI.Config}
               icon={<ConfigIcon />}
               text={Locale.UI.Config}
               onClick={() => {
@@ -536,6 +539,7 @@ function SyncItems() {
         >
           <div style={{ display: "flex" }}>
             <IconButton
+              aria={Locale.Settings.Sync.LocalState + Locale.UI.Export}
               icon={<UploadIcon />}
               text={Locale.UI.Export}
               onClick={() => {
@@ -543,6 +547,7 @@ function SyncItems() {
               }}
             />
             <IconButton
+              aria={Locale.Settings.Sync.LocalState + Locale.UI.Import}
               icon={<DownloadIcon />}
               text={Locale.UI.Import}
               onClick={() => {
@@ -784,6 +789,7 @@ export function Settings() {
             subTitle={Locale.Settings.FontSize.SubTitle}
           >
             <InputRange
+              aria={Locale.Settings.FontSize.Title}
               title={`${config.fontSize ?? 14}px`}
               value={config.fontSize}
               min="12"
@@ -946,6 +952,7 @@ export function Settings() {
                     subTitle={Locale.Settings.Access.CustomEndpoint.SubTitle}
                   >
                     <input
+                      aria-label={Locale.Settings.Access.CustomEndpoint.Title}
                       type="checkbox"
                       checked={accessStore.useCustomConfig}
                       onChange={(e) =>
@@ -991,6 +998,9 @@ export function Settings() {
                         }
                       >
                         <input
+                          aria-label={
+                            Locale.Settings.Access.OpenAI.Endpoint.Title
+                          }
                           type="text"
                           value={accessStore.openaiUrl}
                           placeholder={OPENAI_BASE_URL}
@@ -1007,6 +1017,10 @@ export function Settings() {
                         subTitle={Locale.Settings.Access.OpenAI.ApiKey.SubTitle}
                       >
                         <PasswordInput
+                          aria={Locale.Settings.ShowPassword}
+                          aria-label={
+                            Locale.Settings.Access.OpenAI.ApiKey.Title
+                          }
                           value={accessStore.openaiApiKey}
                           type="text"
                           placeholder={
@@ -1066,6 +1080,9 @@ export function Settings() {
                         }
                       >
                         <input
+                          aria-label={
+                            Locale.Settings.Access.Azure.Endpoint.Title
+                          }
                           type="text"
                           value={accessStore.azureUrl}
                           placeholder={Azure.ExampleEndpoint}
@@ -1082,6 +1099,7 @@ export function Settings() {
                         subTitle={Locale.Settings.Access.Azure.ApiKey.SubTitle}
                       >
                         <PasswordInput
+                          aria-label={Locale.Settings.Access.Azure.ApiKey.Title}
                           value={accessStore.azureApiKey}
                           type="text"
                           placeholder={
@@ -1102,6 +1120,7 @@ export function Settings() {
                         }
                       >
                         <input
+                          aria-label={Locale.Settings.Access.Azure.ApiKey.Title}
                           type="text"
                           value={accessStore.azureApiVersion}
                           placeholder="2023-08-01-preview"
@@ -1126,6 +1145,9 @@ export function Settings() {
                         }
                       >
                         <input
+                          aria-label={
+                            Locale.Settings.Access.Google.Endpoint.Title
+                          }
                           type="text"
                           value={accessStore.googleUrl}
                           placeholder={Google.ExampleEndpoint}
@@ -1142,6 +1164,9 @@ export function Settings() {
                         subTitle={Locale.Settings.Access.Google.ApiKey.SubTitle}
                       >
                         <PasswordInput
+                          aria-label={
+                            Locale.Settings.Access.Google.ApiKey.Title
+                          }
                           value={accessStore.googleApiKey}
                           type="text"
                           placeholder={
@@ -1162,6 +1187,9 @@ export function Settings() {
                         }
                       >
                         <input
+                          aria-label={
+                            Locale.Settings.Access.Google.ApiVersion.Title
+                          }
                           type="text"
                           value={accessStore.googleApiVersion}
                           placeholder="2023-08-01-preview"
@@ -1186,6 +1214,9 @@ export function Settings() {
                         }
                       >
                         <input
+                          aria-label={
+                            Locale.Settings.Access.Anthropic.Endpoint.Title
+                          }
                           type="text"
                           value={accessStore.anthropicUrl}
                           placeholder={Anthropic.ExampleEndpoint}
@@ -1204,6 +1235,9 @@ export function Settings() {
                         }
                       >
                         <PasswordInput
+                          aria-label={
+                            Locale.Settings.Access.Anthropic.ApiKey.Title
+                          }
                           value={accessStore.anthropicApiKey}
                           type="text"
                           placeholder={
@@ -1225,6 +1259,9 @@ export function Settings() {
                         }
                       >
                         <input
+                          aria-label={
+                            Locale.Settings.Access.Anthropic.ApiVerion.Title
+                          }
                           type="text"
                           value={accessStore.anthropicApiVersion}
                           placeholder={Anthropic.Vision}
@@ -1275,6 +1312,7 @@ export function Settings() {
             subTitle={Locale.Settings.Access.CustomModel.SubTitle}
           >
             <input
+              aria-label={Locale.Settings.Access.CustomModel.Title}
               type="text"
               value={config.customModels}
               placeholder="model1,model2,model3"

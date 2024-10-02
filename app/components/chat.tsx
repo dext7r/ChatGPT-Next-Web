@@ -882,6 +882,7 @@ function _Chat() {
       ),
     prev: () => chatStore.nextSession(-1),
     next: () => chatStore.nextSession(1),
+    fork: () => chatStore.forkSession(),
     del: () => chatStore.deleteSession(chatStore.currentSessionIndex),
   });
 

@@ -72,6 +72,8 @@ export const DEFAULT_CONFIG = {
     compressMessageLengthThreshold: 1000,
     compressModel: "gpt-4o-mini" as ModelType,
     compressProviderName: "OpenAI" as ServiceProvider,
+    translateModel: "gpt-4o-mini" as ModelType,
+    translateProviderName: "OpenAI" as ServiceProvider,
     enableInjectSystemPrompts: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
   },
@@ -232,6 +234,10 @@ export const useAppConfig = createPersistStore(
           DEFAULT_CONFIG.modelConfig.compressModel;
         state.modelConfig.compressProviderName =
           DEFAULT_CONFIG.modelConfig.compressProviderName;
+        state.modelConfig.translateModel =
+          DEFAULT_CONFIG.modelConfig.translateModel;
+        state.modelConfig.translateProviderName =
+          DEFAULT_CONFIG.modelConfig.translateProviderName;
       }
 
       return state as any;

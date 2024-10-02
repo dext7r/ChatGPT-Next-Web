@@ -45,6 +45,7 @@ import FileExpressIcon from "../icons/upload-and-download.svg";
 import SearchChatIcon from "../icons/zoom.svg";
 import ShortcutkeyIcon from "../icons/shortcutkey.svg";
 import ReloadIcon from "../icons/reload.svg";
+import TranslateIcon from "../icons/translate.svg";
 
 import {
   ChatMessage,
@@ -113,7 +114,7 @@ import { prettyObject } from "../utils/format";
 import { ExportMessageModal } from "./exporter";
 import { getClientConfig } from "../config/client";
 import { useAllModels } from "../utils/hooks";
-import { MultimodalContent } from "../client/api";
+import { MultimodalContent, getClientApi } from "../client/api";
 
 const localStorage = safeLocalStorage();
 import { ClientApi } from "../client/api";
@@ -469,10 +470,71 @@ export function ChatActions(props: {
   hitBottom: boolean;
   uploading: boolean;
   setShowShortcutKeyModal: React.Dispatch<React.SetStateAction<boolean>>;
+  userInput: string;
+  setUserInput: (input: string) => void;
 }) {
   const config = useAppConfig();
   const navigate = useNavigate();
   const chatStore = useChatStore();
+
+  // translate
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  const handleTranslate = async () => {
+    if (props.userInput.trim() === "") {
+      showToast(Locale.Chat.InputActions.Translate.BlankToast);
+      return;
+    }
+    console.log("[userInput] ", props.userInput);
+    setIsTranslating(true);
+    showToast(Locale.Chat.InputActions.Translate.isTranslatingToast);
+    //
+    const session = chatStore.currentSession();
+    const modelConfig = session.mask.modelConfig;
+
+    const providerName = modelConfig.translateProviderName;
+    const api: ClientApi = getClientApi(providerName);
+    api.llm.chat({
+      messages: [
+        {
+          role: "user",
+          content: `${Locale.Chat.InputActions.Translate.TranslatePrompt} ${props.userInput}`,
+        },
+      ],
+      config: {
+        model: modelConfig.translateModel,
+        stream: false,
+      },
+      onFinish(message) {
+        setIsTranslating(false);
+        if (!isValidMessage(message)) {
+          showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
+          return;
+        }
+        props.setUserInput(message);
+        showToast(Locale.Chat.InputActions.Translate.SuccessTranslateToast);
+      },
+    });
+  };
+  function isValidMessage(message: any): boolean {
+    if (message.startsWith("```") && message.endsWith("```")) {
+      // 提取包裹的内容
+      const jsonString = message.slice(3, -3).trim(); // 去掉开头和结尾的 ```
+
+      try {
+        // 解析 JSON
+        const jsonObject = JSON.parse(jsonString);
+
+        // 检查是否存在 error 字段
+        if (jsonObject.error) {
+          return false;
+        }
+      } catch (e) {
+        console.log("Invalid JSON format.");
+      }
+    }
+    return typeof message === "string" && !message.startsWith("```json");
+  }
 
   // switch themes
   const theme = config.theme;
@@ -666,6 +728,16 @@ export function ChatActions(props: {
           }}
           text={Locale.Chat.InputActions.CloudBackup}
           icon={<FileExpressIcon />}
+        />
+        <ChatAction
+          onClick={handleTranslate}
+          text={
+            isTranslating
+              ? "翻译中..."
+              : Locale.Chat.InputActions.Translate.Title
+          }
+          alwaysShowText={isTranslating}
+          icon={<TranslateIcon />}
         />
       </div>
     </div>
@@ -1793,6 +1865,7 @@ function _Chat() {
             onSearch("");
           }}
           setShowShortcutKeyModal={setShowShortcutKeyModal}
+          userInput={userInput}
           setUserInput={setUserInput}
         />
         <label

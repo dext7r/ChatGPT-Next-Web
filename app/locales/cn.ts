@@ -75,7 +75,15 @@ const cn = {
       Settings: "对话设置",
       UploadImage: "上传图片",
       CloudBackup: "云备份",
-      Translate: "中英互译",
+      Translate: {
+        Title: "中英互译",
+        BlankToast: "输入内容为空，不执行本次翻译。",
+        isTranslatingToast: "正在翻译中...",
+        FailTranslateToast: "本次翻译失败，可检查翻译模型设置后再次尝试",
+        SuccessTranslateToast: "本次翻译已结束并替换输入文本",
+        TranslatePrompt:
+          "请担任中英文翻译官，请检查信息是否准确，请翻译得自然、流畅和地道，使用优美和高雅的表达方式。文本可能由于复制问题导致冗余的段内换行和页码问题，请根据上下文智能去除。无论对方回复什么，你只需将内容翻译为中文或英文。您应该只回复您翻译后的内容，而不应回复其他任何内容。不要写解释。这是你需要翻译的内容：\n",
+      },
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
@@ -395,6 +403,10 @@ const cn = {
     CompressModel: {
       Title: "压缩模型",
       SubTitle: "用于压缩历史记录的模型",
+    },
+    TranslateModel: {
+      Title: "翻译模型",
+      SubTitle: "用于翻译输入文本的模型",
     },
     Temperature: {
       Title: "随机性 (temperature)",

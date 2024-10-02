@@ -19,6 +19,7 @@ export function ModelConfigList(props: {
   );
   const value = `${props.modelConfig.model}@${props.modelConfig?.providerName}`;
   const compressModelValue = `${props.modelConfig.compressModel}@${props.modelConfig?.compressProviderName}`;
+  const translateModelValue = `${props.modelConfig.translateModel}@${props.modelConfig?.translateProviderName}`;
 
   return (
     <>
@@ -242,6 +243,32 @@ export function ModelConfigList(props: {
             props.updateConfig((config) => {
               config.compressModel = ModalConfigValidator.model(model);
               config.compressProviderName = providerName as ServiceProvider;
+            });
+          }}
+        >
+          {allModels
+            .filter((v) => v.available)
+            .map((v, i) => (
+              <option value={`${v.name}@${v.provider?.providerName}`} key={i}>
+                {v.displayName}({v.provider?.providerName})
+              </option>
+            ))}
+        </Select>
+      </ListItem>
+      <ListItem
+        title={Locale.Settings.TranslateModel.Title}
+        subTitle={Locale.Settings.TranslateModel.SubTitle}
+      >
+        <Select
+          className={styles["select-translate-model"]}
+          aria-label={Locale.Settings.TranslateModel.Title}
+          value={translateModelValue}
+          onChange={(e) => {
+            const [model, providerName] =
+              e.currentTarget.value.split(/@(?=[^@]*$)/);
+            props.updateConfig((config) => {
+              config.translateModel = ModalConfigValidator.model(model);
+              config.translateProviderName = providerName as ServiceProvider;
             });
           }}
         >

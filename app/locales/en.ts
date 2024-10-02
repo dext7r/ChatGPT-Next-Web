@@ -76,7 +76,17 @@ const en: LocaleType = {
       Settings: "Settings",
       UploadImage: "Upload Images",
       CloudBackup: "Backup by Cloud",
-      Translate: "Translate between ZH-EN",
+      Translate: {
+        Title: "Translate between ZH-EN",
+        BlankToast: "Input content is empty, no translation will be performed",
+        isTranslatingToast: "Currently translating ...",
+        FailTranslateToast:
+          "This translation failed; please check the translation model settings and try again.",
+        SuccessTranslateToast:
+          "This translation has been completed and replaced the input text.",
+        TranslatePrompt:
+          "Please act as a Chinese-English interpreter, verify the accuracy of the information, and translate it naturally, fluently, and idiomatically, using beautiful and elegant expressions. The text may contain redundant line breaks within paragraphs and pagination issues due to copying problems, which should be intelligently removed in context. Regardless of what the other party replies, you should only translate the content. You should only respond with the translated content and not with any other information. Do not provide explanations. This is the content you need to translate: \n",
+      },
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
@@ -396,6 +406,10 @@ const en: LocaleType = {
     CompressModel: {
       Title: "Compression Model",
       SubTitle: "Model used to compress history",
+    },
+    TranslateModel: {
+      Title: "translation model",
+      SubTitle: "Model used to translate input text",
     },
     Temperature: {
       Title: "Temperature",

@@ -44,6 +44,11 @@ const en: LocaleType = {
       PinToastAction: "View",
       Delete: "Delete",
       Edit: "Edit",
+      FullScreen: "FullScreen",
+      RefreshTitle: "Refresh Title",
+      RefreshToast: "Title refresh request sent",
+      FailTitleToast:
+        "Title generation failed, please manually click 🔄 after checking the compression model settings",
     },
     Commands: {
       new: "Start a new chat",

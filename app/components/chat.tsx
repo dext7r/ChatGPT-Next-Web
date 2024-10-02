@@ -42,6 +42,7 @@ import RobotIcon from "../icons/robot.svg";
 import FileExpressIcon from "../icons/upload-and-download.svg";
 import SearchChatIcon from "../icons/zoom.svg";
 import ShortcutkeyIcon from "../icons/shortcutkey.svg";
+import ReloadIcon from "../icons/reload.svg";
 
 import {
   ChatMessage,
@@ -1443,6 +1444,17 @@ function _Chat() {
           </div>
         </div>
         <div className="window-actions">
+          <div className="window-action-button">
+            <IconButton
+              icon={<ReloadIcon />}
+              bordered
+              title={Locale.Chat.Actions.RefreshTitle}
+              onClick={() => {
+                showToast(Locale.Chat.Actions.RefreshToast);
+                chatStore.summarizeSession(true);
+              }}
+            />
+          </div>
           {!isMobileScreen && (
             <div className="window-action-button">
               <IconButton

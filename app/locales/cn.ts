@@ -44,6 +44,10 @@ const cn = {
       PinToastAction: "查看",
       Delete: "删除",
       Edit: "编辑",
+      FullScreen: "全屏",
+      RefreshTitle: "刷新标题",
+      RefreshToast: "已发送刷新标题请求",
+      FailTitleToast: "标题生成失败，检查压缩模型设置后点击🔄手动刷新标题",
     },
     Commands: {
       new: "新建聊天",

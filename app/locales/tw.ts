@@ -1,3 +1,4 @@
+import { FullScreen } from "../components/ui-lib";
 import { getClientConfig } from "../config/client";
 import { SubmitKey } from "../store/config";
 
@@ -43,6 +44,10 @@ const tw = {
       PinToastAction: "檢視",
       Delete: "刪除",
       Edit: "編輯",
+      FullScreen: "全屏",
+      RefreshTitle: "刷新標題",
+      RefreshToast: "已發送刷新標題請求",
+      FailTitleToast: "標題生成失敗，檢查壓縮模型設置後點擊🔄手動刷新標題",
     },
     Commands: {
       new: "新建聊天",

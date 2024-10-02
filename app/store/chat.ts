@@ -587,7 +587,10 @@ export const useChatStore = createPersistStore(
               stream: false,
             },
             onFinish(message) {
-              if (!isValidMessage(message)) return;
+              if (!isValidMessage(message)) {
+                showToast(Locale.Chat.Actions.FailTitleToast);
+                return;
+              }
               get().updateCurrentSession(
                 (session) =>
                   (session.topic =

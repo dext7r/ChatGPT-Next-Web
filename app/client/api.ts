@@ -98,20 +98,24 @@ export class ClientApi {
     const clientConfig = getClientConfig();
     switch (provider) {
       case ModelProvider.GeminiPro:
-        console.log("[chatGeminiThroughOpenai]", clientConfig?.chatGeminiThroughOpenai);
-        if (clientConfig?.chatGeminiThroughOpenai){
+        console.log(
+          "[chatGeminiThroughOpenai]",
+          clientConfig?.chatGeminiThroughOpenai,
+        );
+        if (clientConfig?.chatGeminiThroughOpenai) {
           this.llm = new ChatGPTApi();
-        }
-        else{
+        } else {
           this.llm = new GeminiProApi();
         }
         break;
       case ModelProvider.Claude:
-        console.log("[chatClaudeThroughOpenai]", clientConfig?.chatClaudeThroughOpenai);
-        if (clientConfig?.chatClaudeThroughOpenai){
+        console.log(
+          "[chatClaudeThroughOpenai]",
+          clientConfig?.chatClaudeThroughOpenai,
+        );
+        if (clientConfig?.chatClaudeThroughOpenai) {
           this.llm = new ChatGPTApi();
-        }
-        else{
+        } else {
           this.llm = new ClaudeApi();
         }
         break;
@@ -201,4 +205,15 @@ export function getHeaders() {
   }
 
   return headers;
+}
+
+export function getClientApi(provider: ServiceProvider): ClientApi {
+  switch (provider) {
+    case ServiceProvider.Google:
+      return new ClientApi(ModelProvider.GeminiPro);
+    case ServiceProvider.Anthropic:
+      return new ClientApi(ModelProvider.Claude);
+    default:
+      return new ClientApi(ModelProvider.GPT);
+  }
 }

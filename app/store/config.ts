@@ -4,8 +4,10 @@ import {
   DEFAULT_INPUT_TEMPLATE,
   DEFAULT_MODELS,
   DEFAULT_SIDEBAR_WIDTH,
+  ServiceProvider,
   StoreKey,
 } from "../constant";
+import { compressImage } from "../utils/chat";
 import { createPersistStore } from "../utils/store";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
@@ -50,6 +52,7 @@ export const DEFAULT_CONFIG = {
 
   modelConfig: {
     model: "gpt-4o-mini" as ModelType,
+    providerName: "OpenAI" as ServiceProvider,
     temperature: 0.5,
     top_p: 0.99,
     max_tokens: 4000,
@@ -58,6 +61,8 @@ export const DEFAULT_CONFIG = {
     sendMemory: true,
     historyMessageCount: 4,
     compressMessageLengthThreshold: 1000,
+    compressModel: "gpt-4o-mini" as ModelType,
+    compressProviderName: "OpenAI" as ServiceProvider,
     enableInjectSystemPrompts: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
   },
@@ -118,12 +123,12 @@ export const useAppConfig = createPersistStore(
 
       for (const model of oldModels) {
         model.available = false;
-        modelMap[model.name] = model;
+        modelMap[`${model.name}@${model?.provider?.id}`] = model;
       }
 
       for (const model of newModels) {
         model.available = true;
-        modelMap[model.name] = model;
+        modelMap[`${model.name}@${model?.provider?.id}`] = model;
       }
 
       set(() => ({
@@ -135,7 +140,22 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 3.9,
+    version: 4,
+
+    merge(persistedState, currentState) {
+      const state = persistedState as ChatConfig | undefined;
+      if (!state) return { ...currentState };
+      const models = currentState.models.slice();
+      state.models.forEach((pModel) => {
+        const idx = models.findIndex(
+          (v) => v.name === pModel.name && v.provider === pModel.provider,
+        );
+        if (idx !== -1) models[idx] = pModel;
+        else models.push(pModel);
+      });
+      return { ...currentState, ...state, models: models };
+    },
+
     migrate(persistedState, version) {
       const state = persistedState as ChatConfig;
 
@@ -171,6 +191,13 @@ export const useAppConfig = createPersistStore(
           state.modelConfig.template !== DEFAULT_INPUT_TEMPLATE
             ? state.modelConfig.template
             : config?.template ?? DEFAULT_INPUT_TEMPLATE;
+      }
+
+      if (version < 4) {
+        state.modelConfig.compressModel =
+          DEFAULT_CONFIG.modelConfig.compressModel;
+        state.modelConfig.compressProviderName =
+          DEFAULT_CONFIG.modelConfig.compressProviderName;
       }
 
       return state as any;

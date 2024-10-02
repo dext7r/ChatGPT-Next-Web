@@ -105,8 +105,11 @@ export const useAccessStore = createPersistStore(
         .then((res) => {
           // Set default model from env request
           let defaultModel = res.defaultModel ?? "";
-          DEFAULT_CONFIG.modelConfig.model =
-            defaultModel !== "" ? defaultModel : "gpt-3.5-turbo";
+          if (defaultModel !== "") {
+            const [model, providerName] = defaultModel.split("@");
+            DEFAULT_CONFIG.modelConfig.model = model;
+            DEFAULT_CONFIG.modelConfig.providerName = providerName;
+          }
           return res;
         })
         .then((res: DangerConfig) => {
@@ -120,32 +123,46 @@ export const useAccessStore = createPersistStore(
           fetchState = 2;
         });
     },
-    fetchAvailableModels(url: string, apiKey: string): Promise<string>{
-      // if (fetchState > 0 || getClientConfig()?.buildMode === "export") 
+    fetchAvailableModels(url: string, apiKey: string): Promise<string> {
+      // if (fetchState > 0 || getClientConfig()?.buildMode === "export")
       //   return Promise.resolve(DEFAULT_ACCESS_STATE.customModels);
 
       fetchState = 1;
-      return fetch(url.replace(/\/+$/, '') +"/v1/models", {
+      return fetch(url.replace(/\/+$/, "") + "/v1/models", {
         method: "get",
         body: null,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       })
         .then((res) => res.json())
         .then((res) => {
           // 如果res里的data数组长度大于0，则说明有可用的模型，提取其中的id属性，使用英文逗号进行字符串连接
-          if (res.data && res.data.length > 0){
-            const excludedKeywords = ['text-', 'moderation', 'embedding', 'dall-e-', 'davinci', 'babbage', 'midjourney', 'whisper', 'tts'];
+          if (res.data && res.data.length > 0) {
+            const excludedKeywords = [
+              "text-",
+              "moderation",
+              "embedding",
+              "dall-e-",
+              "davinci",
+              "babbage",
+              "midjourney",
+              "whisper",
+              "tts",
+            ];
             const availableModels = res.data
-              .filter((model: any) => !excludedKeywords.some(keyword => model.id.toLowerCase().includes(keyword.toLowerCase())))
-              .map((model: any) => model.id)
-              .join(',');
-            console.log("availableModels",availableModels);
+              .filter(
+                (model: any) =>
+                  !excludedKeywords.some((keyword) =>
+                    model.id.toLowerCase().includes(keyword.toLowerCase()),
+                  ),
+              )
+              .map((model: any) => `${model.id}@OpenAI`)
+              .join(",");
+            console.log("availableModels", availableModels);
             return `-all,${availableModels}`;
-          }
-          else{
+          } else {
             return DEFAULT_ACCESS_STATE.customModels;
           }
         })
@@ -156,7 +173,7 @@ export const useAccessStore = createPersistStore(
         .finally(() => {
           fetchState = 2;
         });
-    }
+    },
   }),
   {
     name: StoreKey.Access,

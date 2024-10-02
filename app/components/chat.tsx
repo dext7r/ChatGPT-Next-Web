@@ -90,10 +90,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   CHAT_PAGE_SIZE,
-  LAST_INPUT_KEY,
   Path,
   REQUEST_TIMEOUT_MS,
   UNFINISHED_INPUT,
+  ServiceProvider,
 } from "../constant";
 import { Avatar } from "./emoji";
 import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
@@ -480,6 +480,9 @@ export function ChatActions(props: {
 
   // switch model
   const currentModel = chatStore.currentSession().mask.modelConfig.model;
+  const currentProviderName =
+    chatStore.currentSession().mask.modelConfig?.providerName ||
+    ServiceProvider.OpenAI;
   const allModels = useAllModels();
   const models = useMemo(() => {
     const filteredModels = allModels.filter((m) => m.available);
@@ -609,19 +612,25 @@ export function ChatActions(props: {
 
         {showModelSelector && (
           <Selector
-            defaultSelectedValue={currentModel}
+            defaultSelectedValue={`${currentModel}@${currentProviderName}`}
             items={models.map((m) => ({
-              title: m.displayName,
-              value: m.name,
+              title:
+                m?.provider?.providerName?.toLowerCase() === "openai"
+                  ? `${m.displayName}`
+                  : `${m.displayName} (${m?.provider?.providerName})`,
+              value: `${m.name}@${m?.provider?.providerName}`,
             }))}
             onClose={() => setShowModelSelector(false)}
             onSelection={(s) => {
               if (s.length === 0) return;
+              const [model, providerName] = s[0].split(/@(?=[^@]*$)/);
               chatStore.updateCurrentSession((session) => {
-                session.mask.modelConfig.model = s[0] as ModelType;
+                session.mask.modelConfig.model = model as ModelType;
+                session.mask.modelConfig.providerName =
+                  providerName as ServiceProvider;
                 session.mask.syncGlobalConfig = false;
               });
-              showToast(s[0]);
+              showToast(model);
             }}
           />
         )}

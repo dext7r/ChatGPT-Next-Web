@@ -441,7 +441,8 @@
 }
 
 .chat-message-item-image {
-  width: 100%;
+  // width: 100%;
+  max-width: 50px;
   margin-top: 10px;
 }
 

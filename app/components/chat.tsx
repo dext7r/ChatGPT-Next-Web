@@ -72,6 +72,7 @@ import {
 } from "../utils";
 
 import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
+import Image from "next/image";
 
 import dynamic from "next/dynamic";
 
@@ -1801,10 +1802,13 @@ function _Chat() {
                       defaultShow={i >= messages.length - 6}
                     />
                     {getMessageImages(message).length == 1 && (
-                      <img
+                      <Image
                         className={styles["chat-message-item-image"]}
                         src={getMessageImages(message)[0]}
                         alt=""
+                        layout="intrinsic"
+                        width={400}
+                        height={400}
                       />
                     )}
                     {getMessageImages(message).length > 1 && (
@@ -1818,13 +1822,16 @@ function _Chat() {
                       >
                         {getMessageImages(message).map((image, index) => {
                           return (
-                            <img
+                            <Image
                               className={
                                 styles["chat-message-item-image-multi"]
                               }
                               key={index}
                               src={image}
                               alt=""
+                              layout="intrinsic"
+                              width={400}
+                              height={400}
                             />
                           );
                         })}

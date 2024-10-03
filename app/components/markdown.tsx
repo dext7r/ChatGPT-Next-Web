@@ -123,7 +123,7 @@ export function PreCode(props: { children: any }) {
       });
       setTimeout(renderArtifacts, 1);
     }
-  }, [ref]);
+  }, [renderArtifacts]);
   return (
     <>
       <pre ref={ref}>

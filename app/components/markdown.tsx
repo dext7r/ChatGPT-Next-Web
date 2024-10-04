@@ -149,7 +149,7 @@ export function PreCode(props: { children: any }) {
             getCode={() => htmlCode}
           /> */}
           <span className="button-description">
-            在设置中开启或关闭 Artifacts 预览
+            在设置中开启或关闭 Artifacts 预览，若预览失败请刷新页面
           </span>
           <IconButton
             style={{ position: "absolute", right: 20, top: 10 }}

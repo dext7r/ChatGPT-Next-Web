@@ -9,6 +9,7 @@ import { getClientConfig } from "../config/client";
 import { createPersistStore } from "../utils/store";
 import { ensure } from "../utils/clone";
 import { DEFAULT_CONFIG } from "./config";
+import { showToast } from "../components/ui-lib";
 
 let fetchState = 0; // 0 not fetch, 1 fetching, 2 done
 
@@ -133,55 +134,54 @@ export const useAccessStore = createPersistStore(
         });
     },
     fetchAvailableModels(url: string, apiKey: string): Promise<string> {
-      // if (fetchState > 0 || getClientConfig()?.buildMode === "export")
-      //   return Promise.resolve(DEFAULT_ACCESS_STATE.customModels);
-
+      // if (fetchState !== 0) return Promise.resolve(DEFAULT_ACCESS_STATE.customModels);
       fetchState = 1;
-      return fetch(url.replace(/\/+$/, "") + "/v1/models", {
-        method: "get",
-        body: null,
+      return fetch(`${url.replace(/\/+$/, "")}/v1/models`, {
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
       })
-        .then((res) => res.json())
         .then((res) => {
-          // 如果res里的data数组长度大于0，则说明有可用的模型，提取其中的id属性，使用英文逗号进行字符串连接
-          if (res.data && res.data.length > 0) {
-            const excludedKeywords = [
-              "text-",
-              "moderation",
-              "embedding",
-              "dall-e-",
-              "davinci",
-              "babbage",
-              "midjourney",
-              "whisper",
-              "tts",
-            ];
-            const availableModels = res.data
-              .filter(
-                (model: any) =>
-                  !excludedKeywords.some((keyword) =>
-                    model.id.toLowerCase().includes(keyword.toLowerCase()),
-                  ),
-              )
-              .map((model: any) => `${model.id}@OpenAI`)
-              .join(",");
-            console.log("availableModels", availableModels);
-            return `-all,${availableModels}`;
-          } else {
-            return DEFAULT_ACCESS_STATE.customModels;
+          if (!res.ok) {
+            // 抛出错误，包含响应状态和状态文本
+            throw new Error(`${res.status} - ${res.statusText}`);
           }
+          return res.json();
+        })
+        .then((res) => {
+          const models = res.data || [];
+          // 根据关键字，去除非chat格式模型
+          const excludedKeywords = [
+            "text-",
+            "moderation",
+            "embedding",
+            "dall-e-",
+            "davinci",
+            "babbage",
+            "midjourney",
+            "whisper",
+            "tts",
+          ];
+          const availableModels = models
+            .filter(
+              (model: any) =>
+                !excludedKeywords.some((keyword) =>
+                  model.id.toLowerCase().includes(keyword.toLowerCase()),
+                ),
+            )
+            .map((model: any) => `${model.id}@OpenAI`)
+            .join(",");
+          console.log("availableModels", availableModels);
+          showToast("fetch and update models list successfully");
+          return `-all,${availableModels}`;
         })
         .catch((error) => {
           console.error("[Access] failed to fetch available models: ", error);
+          showToast(`failed to fetch available models: ${error}`);
           return DEFAULT_ACCESS_STATE.customModels;
         })
-        .finally(() => {
-          fetchState = 2;
-        });
+        .finally(() => (fetchState = 2));
     },
   }),
   {

@@ -43,7 +43,9 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
   if (serverConfig.needCode && !serverConfig.codes.has(hashedCode) && !apiKey) {
     return {
       error: true,
-      msg: !accessCode ? "empty access code" : "wrong access code, don't try to crack the access code, your IP has been record: " + userIP,
+      msg: !accessCode
+        ? "empty access code"
+        : `get wrong access code [${accessCode}], don't try to crack the access code, your IP(${userIP}) has been record`,
     };
   }
 

@@ -9,6 +9,7 @@ import Locale from "../locales";
 import BotIcon from "../icons/bot.svg";
 import { useEffect } from "react";
 import { getClientConfig } from "../config/client";
+import { PasswordInput } from "./ui-lib";
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -39,17 +40,20 @@ export function AuthPage() {
       <div className={styles["auth-title"]}>{Locale.Auth.Title}</div>
       <div className={styles["auth-tips"]}>{Locale.Auth.Tips}</div>
 
-      <input
-        className={styles["auth-input"]}
-        type="password"
-        placeholder={Locale.Auth.Input}
+      <PasswordInput
+        style={{ marginTop: "3vh", marginBottom: "3vh" }}
+        aria={Locale.Settings.ShowPassword}
+        aria-label={Locale.Auth.Input}
         value={accessStore.accessCode}
+        type="text"
+        placeholder={Locale.Auth.Input}
         onChange={(e) => {
           accessStore.update(
             (access) => (access.accessCode = e.currentTarget.value),
           );
         }}
       />
+
       {!accessStore.hideUserApiKey ? (
         <>
           <div className={styles["auth-tips"]}>{Locale.Auth.SubTips}</div>

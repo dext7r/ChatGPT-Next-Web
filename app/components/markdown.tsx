@@ -14,11 +14,7 @@ import ReloadButtonIcon from "../icons/reload.svg";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { showImageModal, FullScreen } from "./ui-lib";
-import {
-  ArtifactsShareButton,
-  HTMLPreview,
-  HTMLPreviewHander,
-} from "./artifacts";
+import { HTMLPreview, HTMLPreviewHander } from "./artifacts";
 import { useChatStore } from "../store";
 import { IconButton } from "./button";
 
@@ -177,6 +173,7 @@ function CustomCode(props: { children: any; className?: string }) {
   const config = useAppConfig();
   const enableCodeFold =
     session.mask?.enableCodeFold != false && config.enableCodeFold;
+
   const ref = useRef<HTMLPreElement>(null);
   const [collapsed, setCollapsed] = useState(true);
   const [showToggle, setShowToggle] = useState(false);
@@ -192,6 +189,19 @@ function CustomCode(props: { children: any; className?: string }) {
   const toggleCollapsed = () => {
     setCollapsed((collapsed) => !collapsed);
   };
+  const renderShowMoreButton = () => {
+    if (showToggle && enableCodeFold && collapsed) {
+      return (
+        <div
+          className={`show-hide-button ${collapsed ? "collapsed" : "expanded"}`}
+        >
+          <button onClick={toggleCollapsed}>{Locale.NewChat.More}</button>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       <code
@@ -204,15 +214,7 @@ function CustomCode(props: { children: any; className?: string }) {
       >
         {props.children}
       </code>
-      {showToggle && enableCodeFold && (
-        <div
-          className={`show-hide-button ${collapsed ? "collapsed" : "expanded"}`}
-        >
-          <button onClick={toggleCollapsed}>
-            {collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
-          </button>
-        </div>
-      )}
+      {renderShowMoreButton()}
     </>
   );
 }

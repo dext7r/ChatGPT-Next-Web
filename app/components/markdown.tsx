@@ -149,7 +149,8 @@ export function PreCode(props: { children: any }) {
             getCode={() => htmlCode}
           /> */}
           <span className="button-description">
-            在设置中开启或关闭 Artifacts 预览，若预览失败请刷新页面
+            可在设置中开启/关闭“Artifacts
+            预览”和“代码折叠”，若预览失败请刷新页面
           </span>
           <IconButton
             style={{ position: "absolute", right: 20, top: 10 }}
@@ -171,6 +172,11 @@ export function PreCode(props: { children: any }) {
 }
 
 function CustomCode(props: { children: any; className?: string }) {
+  const chatStore = useChatStore();
+  const session = chatStore.currentSession();
+  const config = useAppConfig();
+  const enableCodeFold =
+    session.mask?.enableCodeFold != false && config.enableCodeFold;
   const ref = useRef<HTMLPreElement>(null);
   const [collapsed, setCollapsed] = useState(true);
   const [showToggle, setShowToggle] = useState(false);
@@ -192,13 +198,13 @@ function CustomCode(props: { children: any; className?: string }) {
         className={props?.className}
         ref={ref}
         style={{
-          maxHeight: collapsed ? "400px" : "none",
+          maxHeight: enableCodeFold && collapsed ? "400px" : "none",
           overflowY: "hidden",
         }}
       >
         {props.children}
       </code>
-      {showToggle && (
+      {showToggle && enableCodeFold && (
         <div
           className={`show-hide-button ${collapsed ? "collapsed" : "expanded"}`}
         >

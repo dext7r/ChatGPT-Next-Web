@@ -18,6 +18,7 @@ export type Mask = {
   lang: Lang;
   builtin: boolean;
   enableArtifacts?: boolean;
+  enableCodeFold?: boolean;
 };
 
 export const DEFAULT_MASK_STATE = {

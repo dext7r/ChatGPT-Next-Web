@@ -144,7 +144,7 @@ export function PreCode(props: { children: any }) {
             style={{ position: "absolute", right: 20, top: 10 }}
             getCode={() => htmlCode}
           /> */}
-          <span className="button-description">
+          <span className="button-description" style={{ whiteSpace: "normal" }}>
             可在设置中开启/关闭“Artifacts
             预览”和“代码折叠”，若预览失败请刷新页面
           </span>

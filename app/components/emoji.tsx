@@ -8,12 +8,16 @@ import { ModelType } from "../store";
 
 import BotIcon from "../icons/bot.svg";
 import BlackBotIcon from "../icons/black-bot.svg";
-import BotIconClaude from "../icons/bot-claude-black.svg";
+import BotIconClaude from "../icons/bot-claude.svg";
 import BotIconCohere from "../icons/bot-cohere.svg";
 import BotIconDeepseek from "../icons/bot-deepseek.svg";
 import BotIconGemini from "../icons/bot-gemini.svg";
 import BotIconLlama from "../icons/bot-llama.svg";
 import BotIconMistral from "../icons/bot-mistral.svg";
+import BotIconQwen from "../icons/bot-qwen.svg";
+import BotIconSparkdesk from "../icons/bot-sparkdesk.svg";
+import BotIconGLM from "../icons/bot-glm.svg";
+import BotIconMoonshot from "../icons/bot-moonshot.svg";
 
 export function getEmojiUrl(unified: string, style: EmojiStyle) {
   // Whoever owns this Content Delivery Network (CDN), I am using your CDN to serve emojis
@@ -54,26 +58,38 @@ export function Avatar(props: { model?: ModelType; avatar?: string }) {
     let IconComponent;
     let model = props.model.toLowerCase();
     switch (true) {
-      case model.startsWith("gpt-4"):
+      case model.includes("gpt-4"):
         IconComponent = BlackBotIcon;
         break;
-      case model.startsWith("claude"):
+      case model.includes("claude"):
         IconComponent = BotIconClaude;
         break;
-      case model.startsWith("command"):
+      case model.includes("command"):
         IconComponent = BotIconCohere;
         break;
-      case model.startsWith("deepseek"):
+      case model.includes("deepseek"):
         IconComponent = BotIconDeepseek;
         break;
-      case model.startsWith("gemini"):
+      case model.includes("gemini"):
         IconComponent = BotIconGemini;
         break;
-      case model.startsWith("llama"):
+      case model.includes("llama"):
         IconComponent = BotIconLlama;
         break;
-      case model.startsWith("mistral"):
+      case model.includes("mistral"):
         IconComponent = BotIconMistral;
+        break;
+      case model.includes("qwen"):
+        IconComponent = BotIconQwen;
+        break;
+      case model.includes("sparkdesk"):
+        IconComponent = BotIconSparkdesk;
+        break;
+      case model.includes("glm"):
+        IconComponent = BotIconGLM;
+        break;
+      case model.includes("moonshot"):
+        IconComponent = BotIconMoonshot;
         break;
       default:
         IconComponent = BotIcon;

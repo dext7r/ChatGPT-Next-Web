@@ -117,10 +117,11 @@ import { getClientConfig } from "../config/client";
 import { useAllModels } from "../utils/hooks";
 import { MultimodalContent, getClientApi } from "../client/api";
 
-const localStorage = safeLocalStorage();
 import { ClientApi } from "../client/api";
 import { createTTSPlayer } from "../utils/audio";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "../utils/ms_edge_tts";
+
+const localStorage = safeLocalStorage();
 
 const ttsPlayer = createTTSPlayer();
 
@@ -518,23 +519,27 @@ export function ChatActions(props: {
     });
   };
   function isValidMessage(message: any): boolean {
+    if (typeof message !== "string") {
+      return false;
+    }
+    message = message.trim();
     if (message.startsWith("```") && message.endsWith("```")) {
-      // 提取包裹的内容
-      const jsonString = message.slice(3, -3).trim(); // 去掉开头和结尾的 ```
-
+      const codeBlockContent = message.slice(3, -3).trim();
+      const jsonString = codeBlockContent.replace(/^json\s*/i, "").trim();
       try {
-        // 解析 JSON
+        // 返回 json 格式消息，error 字段为 true 或者包含 error.message 字段，判定为错误回复，否则为正常回复
         const jsonObject = JSON.parse(jsonString);
-
-        // 检查是否存在 error 字段
-        if (jsonObject.error) {
+        if (jsonObject?.error == true || jsonObject?.error?.message) {
           return false;
         }
+        return true;
       } catch (e) {
         console.log("Invalid JSON format.");
+        // 非 json 格式，通常可认为是正常回复
+        return true;
       }
     }
-    return typeof message === "string" && !message.startsWith("```json");
+    return true;
   }
 
   // switch themes

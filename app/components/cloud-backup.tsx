@@ -8,6 +8,7 @@ import {
   mergeAppState,
   setLocalAppState,
 } from "../utils/sync";
+import { safeLocalStorage } from "../utils";
 import { getClientConfig } from "../config/client";
 import { IconButton } from "./button";
 import Locale from "../locales";
@@ -20,6 +21,9 @@ interface FileInfo {
   name: string;
   size: number;
 }
+
+const localStorage = safeLocalStorage();
+const serverAddressKey = "serverAddress";
 
 export function CloudBackupPage() {
   const navigate = useNavigate();
@@ -53,7 +57,7 @@ export function CloudBackupPage() {
 
   useEffect(() => {
     // 从 localStorage 读取文件服务器地址
-    const savedAddress = localStorage.getItem("serverAddress");
+    const savedAddress = localStorage.getItem(serverAddressKey);
     if (savedAddress) {
       setServerAddress(savedAddress);
     }
@@ -63,7 +67,7 @@ export function CloudBackupPage() {
     setServerAddress(address);
     if (typeof window !== "undefined") {
       // 安全地使用 localStorage
-      localStorage.setItem("serverAddress", address); // 保存到 localStorage
+      localStorage.setItem(serverAddressKey, address); // 保存到 localStorage
     }
   };
 
@@ -425,7 +429,7 @@ export function CloudBackupPage() {
   };
   const clearServerAddress = () => {
     setServerAddress("");
-    localStorage.removeItem("serverAddress"); // 从 localStorage 删除
+    localStorage.removeItem(serverAddressKey); // 从 localStorage 删除
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -451,7 +455,7 @@ export function CloudBackupPage() {
         <div className={styles.inputGroup}>
           <input
             type="text"
-            id="serverAddress"
+            id={serverAddressKey}
             value={serverAddress}
             onChange={(e) => handleServerAddressChange(e.target.value)}
             placeholder="请输入文件服务器地址"

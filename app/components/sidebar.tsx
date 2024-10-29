@@ -177,6 +177,9 @@ export function SideBarHeader(props: {
   shouldNarrow?: boolean;
 }) {
   const { title, subTitle, logo, children, shouldNarrow } = props;
+  const renderSubTitle = (text: string) => {
+    return text.split("\n").map((line, index) => <div key={index}>{line}</div>);
+  };
   return (
     <Fragment>
       <div
@@ -189,7 +192,9 @@ export function SideBarHeader(props: {
           <div className={styles["sidebar-title"]} data-tauri-drag-region>
             {title}
           </div>
-          <div className={styles["sidebar-sub-title"]}>{subTitle}</div>
+          <div className={styles["sidebar-sub-title"]}>
+            {typeof subTitle === "string" ? renderSubTitle(subTitle) : subTitle}
+          </div>
         </div>
         <div className={styles["sidebar-logo"] + " no-dark"}>{logo}</div>
       </div>

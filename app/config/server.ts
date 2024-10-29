@@ -42,6 +42,10 @@ declare global {
 
       // custom template for preprocessing user input
       DEFAULT_INPUT_TEMPLATE?: string;
+
+      // sidebar title
+      SIDEBAR_TITLE?: string;
+      SIDEBAR_SUBTITLE?: string;
     }
   }
 }
@@ -74,7 +78,12 @@ function getApiKey(keys?: string) {
 
   return apiKey;
 }
-
+export const getSidebarConfig = () => {
+  return {
+    title: process.env.SIDEBAR_TITLE || "NextChat",
+    subTitle: process.env.SIDEBAR_SUBTITLE || "Build your own AI assistant.",
+  };
+};
 export const getServerSideConfig = () => {
   if (typeof process === "undefined") {
     throw Error(

@@ -52,6 +52,10 @@ const DEFAULT_ACCESS_STATE = {
   customModels: "",
   defaultModel: "",
 
+  // sidebar config
+  sidebarTitle: "",
+  sidebarSubTitle: "",
+
   // tts config
   edgeTTSVoiceName: "zh-CN-YunxiNeural",
 };
@@ -60,6 +64,14 @@ export const useAccessStore = createPersistStore(
   { ...DEFAULT_ACCESS_STATE },
 
   (set, get) => ({
+    setSideBarTitle() {
+      this.fetch();
+      return get().sidebarTitle;
+    },
+    setSideBarSubTitle() {
+      this.fetch();
+      return get().sidebarSubTitle;
+    },
     enabledAccessControl() {
       this.fetch();
 

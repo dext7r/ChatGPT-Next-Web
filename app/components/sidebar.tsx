@@ -19,7 +19,7 @@ import FileExpressIcon from "../icons/upload-and-download.svg";
 
 import Locale from "../locales";
 
-import { useAppConfig, useChatStore } from "../store";
+import { useAppConfig, useChatStore, useAccessStore } from "../store";
 
 import {
   DEFAULT_SIDEBAR_WIDTH,
@@ -234,6 +234,7 @@ export function SideBar(props: { className?: string }) {
   const navigate = useNavigate();
   const config = useAppConfig();
   const chatStore = useChatStore();
+  const { sidebarTitle, sidebarSubTitle } = useAccessStore();
 
   return (
     <SideBarContainer
@@ -242,8 +243,8 @@ export function SideBar(props: { className?: string }) {
       {...props}
     >
       <SideBarHeader
-        title="NextChat"
-        subTitle="Build your own AI assistant."
+        title={sidebarTitle}
+        subTitle={sidebarSubTitle}
         logo={<ChatGptIcon />}
         shouldNarrow={shouldNarrow}
       >

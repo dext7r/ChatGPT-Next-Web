@@ -5,15 +5,16 @@ import "./styles/highlight.scss";
 import { getClientConfig } from "./config/client";
 import { Metadata, Viewport } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { getServerSideConfig } from "./config/server";
+import { getServerSideConfig, getSidebarConfig } from "./config/server";
 import { GoogleTagManager } from "@next/third-parties/google";
 const serverConfig = getServerSideConfig();
+const siderbarConfig = getSidebarConfig();
 
 export const metadata: Metadata = {
-  title: "NextChat",
+  title: siderbarConfig.siteTitle,
   description: "Your personal ChatGPT Chat Bot.",
   appleWebApp: {
-    title: "NextChat",
+    title: siderbarConfig.siteTitle,
     statusBarStyle: "default",
   },
 };
@@ -36,8 +37,15 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="config" content={JSON.stringify(getClientConfig())} />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <link rel="manifest" href="/site.webmanifest" crossOrigin="use-credentials"></link>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <link
+          rel="manifest"
+          href="/site.webmanifest"
+          crossOrigin="use-credentials"
+        ></link>
         <script src="/serviceWorkerRegister.js" defer></script>
       </head>
       <body>

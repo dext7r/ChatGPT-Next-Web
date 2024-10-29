@@ -82,6 +82,7 @@ export const getSidebarConfig = () => {
   return {
     title: process.env.SIDEBAR_TITLE || "NextChat",
     subTitle: process.env.SIDEBAR_SUBTITLE || "Build your own AI assistant.",
+    siteTitle: process.env.SITE_TITLE || "NextChat",
   };
 };
 export const getServerSideConfig = () => {

@@ -169,8 +169,6 @@ export const DEFAULT_TTS_VOICES = [
 
 const openaiModels = [
   "chatgpt-4o-latest",
-  "o1-mini",
-  "o1-preview",
   "gpt-3.5-turbo",
   "gpt-3.5-turbo-1106",
   "gpt-3.5-turbo-0125",
@@ -189,6 +187,9 @@ const openaiModels = [
   "gpt-4-turbo-2024-04-09",
   "gpt-4-turbo-preview",
   "gpt-4-vision-preview",
+  // 非流模型
+  "o1-mini",
+  "o1-preview",
   // 非标准模型
   "gpt-4o-plus",
   "gpt-o1-mini",
@@ -212,10 +213,13 @@ const anthropicModels = [
   "claude-instant-1.2",
   "claude-2.0",
   "claude-2.1",
-  "claude-3-5-sonnet-20240620",
-  "claude-3-sonnet-20240229",
-  "claude-3-opus-20240229",
   "claude-3-haiku-20240307",
+  "claude-3-sonnet-20240229",
+  "claude-3-5-sonnet-latest",
+  "claude-3-5-sonnet-20240620",
+  "claude-3-5-sonnet-20241022",
+  "claude-3-opus-20240229",
+  "claude-3-opus-latest",
 ];
 
 export const DEFAULT_MODELS = [

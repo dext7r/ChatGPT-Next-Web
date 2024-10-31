@@ -49,6 +49,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            CHAT_CLAUDE_THROUGH_OPENAI=1
-            CHAT_GEMINI_THROUGH_OPENAI=1

@@ -86,7 +86,9 @@ export const useUpdateStore = createPersistStore(
       }));
 
       try {
+        console.log("[version]", versionType);
         const remoteId = await getVersion(versionType);
+        console.log("[remote]", remoteId);
         set(() => ({
           remoteVersion: remoteId,
         }));

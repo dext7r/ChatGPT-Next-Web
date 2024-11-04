@@ -7,15 +7,16 @@ import SettingsIcon from "../icons/settings.svg";
 import GithubIcon from "../icons/github.svg";
 import ChatGptIcon from "../icons/chatgpt.svg";
 import AddIcon from "../icons/add.svg";
-import CloseIcon from "../icons/close.svg";
+// import CloseIcon from "../icons/close.svg";
 import DeleteIcon from "../icons/delete.svg";
 import MaskIcon from "../icons/mask.svg";
-import PluginIcon from "../icons/plugin.svg";
+// import PluginIcon from "../icons/plugin.svg";
 import DragIcon from "../icons/drag.svg";
 import DiscoveryIcon from "../icons/discovery.svg";
-import OpenAIIcon from "../icons/openai.svg";
-import FileExpressIcon from "../icons/upload-and-download.svg";
+// import OpenAIIcon from "../icons/openai.svg";
+// import FileExpressIcon from "../icons/upload-and-download.svg";
 // import PlusIcon from "../icons/openai_plus.svg";
+import parse from "html-react-parser";
 
 import Locale from "../locales";
 
@@ -178,7 +179,7 @@ export function SideBarHeader(props: {
 }) {
   const { title, subTitle, logo, children, shouldNarrow } = props;
   const renderSubTitle = (text: string) => {
-    return text.split("\n").map((line, index) => <div key={index}>{line}</div>);
+    return parse(text);
   };
   return (
     <Fragment>

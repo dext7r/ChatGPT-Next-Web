@@ -160,11 +160,11 @@ After adding or modifying this environment variable, please redeploy the project
 
 ### `CODE` (optional)
 
-Access password, separated by comma.
+Access password, separated by comma. （授权码，支持英文逗号分隔多个code）
 
 ### `OPENAI_API_KEY` (required)
 
-Your openai api key, join multiple api keys with comma.
+Your openai api key, join multiple api keys with comma. （openai 密钥，支持英文逗号分隔多个key）
 
 ### `BASE_URL` (optional)
 
@@ -172,17 +172,17 @@ Your openai api key, join multiple api keys with comma.
 
 > Examples: `http://your-openai-proxy.com`
 
-Override openai api request base url.
+Override openai api request base url. （openai 渠道自定义接口地址）
 
 ### `OPENAI_ORG_ID` (optional)
 
-Specify OpenAI organization ID.
+Specify OpenAI organization ID. （openai 组织 ID）
 
 ### `AZURE_URL` (optional)
 
 > Example: https://{azure-resource-url}/openai/deployments/{deploy-name}
 
-Azure deploy url.
+Azure deploy url. 
 
 ### `AZURE_API_KEY` (optional)
 
@@ -216,25 +216,25 @@ anthropic claude Api Url.
 
 > Default: Empty
 
-If you do not want users to input their own API key, set this value to 1.
+If you do not want users to input their own API key, set this value to 1. （要禁止前端使用用户的key，则设置该变量非空）
 
 ### `DISABLE_GPT4` (optional)
 
 > Default: Empty
 
-If you do not want users to use GPT-4, set this value to 1.
+If you do not want users to use GPT-4, set this value to 1. （要禁止用户使用 gpt4 ，则设置该变量非空）
 
 ### `ENABLE_BALANCE_QUERY` (optional)
 
 > Default: Empty
 
-If you do want users to query balance, set this value to 1.
+If you do want users to query balance, set this value to 1. （要禁止用户查询api余额，则设置该变量非空）
 
 ### `DISABLE_FAST_LINK` (optional)
 
 > Default: Empty
 
-If you want to disable parse settings from url, set this to 1.
+If you want to disable parse settings from url, set this to 1. （要禁止url解析参数，则设置该变量非空）
 
 ### `CUSTOM_MODELS` (optional)
 
@@ -243,7 +243,19 @@ If you want to disable parse settings from url, set this to 1.
 
 To control custom models, use `+` to add a custom model, use `-` to hide a model, use `name=displayName` to customize model name, separated by comma.
 
-User `-all` to disable all default models, `+all` to enable all default models.
+User `-all` to disable all default models, `+all` to enable all default models. （自定义模型参数）
+
+### `SIDEBAR_TITLE` (optional)
+
+Set the title of sidebar. （侧边栏标题）
+
+### `SIDEBAR_SUBTITLE` (optional)
+
+Set the subtitle of sidebar. Support html parsing. （侧边栏子标题，支持html解析）
+
+### `SITE_TITLE` (optional)
+
+Set the website title. （网站顶部标题）
 
 ### `WHITE_WEBDEV_ENDPOINTS` (optional)
 

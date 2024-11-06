@@ -392,6 +392,7 @@ export const useChatStore = createPersistStore(
             botMessage.streaming = false;
             if (message) {
               botMessage.content = message;
+              botMessage.date = new Date().toLocaleString();
               get().onNewMessage(botMessage);
             }
             ChatControllerPool.remove(session.id, botMessage.id);

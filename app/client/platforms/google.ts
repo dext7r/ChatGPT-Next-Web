@@ -161,7 +161,10 @@ export class GeminiProApi implements LLMApi {
         let existingTexts: string[] = [];
         const finish = () => {
           finished = true;
-          options.onFinish(existingTexts.join(""));
+          options.onFinish(
+            existingTexts.join(""),
+            new Response(null, { status: 200 }),
+          );
         };
 
         // animate response to make it looks smooth
@@ -266,7 +269,7 @@ export class GeminiProApi implements LLMApi {
           );
         }
         const message = this.extractMessage(resJson);
-        options.onFinish(message);
+        options.onFinish(message, res);
       }
     } catch (e) {
       console.log("[Request] failed to make a chat request", e);

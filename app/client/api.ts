@@ -51,7 +51,7 @@ export interface ChatOptions {
   config: LLMConfig;
 
   onUpdate?: (message: string, chunk: string) => void;
-  onFinish: (message: string) => void;
+  onFinish: (message: string, responseRes: Response) => void;
   onError?: (err: Error) => void;
   onController?: (controller: AbortController) => void;
 }
@@ -182,8 +182,8 @@ export function getHeaders(ignoreHeaders: boolean = false) {
   const apiKey = isGoogle
     ? accessStore.googleApiKey
     : isAzure
-    ? accessStore.azureApiKey
-    : accessStore.openaiApiKey;
+      ? accessStore.azureApiKey
+      : accessStore.openaiApiKey;
   const clientConfig = getClientConfig();
   const makeBearer = (s: string) => `${isAzure ? "" : "Bearer "}${s.trim()}`;
   const validString = (x: string) => x && x.length > 0;

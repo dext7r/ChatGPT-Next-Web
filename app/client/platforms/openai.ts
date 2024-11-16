@@ -54,6 +54,7 @@ interface RequestPayload {
   frequency_penalty?: number;
   top_p: number;
   max_tokens?: number;
+  max_completion_tokens?: number;
 }
 
 export class ChatGPTApi implements LLMApi {
@@ -239,6 +240,7 @@ export class ChatGPTApi implements LLMApi {
       if (isO1) {
         requestPayload["presence_penalty"] = 0;
         requestPayload["frequency_penalty"] = 0;
+        requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
       }
     }
 

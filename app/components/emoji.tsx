@@ -18,6 +18,7 @@ import BotIconQwen from "../icons/bot-qwen.svg";
 import BotIconSparkdesk from "../icons/bot-sparkdesk.svg";
 import BotIconGLM from "../icons/bot-glm.svg";
 import BotIconMoonshot from "../icons/bot-moonshot.svg";
+import BotIconGrok from "../icons/bot-grok.svg";
 
 export function getEmojiUrl(unified: string, style: EmojiStyle) {
   // Whoever owns this Content Delivery Network (CDN), I am using your CDN to serve emojis
@@ -76,7 +77,7 @@ export function Avatar(props: { model?: ModelType; avatar?: string }) {
       case model.includes("llama"):
         IconComponent = BotIconLlama;
         break;
-      case model.includes("mistral"):
+      case model.includes("mistral") || model.includes("pixtral"):
         IconComponent = BotIconMistral;
         break;
       case model.includes("qwen"):
@@ -90,6 +91,9 @@ export function Avatar(props: { model?: ModelType; avatar?: string }) {
         break;
       case model.includes("moonshot"):
         IconComponent = BotIconMoonshot;
+        break;
+      case model.includes("grok"):
+        IconComponent = BotIconGrok;
         break;
       default:
         IconComponent = BotIcon;

@@ -147,7 +147,9 @@ export class ChatGPTApi implements LLMApi {
 
   async chat(options: ChatOptions) {
     const visionModel = isVisionModel(options.config.model);
-    const isO1 = options.config.model.startsWith("o1");
+    const isO1 =
+      options.config.model.startsWith("o1") ||
+      options.config.model.startsWith("gpt-o1");
 
     const messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
@@ -220,7 +222,7 @@ export class ChatGPTApi implements LLMApi {
     let requestPayload: RequestPayload;
     requestPayload = {
       messages,
-      stream: !isO1 ? options.config.stream : false,
+      stream: options.config.stream,
       model: modelConfig.model,
       temperature: !isO1 ? modelConfig.temperature : 1,
       top_p: !isO1 ? modelConfig.top_p : 1,
@@ -246,7 +248,7 @@ export class ChatGPTApi implements LLMApi {
 
     console.log("[Request] openai payload: ", requestPayload);
 
-    const shouldStream = !!options.config.stream && !isO1;
+    const shouldStream = !!options.config.stream; // && !isO1; // o1 已经开始支持流式
     const controller = new AbortController();
     options.onController?.(controller);
 

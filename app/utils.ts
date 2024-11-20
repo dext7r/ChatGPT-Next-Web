@@ -257,6 +257,7 @@ export function isVisionModel(model: string) {
     "gemini-1.5",
     "gpt-4o",
     "gemini-exp-1114",
+    "learnlm",
     "pixtral",
   ];
   const isGpt4Turbo =

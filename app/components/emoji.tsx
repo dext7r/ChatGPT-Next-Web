@@ -59,7 +59,7 @@ export function Avatar(props: { model?: ModelType; avatar?: string }) {
     let IconComponent;
     let model = props.model.toLowerCase();
     switch (true) {
-      case model.includes("gpt-4"):
+      case model.includes("gpt-4") || model.includes("o1"):
         IconComponent = BlackBotIcon;
         break;
       case model.includes("claude"):
@@ -100,7 +100,7 @@ export function Avatar(props: { model?: ModelType; avatar?: string }) {
     }
     return (
       <div className="no-dark">
-        {props.model?.startsWith("gpt-4") ? (
+        {props.model?.includes("gpt-4") || props.model?.includes("o1") ? (
           <BlackBotIcon className="user-avatar" />
         ) : (
           <IconComponent />

@@ -65,7 +65,7 @@ export const MAX_SIDEBAR_WIDTH = 500;
 export const MIN_SIDEBAR_WIDTH = 230;
 export const NARROW_SIDEBAR_WIDTH = 100;
 
-export const ACCESS_CODE_PREFIX = "nk-";
+export const ACCESS_CODE_PREFIX = "ai-";
 
 export const LAST_INPUT_KEY = "last-input";
 export const UNFINISHED_INPUT = (id: string) => "unfinished-input-" + id;
@@ -210,6 +210,7 @@ const googleModels = [
   "gemini-1.5-pro-exp-0801",
   "gemini-1.5-pro-exp-0827",
   "gemini-exp-1114",
+  "gemini-exp-1121",
   "gemini-pro-vision",
 ];
 

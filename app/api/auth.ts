@@ -24,7 +24,32 @@ function parseApiKey(bearToken: string) {
   };
 }
 
+function isNonBrowserRequest(req: NextRequest) {
+  const userAgent = req.headers.get("User-Agent") ?? "";
+
+  // 定义常见浏览器的标识符
+  const browserIdentifiers = [
+    "Mozilla",
+    "Chrome",
+    "Safari",
+    "Firefox",
+    "Edge",
+    "OPR",
+  ];
+
+  // 检查 User-Agent 是否包含任何浏览器标识符
+  const isBrowser = browserIdentifiers.some((identifier) =>
+    userAgent.includes(identifier),
+  );
+
+  return !isBrowser;
+}
+
 export function auth(req: NextRequest, modelProvider: ModelProvider) {
+  const has_no_ua = isNonBrowserRequest(req);
+  if (has_no_ua)
+    return { error: true, msg: "Please use the browser to make the request." };
+
   const authToken = req.headers.get("Authorization") ?? "";
 
   // check if it is openai api key or user token

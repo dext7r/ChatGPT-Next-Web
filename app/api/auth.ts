@@ -46,9 +46,13 @@ function isNonBrowserRequest(req: NextRequest) {
 }
 
 export function auth(req: NextRequest, modelProvider: ModelProvider) {
+  const userIP = getIP(req);
+
   const has_no_ua = isNonBrowserRequest(req);
-  if (has_no_ua)
+  if (has_no_ua) {
+    console.log("[Non Browser Request] IP: ", userIP);
     return { error: true, msg: "Please use the browser to make the request." };
+  }
 
   const authToken = req.headers.get("Authorization") ?? "";
 
@@ -58,7 +62,6 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
   const hashedCode = md5.hash(accessCode ?? "").trim();
 
   const serverConfig = getServerSideConfig();
-  const userIP = getIP(req);
   // console.log("[Auth] allowed hashed codes: ", [...serverConfig.codes]);
   console.log("[Auth] got access code:", accessCode);
   // console.log("[Auth] hashed access code:", hashedCode);

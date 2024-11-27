@@ -93,6 +93,34 @@ function createEmptySession(): ChatSession {
   };
 }
 
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+}
+
+function createTemplateRegex(output: string) {
+  const keys = [
+    "{{ServiceProvider}}",
+    "{{cutoff}}",
+    "{{model}}",
+    "{{time}}",
+    "{{lang}}",
+    "{{newline}}",
+  ];
+  const placeholder = "PLACEHOLDER_FOR_INPUT";
+  let escapedOutput = output.replace("{{input}}", placeholder);
+  const keysRegex = new RegExp(
+    keys.map((key) => escapeRegExp(key)).join("|"),
+    "g",
+  );
+  escapedOutput = escapedOutput.replace(keysRegex, "");
+  const escapedRegexString = escapeRegExp(escapedOutput);
+  const finalRegexString = escapedRegexString.replace(
+    new RegExp(`\\s*${placeholder}\\s*`, "g"),
+    "([\\s\\S]*)",
+  );
+  return new RegExp("^" + finalRegexString + "$");
+}
+
 function countMessages(msgs: ChatMessage[]) {
   return msgs.reduce(
     (pre, cur) => pre + estimateTokenLength(getMessageTextContent(cur)),
@@ -121,26 +149,25 @@ function fillTemplateWith(input: string, modelConfig: ModelConfig) {
     time: new Date().toString(),
     lang: getLang(),
     input: input,
+    newline: "\n",
   };
 
   let output = modelConfig.template ?? DEFAULT_INPUT_TEMPLATE;
-
-  // remove duplicate
-  if (input.startsWith(output)) {
+  // avoid duplicate template
+  const templateRegex = createTemplateRegex(output);
+  if (templateRegex.test(input)) {
     output = "";
   }
-
   // must contains {{input}}
   const inputVar = "{{input}}";
   if (!output.includes(inputVar)) {
-    output += "\n" + inputVar;
+    output += inputVar;
   }
 
   Object.entries(vars).forEach(([name, value]) => {
     const regex = new RegExp(`{{${name}}}`, "g");
     output = output.replace(regex, value.toString()); // Ensure value is a string
   });
-
   return output;
 }
 

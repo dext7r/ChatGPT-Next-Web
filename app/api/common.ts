@@ -88,15 +88,14 @@ export async function requestOpenai(req: NextRequest) {
       console.log("[Requset Model] ", jsonBody?.model ?? "");
       // not undefined and is false
       if (
-        isModelAvailableInServer(
+        !isModelAvailableInServer(
           serverConfig.customModels,
           jsonBody?.model as string,
-          ServiceProvider.OpenAI as string,
-        ) ||
-        isModelAvailableInServer(
-          serverConfig.customModels,
-          jsonBody?.model as string,
-          ServiceProvider.Azure as string,
+          [
+            ServiceProvider.OpenAI,
+            ServiceProvider.Azure,
+            jsonBody?.model as string,
+          ],
         )
       ) {
         return NextResponse.json(

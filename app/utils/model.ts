@@ -139,9 +139,17 @@ export function collectModelsWithDefaultModel(
 export function isModelAvailableInServer(
   customModels: string,
   modelName: string,
-  providerName: string,
+  providerNames: string | string[],
 ) {
-  const fullName = `${modelName}@${providerName}`;
   const modelTable = collectModelTable(DEFAULT_MODELS, customModels);
-  return modelTable[fullName]?.available === false;
+  const providerNamesArray = Array.isArray(providerNames)
+    ? providerNames
+    : [providerNames];
+  for (const providerName of providerNamesArray) {
+    const fullName = `${modelName}@${providerName.toLowerCase()}`;
+    if (modelTable[fullName]?.available === true) {
+      return true;
+    }
+  }
+  return false;
 }

@@ -194,6 +194,10 @@ const openaiModels = [
   "o1-mini",
   "o1-preview",
   // 非标准模型
+  "o1",
+  "o1-all",
+  "o1-pro",
+  "o1-pro-all",
   "gpt-4o-plus",
   "gpt-o1-mini",
   "gpt-o1-preview",

@@ -480,6 +480,15 @@ export function SearchSelector<T>(props: {
 
   // 添加搜索状态
   const [searchQuery, setSearchQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // 当组件加载时自动聚焦到输入框
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
   const handleSelection = (e: MouseEvent, value: T) => {
     if (props.multiple) {
       e.stopPropagation();
@@ -511,6 +520,7 @@ export function SearchSelector<T>(props: {
           {/* 搜索框 */}
           <div className={styles["selector-search"]}>
             <input
+              ref={inputRef}
               type="text"
               className={styles["selector-search-input"]}
               placeholder={Locale.UI.SearchModel}

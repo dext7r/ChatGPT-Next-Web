@@ -573,6 +573,7 @@ const cn = {
     Import: "导入",
     Sync: "同步",
     Config: "配置",
+    SearchModel: "搜索模型",
   },
   Exporter: {
     Description: {

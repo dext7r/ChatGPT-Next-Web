@@ -87,6 +87,7 @@ import {
   List,
   ListItem,
   Modal,
+  SearchSelector,
   Selector,
   showConfirm,
   showPrompt,
@@ -120,6 +121,8 @@ import { MultimodalContent, getClientApi } from "../client/api";
 import { ClientApi } from "../client/api";
 import { createTTSPlayer } from "../utils/audio";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "../utils/ms_edge_tts";
+
+import { isEmpty } from "lodash-es";
 
 const localStorage = safeLocalStorage();
 
@@ -698,7 +701,7 @@ export function ChatActions(props: {
         />
 
         {showModelSelector && (
-          <Selector
+          <SearchSelector
             defaultSelectedValue={`${currentModel}@${currentProviderName}`}
             items={models.map((m) => ({
               title:
@@ -1013,7 +1016,7 @@ function _Chat() {
   };
 
   const doSubmit = (userInput: string) => {
-    if (userInput.trim() === "") return;
+    if (userInput.trim() === "" && isEmpty(attachImages)) return;
     const matchCommand = chatCommands.match(userInput);
     if (matchCommand.matched) {
       setUserInput("");

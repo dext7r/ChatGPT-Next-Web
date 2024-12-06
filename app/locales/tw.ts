@@ -490,6 +490,7 @@ const tw = {
     Import: "匯入",
     Sync: "同步",
     Config: "設定",
+    SearchModel: "搜尋模型",
   },
   Exporter: {
     Description: {

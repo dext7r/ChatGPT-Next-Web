@@ -199,8 +199,12 @@ const openaiModels = [
   "o1-pro",
   "o1-pro-all",
   "gpt-4o-plus",
+  "gpt-4o-all",
+  "gpt-4-all",
   "gpt-o1-mini",
   "gpt-o1-preview",
+  "gpt-o1",
+  "gpt-o1-pro",
 ];
 
 const googleModels = [
@@ -215,6 +219,7 @@ const googleModels = [
   "gemini-1.5-pro-exp-0827",
   "gemini-exp-1114",
   "gemini-exp-1121",
+  "gemini-exp-1206",
   "gemini-pro-vision",
 ];
 

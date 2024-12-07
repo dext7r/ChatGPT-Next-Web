@@ -504,12 +504,26 @@ export function SearchSelector<T>(props: {
     }
   };
   // 过滤列表项
-  const filteredItems = props.items.filter(
-    (item) =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.subTitle &&
-        item.subTitle.toLowerCase().includes(searchQuery.toLowerCase())),
-  );
+  const filteredItems = props.items
+    .filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.subTitle &&
+          item.subTitle.toLowerCase().includes(searchQuery.toLowerCase())),
+    )
+    .sort((a, b) => {
+      // 将选中的项目排在前面
+      const aSelected = selectedValues.includes(a.value);
+      const bSelected = selectedValues.includes(b.value);
+      if (aSelected && !bSelected) {
+        return -1;
+      }
+      if (!aSelected && bSelected) {
+        return 1;
+      }
+      return 0;
+    });
+
   return (
     <div className={styles["selector"]} onClick={() => props.onClose?.()}>
       <div
@@ -550,12 +564,31 @@ export function SearchSelector<T>(props: {
                 {selected ? (
                   <div
                     style={{
-                      height: 10,
-                      width: 10,
+                      height: 16,
+                      width: 16,
                       backgroundColor: "var(--primary)",
-                      borderRadius: 10,
+                      borderRadius: 8,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
-                  ></div>
+                  >
+                    <svg // 白色对勾图标
+                      width="10"
+                      height="10"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2 5L4 7L8 3"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
                 ) : (
                   <></>
                 )}

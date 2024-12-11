@@ -46,6 +46,9 @@ declare global {
       // sidebar title
       SIDEBAR_TITLE?: string;
       SIDEBAR_SUBTITLE?: string;
+
+      // website title
+      SITE_TITLE?: string;
     }
   }
 }

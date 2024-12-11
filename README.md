@@ -222,7 +222,7 @@ If you do not want users to input their own API key, set this value to 1. （要
 
 > Default: Empty
 
-If you do not want users to use GPT-4, set this value to 1. （要禁止用户使用 gpt4 ，则设置该变量非空）
+If you do not want users to use GPT-4, set this value to 1. （要禁止用户使用 gpt4/chatgpt-4o/o1 等 gpt 高级模型，则设置该变量非空）
 
 ### `ENABLE_BALANCE_QUERY` (optional)
 
@@ -252,6 +252,29 @@ Set the title of sidebar. （侧边栏标题）
 ### `SIDEBAR_SUBTITLE` (optional)
 
 Set the subtitle of sidebar. Support html parsing. （侧边栏子标题，支持html解析）
+
+- html 示例：
+```
+<br>
+<div style="line-height: 1.8;">
+   <div>AI-Chat 演示站</div>
+   <div>测试侧边栏文字 HTML 解析</div>
+   <a href="https://github.com/QAbot-zh/ChatGPT-Next-Web" 
+      style="color: #1890ff;
+               text-decoration: none;
+               font-weight: 500;
+               transition: all 0.3s ease;
+               padding: 2px 4px;
+               border-radius: 4px;
+               background-color: rgba(24,144,255,0.1);">
+      <span style="margin-bottom: 8px;">📦</span>Github项目
+   </a>
+</div>
+```
+
+实际效果：
+
+![alt text](image.png)
 
 ### `SITE_TITLE` (optional)
 

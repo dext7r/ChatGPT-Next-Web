@@ -253,12 +253,16 @@ export function isVisionModel(model: string) {
   const excludeKeywords = ["claude-3-5-haiku-20241022"];
   const visionKeywords = [
     "vision",
+    "gpt-4o",
     "claude-3",
     "gemini-1.5",
-    "gpt-4o",
+    "gemini-2.0",
     "gemini-exp",
     "learnlm",
     "pixtral",
+    "qwen-vl",
+    "qwen2-vl",
+    "glm-4v",
   ];
   const isGpt4Turbo =
     model.includes("gpt-4-turbo") && !model.includes("preview");

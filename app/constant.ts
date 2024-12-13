@@ -200,11 +200,11 @@ const openaiModels = [
   "o1-pro-all",
   "gpt-4o-plus",
   "gpt-4o-all",
-  "gpt-4-all",
   "gpt-o1-mini",
   "gpt-o1-preview",
   "gpt-o1",
   "gpt-o1-pro",
+  "gpt-4-all",
 ];
 
 const googleModels = [
@@ -212,6 +212,7 @@ const googleModels = [
   "gemini-1.5-flash-8b-exp-0827",
   "gemini-1.5-flash-exp-0827",
   "gemini-1.5-flash-002",
+  "gemini-2.0-flash-exp",
   "gemini-1.5-flash-latest",
   "gemini-1.5-pro-002",
   "gemini-1.5-pro-latest",

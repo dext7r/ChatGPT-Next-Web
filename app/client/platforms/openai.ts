@@ -150,6 +150,10 @@ export class ChatGPTApi implements LLMApi {
     const isO1 =
       options.config.model.startsWith("o1") ||
       options.config.model.startsWith("gpt-o1");
+    const model_name = options.config.model.toLowerCase();
+    const isGlm4v = model_name.startsWith("glm-4v");
+    const isMistral = model_name.startsWith("mistral");
+    const isMiniMax = model_name.startsWith("aabb");
 
     const messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
@@ -231,12 +235,12 @@ export class ChatGPTApi implements LLMApi {
     // add max_tokens to vision model
     // if (visionModel && modelConfig.model.includes("preview")) {
     if (
-      (visionModel && modelConfig.model !== "gpt-4-turbo") ||
-      modelConfig.model.startsWith("abab")
+      (visionModel && modelConfig.model !== "gpt-4-turbo" && !isGlm4v) ||
+      isMiniMax
     ) {
       requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
     }
-    if (!modelConfig.model.toLowerCase().startsWith("mistral")) {
+    if (!isMistral) {
       requestPayload["presence_penalty"] = modelConfig.presence_penalty;
       requestPayload["frequency_penalty"] = modelConfig.frequency_penalty;
       if (isO1) {

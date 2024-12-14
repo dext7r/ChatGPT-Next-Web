@@ -17,9 +17,11 @@ export function ModelConfigList(props: {
     allModels.filter((v) => v.available),
     "provider.providerName",
   );
+  // const { translateModel, ocrModel } = useAccessStore();
   const value = `${props.modelConfig.model}@${props.modelConfig?.providerName}`;
   const compressModelValue = `${props.modelConfig.compressModel}@${props.modelConfig?.compressProviderName}`;
-  const translateModelValue = `${props.modelConfig.translateModel}@${props.modelConfig?.translateProviderName}`;
+  // const translateModelValue = `${props.modelConfig.translateModel}@${props.modelConfig?.translateProviderName}`;
+  // const ocrModelValue = `${props.modelConfig.ocrModel}@${props.modelConfig?.ocrProviderName}`;
 
   return (
     <>
@@ -265,7 +267,7 @@ export function ModelConfigList(props: {
             ))}
         </Select>
       </ListItem>
-      <ListItem
+      {/* <ListItem
         title={Locale.Settings.TranslateModel.Title}
         subTitle={Locale.Settings.TranslateModel.SubTitle}
       >
@@ -291,6 +293,32 @@ export function ModelConfigList(props: {
             ))}
         </Select>
       </ListItem>
+      <ListItem
+        title={Locale.Settings.OCRModel.Title}
+        subTitle={Locale.Settings.OCRModel.SubTitle}
+      >
+        <Select
+          className={styles["select-ocr-model"]}
+          aria-label={Locale.Settings.OCRModel.Title}
+          value={ocrModelValue}
+          onChange={(e) => {
+            const [model, providerName] =
+              e.currentTarget.value.split(/@(?=[^@]*$)/);
+            props.updateConfig((config) => {
+              config.ocrModel = ModalConfigValidator.model(model);
+              config.ocrProviderName = providerName as ServiceProvider;
+            });
+          }}
+        >
+          {allModels
+            .filter((v) => v.available)
+            .map((v, i) => (
+              <option value={`${v.name}@${v.provider?.providerName}`} key={i}>
+                {v.displayName}({v.provider?.providerName})
+              </option>
+            ))}
+        </Select>
+      </ListItem> */}
     </>
   );
 }

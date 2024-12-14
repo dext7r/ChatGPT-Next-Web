@@ -13,7 +13,6 @@ import {
   ServiceProvider,
   StoreKey,
 } from "../constant";
-import { compressImage } from "../utils/chat";
 import { createPersistStore } from "../utils/store";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
@@ -76,6 +75,8 @@ export const DEFAULT_CONFIG = {
     compressProviderName: "OpenAI" as ServiceProvider,
     translateModel: "gpt-4o-mini" as ModelType,
     translateProviderName: "OpenAI" as ServiceProvider,
+    ocrModel: "gpt-4o-mini" as ModelType,
+    ocrProviderName: "OpenAI" as ServiceProvider,
     enableInjectSystemPrompts: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
   },
@@ -240,6 +241,9 @@ export const useAppConfig = createPersistStore(
           DEFAULT_CONFIG.modelConfig.translateModel;
         state.modelConfig.translateProviderName =
           DEFAULT_CONFIG.modelConfig.translateProviderName;
+        state.modelConfig.ocrModel = DEFAULT_CONFIG.modelConfig.ocrModel;
+        state.modelConfig.ocrProviderName =
+          DEFAULT_CONFIG.modelConfig.ocrProviderName;
       }
 
       return state as any;

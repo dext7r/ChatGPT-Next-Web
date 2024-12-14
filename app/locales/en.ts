@@ -87,6 +87,29 @@ const en: LocaleType = {
         TranslatePrompt:
           "Please act as a Chinese-English interpreter, verify the accuracy of the information, and translate it naturally, fluently, and idiomatically, using beautiful and elegant expressions. The text may contain redundant line breaks within paragraphs and pagination issues due to copying problems, which should be intelligently removed in context. Regardless of what the other party replies, you should only translate the content. You should only respond with the translated content and not with any other information. Do not provide explanations. This is the content you need to translate: \n",
       },
+      OCR: {
+        Title: "OCR",
+        BlankToast: "No image input detected, no OCR will be performed",
+        isDetectingToast: "Currently OCR ...",
+        FailDetectToast:
+          "This OCR failed; please check the OCR model settings and try again.",
+        SuccessDetectToast:
+          "This OCR has been completed and replaced the input image.",
+        DetectSystemPrompt:
+          "You are a professional OCR text recognition tool. Please strictly adhere to the following rules:\n\
+1.Only output the actual text present in the image, without adding any explanations, comments, or extra content.\n\
+2.Maintain the original format, line breaks, indentation, punctuation, etc., exactly as they are.\n\
+3.For text that is difficult to recognize, use [...] to indicate it, and do not guess or supplement.\n\
+4.If it is a table, maintain the original table structure as much as possible.\n\
+5.If it is code, keep the original code format.\n\
+6.If it includes mathematical formulas, use LaTeX format and wrap it with $$.\n\
+7.If the content contains multiple languages, accurately recognize and maintain the original languages.\n\
+8.If there are punctuation marks, maintain their original usage.\n\
+9.If there are special symbols or formulas, ensure accurate conversion to their corresponding formats.\n\
+10.Do not make any modifications, polishing, or reorganization of the text content.",
+        DetectPrompt:
+          "Please help me OCR this image, according to the above rules, and ensure the accuracy of the output results without any additional content.",
+      },
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
@@ -411,6 +434,10 @@ const en: LocaleType = {
     TranslateModel: {
       Title: "translation model",
       SubTitle: "Model used to translate input text",
+    },
+    OCRModel: {
+      Title: "ocr model",
+      SubTitle: "Model used to extract text from input image",
     },
     Temperature: {
       Title: "Temperature",

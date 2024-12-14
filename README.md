@@ -280,6 +280,15 @@ Set the subtitle of sidebar. Support html parsing. （侧边栏子标题，支�
 
 Set the website title. （网站顶部标题）
 
+### `TRANSLATE_MODEL` （optional）
+
+Set the translate model. （设置翻译模型，默认为 gpt-4o-mini）
+
+### `OCR_MODEL` （optional）
+
+Set the ocr model. （设置 ocr 模型，默认为 gpt-4o-mini）
+
+
 ### `WHITE_WEBDEV_ENDPOINTS` (optional)
 
 You can use this option if you want to increase the number of webdav service addresses you are allowed to access, as required by the format：

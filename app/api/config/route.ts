@@ -15,8 +15,11 @@ const DANGER_CONFIG = {
   disableFastLink: serverConfig.disableFastLink,
   customModels: serverConfig.customModels,
   defaultModel: serverConfig.defaultModel,
+  translateModel: serverConfig.translateModel,
+  ocrModel: serverConfig.ocrModel,
   sidebarTitle: siderbarConfig.title,
   sidebarSubTitle: siderbarConfig.subTitle,
+  siteTitle: siderbarConfig.siteTitle,
 };
 
 declare global {

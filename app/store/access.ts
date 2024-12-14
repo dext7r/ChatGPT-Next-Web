@@ -8,7 +8,7 @@ import { getHeaders } from "../client/api";
 import { getClientConfig } from "../config/client";
 import { createPersistStore } from "../utils/store";
 import { ensure } from "../utils/clone";
-import { DEFAULT_CONFIG } from "./config";
+import { DEFAULT_CONFIG, ModelType } from "./config";
 import { showToast } from "../components/ui-lib";
 
 let fetchState = 0; // 0 not fetch, 1 fetching, 2 done
@@ -55,6 +55,11 @@ const DEFAULT_ACCESS_STATE = {
   // sidebar config
   sidebarTitle: "",
   sidebarSubTitle: "",
+  siteTitle: "NextChat",
+
+  // model config
+  translateModel: "" as ModelType,
+  ocrModel: "" as ModelType,
 
   // tts config
   edgeTTSVoiceName: "zh-CN-YunxiNeural",
@@ -71,6 +76,18 @@ export const useAccessStore = createPersistStore(
     setSideBarSubTitle() {
       this.fetch();
       return get().sidebarSubTitle;
+    },
+    setSiteTitle() {
+      this.fetch();
+      return get().siteTitle;
+    },
+    setTranslateModel() {
+      this.fetch();
+      return get().translateModel;
+    },
+    setOcrModel() {
+      this.fetch();
+      return get().ocrModel;
     },
     enabledAccessControl() {
       this.fetch();

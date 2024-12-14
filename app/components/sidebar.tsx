@@ -7,15 +7,10 @@ import SettingsIcon from "../icons/settings.svg";
 import GithubIcon from "../icons/github.svg";
 import ChatGptIcon from "../icons/chatgpt.svg";
 import AddIcon from "../icons/add.svg";
-// import CloseIcon from "../icons/close.svg";
 import DeleteIcon from "../icons/delete.svg";
 import MaskIcon from "../icons/mask.svg";
-// import PluginIcon from "../icons/plugin.svg";
 import DragIcon from "../icons/drag.svg";
 import DiscoveryIcon from "../icons/discovery.svg";
-// import OpenAIIcon from "../icons/openai.svg";
-// import FileExpressIcon from "../icons/upload-and-download.svg";
-// import PlusIcon from "../icons/openai_plus.svg";
 import parse from "html-react-parser";
 
 import Locale from "../locales";
@@ -30,9 +25,6 @@ import {
   Path,
   PLUGINS,
   REPO_URL,
-  // FAKE_OPENAI_URL,
-  // FILEBOX_URL
-  // PLUS_OPENAI_URL
 } from "../constant";
 
 import { Link, useNavigate } from "react-router-dom";

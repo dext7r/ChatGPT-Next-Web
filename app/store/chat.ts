@@ -819,9 +819,12 @@ export const useChatStore = createPersistStore(
           s.mask.modelConfig.compressModel = config.modelConfig.compressModel;
           s.mask.modelConfig.compressProviderName =
             config.modelConfig.compressProviderName;
-          s.mask.modelConfig.translateModel = config.modelConfig.translateModel;
-          s.mask.modelConfig.translateProviderName =
-            config.modelConfig.translateProviderName;
+          // s.mask.modelConfig.translateModel = config.modelConfig.translateModel;
+          // s.mask.modelConfig.translateProviderName =
+          //   config.modelConfig.translateProviderName;
+          // s.mask.modelConfig.ocrModel = config.modelConfig.ocrModel;
+          // s.mask.modelConfig.ocrProviderName =
+          //   config.modelConfig.ocrProviderName;
         });
       }
 

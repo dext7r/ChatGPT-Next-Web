@@ -71,13 +71,6 @@ function getApiKey(keys?: string) {
   const apiKeys = apiKeyEnvVar.split(",").map((v) => v.trim());
   const randomIndex = Math.floor(Math.random() * apiKeys.length);
   const apiKey = apiKeys[randomIndex];
-  // if (apiKey) {
-  //   console.log(
-  //     `[Server Config] using ${randomIndex + 1} of ${
-  //       apiKeys.length
-  //     } api key - ${apiKey}`,
-  //   );
-  // }
 
   return apiKey;
 }
@@ -118,11 +111,6 @@ export const getServerSideConfig = () => {
   const isAzure = !!process.env.AZURE_URL;
   const isGoogle = !!process.env.GOOGLE_API_KEY;
   const isAnthropic = !!process.env.ANTHROPIC_API_KEY;
-
-  // const apiKeyEnvVar = process.env.OPENAI_API_KEY ?? "";
-  // const apiKeys = apiKeyEnvVar.split(",").map((v) => v.trim());
-  // const randomIndex = Math.floor(Math.random() * apiKeys.length);
-  // const apiKey = apiKeys[randomIndex];
 
   const fastApiKeyEnvVar = process.env.FAST_API_KEY ?? "";
   const fastApiKeys = fastApiKeyEnvVar.split(",").map((v) => v.trim());
@@ -189,5 +177,8 @@ export const getServerSideConfig = () => {
     fastBaseUrl,
     fastModels,
     fastChannel,
+
+    translateModel: process.env.TRANSLATE_MODEL,
+    ocrModel: process.env.OCR_MODEL,
   };
 };

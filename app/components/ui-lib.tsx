@@ -14,7 +14,6 @@ import Locale from "../locales";
 
 import { createRoot } from "react-dom/client";
 import React, {
-  CSSProperties,
   HTMLProps,
   MouseEvent,
   useEffect,

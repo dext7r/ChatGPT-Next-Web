@@ -46,6 +46,7 @@ import SearchChatIcon from "../icons/zoom.svg";
 import ShortcutkeyIcon from "../icons/shortcutkey.svg";
 import ReloadIcon from "../icons/reload.svg";
 import TranslateIcon from "../icons/translate.svg";
+import OcrIcon from "../icons/ocr.svg";
 
 import {
   ChatMessage,
@@ -88,7 +89,6 @@ import {
   ListItem,
   Modal,
   SearchSelector,
-  Selector,
   showConfirm,
   showPrompt,
   showToast,
@@ -472,6 +472,7 @@ function useScrollToBottom(
 
 export function ChatActions(props: {
   uploadImage: () => void;
+  attachImages: string[];
   setAttachImages: (images: string[]) => void;
   setUploading: (uploading: boolean) => void;
   showPromptModal: () => void;
@@ -490,16 +491,27 @@ export function ChatActions(props: {
 
   // translate
   const [isTranslating, setIsTranslating] = useState(false);
+  // ocr
+  const [isOCRing, setIsOCRing] = useState(false);
+  const { translateModel, ocrModel } = useAccessStore();
 
   const handleTranslate = async () => {
     if (props.userInput.trim() === "") {
       showToast(Locale.Chat.InputActions.Translate.BlankToast);
       return;
     }
-    console.log("[userInput] ", props.userInput);
     setIsTranslating(true);
     showToast(Locale.Chat.InputActions.Translate.isTranslatingToast);
     //
+    const [translateModelName, translateProviderName] =
+      translateModel.split(/@(?=[^@]*$)/);
+    if (translateModelName) {
+      session.mask.modelConfig.translateModel = translateModelName;
+      if (translateProviderName) {
+        session.mask.modelConfig.translateProviderName =
+          translateProviderName as ServiceProvider;
+      }
+    }
     const modelConfig = session.mask.modelConfig;
 
     const providerName = modelConfig.translateProviderName;
@@ -517,7 +529,6 @@ export function ChatActions(props: {
       },
       onFinish(message, responseRes) {
         if (responseRes?.status === 200) {
-          setIsTranslating(false);
           if (!isValidMessage(message)) {
             showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
             return;
@@ -527,6 +538,68 @@ export function ChatActions(props: {
         } else {
           showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
         }
+        setIsTranslating(false);
+      },
+    });
+  };
+  const handleOCR = async () => {
+    if (isEmpty(props.attachImages)) {
+      showToast(Locale.Chat.InputActions.OCR.BlankToast);
+      return;
+    }
+    // console.log("[userInput] ", props.userInput);
+    setIsOCRing(true);
+    showToast(Locale.Chat.InputActions.OCR.isDetectingToast);
+    //
+    const [ocrModelName, ocrProviderName] = ocrModel.split(/@(?=[^@]*$)/);
+    if (ocrModelName) {
+      session.mask.modelConfig.ocrModel = ocrModelName;
+      if (ocrProviderName) {
+        session.mask.modelConfig.translateProviderName =
+          ocrProviderName as ServiceProvider;
+      }
+    }
+    const modelConfig = session.mask.modelConfig;
+    const providerName = modelConfig.translateProviderName;
+
+    const api: ClientApi = getClientApi(providerName);
+    const newContext: MultimodalContent[] = [
+      { type: "text", text: `${Locale.Chat.InputActions.OCR.DetectPrompt}` },
+    ];
+    for (const image of props.attachImages) {
+      newContext.push({ type: "image_url", image_url: { url: image } });
+    }
+
+    api.llm.chat({
+      messages: [
+        {
+          role: "system",
+          content: `${Locale.Chat.InputActions.OCR.DetectSystemPrompt}`,
+        },
+        {
+          role: "user",
+          content: newContext,
+        },
+      ],
+      config: {
+        model: modelConfig.ocrModel,
+        stream: false,
+      },
+      onFinish(message, responseRes) {
+        if (responseRes?.status === 200) {
+          if (!isValidMessage(message)) {
+            showToast(Locale.Chat.InputActions.OCR.FailDetectToast);
+            return;
+          }
+          props.setUserInput(
+            `${props.userInput}${props.userInput ? "\n" : ""}${message}`,
+          );
+          props.setAttachImages([]);
+          showToast(Locale.Chat.InputActions.OCR.SuccessDetectToast);
+        } else {
+          showToast(Locale.Chat.InputActions.OCR.FailDetectToast);
+        }
+        setIsOCRing(false);
       },
     });
   };
@@ -751,11 +824,21 @@ export function ChatActions(props: {
           onClick={handleTranslate}
           text={
             isTranslating
-              ? "翻译中..."
+              ? Locale.Chat.InputActions.Translate.isTranslatingToast
               : Locale.Chat.InputActions.Translate.Title
           }
           alwaysShowText={isTranslating}
           icon={<TranslateIcon />}
+        />
+        <ChatAction
+          onClick={handleOCR}
+          text={
+            isOCRing
+              ? Locale.Chat.InputActions.OCR.isDetectingToast
+              : Locale.Chat.InputActions.OCR.Title
+          }
+          alwaysShowText={isOCRing}
+          icon={<OcrIcon />}
         />
       </div>
     </div>
@@ -1900,6 +1983,7 @@ function _Chat() {
 
         <ChatActions
           uploadImage={uploadImage}
+          attachImages={attachImages}
           setAttachImages={setAttachImages}
           setUploading={setUploading}
           showPromptModal={() => setShowPromptModal(true)}

@@ -563,9 +563,11 @@ export function ChatActions(props: {
     const providerName = modelConfig.translateProviderName;
 
     const api: ClientApi = getClientApi(providerName);
-    const newContext: MultimodalContent[] = [
-      { type: "text", text: `${Locale.Chat.InputActions.OCR.DetectPrompt}` },
-    ];
+    let textValue = Locale.Chat.InputActions.OCR.DetectPrompt;
+    if (props.userInput && props.userInput.trim() !== "") {
+      textValue += `\n(${props.userInput})`;
+    }
+    const newContext: MultimodalContent[] = [{ type: "text", text: textValue }];
     for (const image of props.attachImages) {
       newContext.push({ type: "image_url", image_url: { url: image } });
     }

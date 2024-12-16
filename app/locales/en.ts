@@ -110,6 +110,16 @@ const en: LocaleType = {
         DetectPrompt:
           "Please help me OCR this image, according to the above rules, and ensure the accuracy of the output results without any additional content.",
       },
+      Privacy: {
+        Title: "Mosaic for Privacy Input, irreversible",
+        BlankToast:
+          "Input content is empty, no privacy mosaic will be performed",
+        isPrivacyToast: "Currently privacy mosaic ...",
+        FailPrivacyToast:
+          "This privacy mosaic failed; please check the privacy model settings and try again.",
+        SuccessPrivacyToast:
+          "This privacy mosaic has been completed and replaced the input content.",
+      },
     },
     Rename: "Rename Chat",
     Typing: "Typing…",

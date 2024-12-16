@@ -47,6 +47,7 @@ import ShortcutkeyIcon from "../icons/shortcutkey.svg";
 import ReloadIcon from "../icons/reload.svg";
 import TranslateIcon from "../icons/translate.svg";
 import OcrIcon from "../icons/ocr.svg";
+import PrivacyIcon from "../icons/privacy.svg";
 
 import {
   ChatMessage,
@@ -493,6 +494,8 @@ export function ChatActions(props: {
   const [isTranslating, setIsTranslating] = useState(false);
   // ocr
   const [isOCRing, setIsOCRing] = useState(false);
+  // privacy
+  const [isPrivacying, setIsPrivacying] = useState(false);
   const { translateModel, ocrModel } = useAccessStore();
 
   const handleTranslate = async () => {
@@ -605,6 +608,69 @@ export function ChatActions(props: {
       },
     });
   };
+  const handlePrivacy = async () => {
+    if (props.userInput.trim() === "") {
+      showToast(Locale.Chat.InputActions.Privacy.BlankToast);
+      return;
+    }
+    setIsPrivacying(true);
+    showToast(Locale.Chat.InputActions.Privacy.isPrivacyToast);
+    const markedText = maskSensitiveInfo(props.userInput);
+    props.setUserInput(markedText);
+    showToast(Locale.Chat.InputActions.Privacy.SuccessPrivacyToast);
+    setIsPrivacying(false);
+  };
+  function maskSensitiveInfo(text: string): string {
+    // 手机号: 保留前3位和后4位
+    const maskPhone = (match: string): string => {
+      return match.slice(0, 3) + "****" + match.slice(-4);
+    };
+
+    // 邮箱: 保留用户名首字母和完整域名
+    const maskEmail = (match: string): string => {
+      const [username, domain] = match.split("@");
+      return username[0] + "***" + "@" + domain;
+    };
+
+    // UUID: 保留首尾各4位
+    const maskUUID = (match: string): string => {
+      return match.slice(0, 4) + "****" + match.slice(-4);
+    };
+
+    // IP地址: 保留第一段
+    const maskIP = (match: string): string => {
+      const segments = match.split(".");
+      return segments[0] + ".*.*.*";
+    };
+
+    // sk-开头的密钥: 保留前4位和后4位，中间部分用*替换
+    const maskKey = (match: string): string => {
+      return match.slice(0, 4) + "*".repeat(match.length - 8) + match.slice(-4);
+    };
+
+    // 正则匹配
+    const patterns: { regex: RegExp; maskFunc: (match: string) => string }[] = [
+      { regex: /1[3-9]\d{9}/g, maskFunc: maskPhone }, // 11位手机号
+      {
+        regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+        maskFunc: maskEmail,
+      }, // 邮箱
+      {
+        regex:
+          /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g,
+        maskFunc: maskUUID,
+      }, // UUID
+      { regex: /\b\d{1,3}(\.\d{1,3}){3}\b/g, maskFunc: maskIP }, // IP地址
+      { regex: /sk-[a-zA-Z0-9]{12,}/g, maskFunc: maskKey }, // sk-开头的、超过12位的密钥
+    ];
+
+    let maskedText = text;
+    for (const { regex, maskFunc } of patterns) {
+      maskedText = maskedText.replace(regex, maskFunc);
+    }
+
+    return maskedText;
+  }
   function isValidMessage(message: any): boolean {
     if (typeof message !== "string") {
       return false;
@@ -841,6 +907,16 @@ export function ChatActions(props: {
           }
           alwaysShowText={isOCRing}
           icon={<OcrIcon />}
+        />
+        <ChatAction
+          onClick={handlePrivacy}
+          text={
+            isPrivacying
+              ? Locale.Chat.InputActions.Privacy.isPrivacyToast
+              : Locale.Chat.InputActions.Privacy.Title
+          }
+          alwaysShowText={isPrivacying}
+          icon={<PrivacyIcon />}
         />
       </div>
     </div>

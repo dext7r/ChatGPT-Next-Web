@@ -81,6 +81,24 @@ One-Click to get a well-designed cross-platform ChatGPT web UI, with GPT3, GPT4 
 - 多国语言支持：English, 简体中文, 繁体中文, 日本語, Español, Italiano, Türkçe, Deutsch, Tiếng Việt, Русский, Čeština, 한국어, Indonesia
 - 拥有自己的域名？好上加好，绑定后即可在任何地方**无障碍**快速访问
 
+## 二开新增功能
+- 免导入导出的云备份功能（需配合[文件服务器项目](https://github.com/QAbot-zh/go-file-server)使用）
+- 侧边栏自定义
+- 基于 AI 模型的中英互译
+
+![alt text](image-3.png)
+![alt text](image-4.png)
+
+- 基于 AI 模型的 ocr 
+
+![alt text](image-5.png)
+![alt text](image-6.png)
+
+- 基于正则匹配的隐私打码（**所有基于 AI 模型的功能的信息安全请自行把握，包括上述的翻译和ocr，打码功能不基于 AI 实现**）
+
+![alt text](image-1.png)
+![alt text](image-2.png)
+
 ## 开发计划
 
 - [x] 为每个对话设置系统 Prompt [#138](https://github.com/Yidadaa/ChatGPT-Next-Web/issues/138)

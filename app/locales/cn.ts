@@ -108,6 +108,13 @@ const cn = {
         DetectPrompt:
           "请帮我识别这张图片中的文字内容,按照上述规则输出结果，确保输出结果的准确性且没有多余内容。",
       },
+      Privacy: {
+        Title: "输入隐私打码,不可撤销",
+        BlankToast: "输入内容为空，不执行本次打码。",
+        isPrivacyToast: "正在打码中...",
+        FailPrivacyToast: "本次打码失败，无权限或请检查模型设置后再次尝试",
+        SuccessPrivacyToast: "本次打码已结束并替换输入内容",
+      },
     },
     Rename: "重命名对话",
     Typing: "正在输入…",

@@ -87,16 +87,20 @@ export async function requestOpenai(req: NextRequest) {
       const jsonBody = JSON.parse(clonedBody) as { model?: string };
       console.log("[Requset Model] ", jsonBody?.model ?? "");
       // not undefined and is false
+      const models = [
+        serverConfig.customModels,
+        serverConfig.ocrModel,
+        serverConfig.translateModel,
+      ];
+
+      // 使用filter过滤掉不存在的model，再用join组合成字符串
+      const combinedModels = models.filter((model) => model).join(",");
       if (
-        !isModelAvailableInServer(
-          serverConfig.customModels,
+        !isModelAvailableInServer(combinedModels, jsonBody?.model as string, [
+          ServiceProvider.OpenAI,
+          ServiceProvider.Azure,
           jsonBody?.model as string,
-          [
-            ServiceProvider.OpenAI,
-            ServiceProvider.Azure,
-            jsonBody?.model as string,
-          ],
-        )
+        ])
       ) {
         return NextResponse.json(
           {

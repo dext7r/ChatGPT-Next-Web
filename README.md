@@ -86,18 +86,18 @@ One-Click to get a well-designed cross-platform ChatGPT web UI, with GPT3, GPT4 
 - 侧边栏自定义
 - 基于 AI 模型的中英互译
 
-![alt text](image-3.png)
-![alt text](image-4.png)
+![before translate](./docs/images/translate-1.png)
+![after translate](./docs/images/translate-2.png)
 
 - 基于 AI 模型的 ocr 
 
-![alt text](image-5.png)
-![alt text](image-6.png)
+![before ocr](./docs/images/ocr-1.png)
+![after ocr](./docs/images/ocr-2.png)
 
 - 基于正则匹配的隐私打码（**所有基于 AI 模型的功能的信息安全请自行把握，包括上述的翻译和ocr，打码功能不基于 AI 实现**）
 
-![alt text](image-1.png)
-![alt text](image-2.png)
+![before privacy](./docs//images/privacy-1.png)
+![after privacy](./docs//images/privacy-2.png)
 
 ## 开发计划
 

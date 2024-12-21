@@ -9,6 +9,7 @@ import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
 import MaxIcon from "../icons/max.svg";
 import MinIcon from "../icons/min.svg";
+import { Avatar } from "./emoji";
 
 import Locale from "../locales";
 
@@ -49,7 +50,7 @@ export function Card(props: { children: JSX.Element[]; className?: string }) {
 }
 
 export function ListItem(props: {
-  title: string;
+  title: JSX.Element;
   subTitle?: string;
   children?: JSX.Element | JSX.Element[];
   icon?: JSX.Element;
@@ -550,7 +551,14 @@ export function SearchSelector<T>(props: {
                   item.disable && styles["selector-item-disabled"]
                 }`}
                 key={i}
-                title={item.title}
+                title={
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <div style={{ marginRight: 8 }}>
+                      <Avatar model={item.value as string} />
+                    </div>
+                    {item.title}
+                  </div>
+                }
                 subTitle={item.subTitle}
                 onClick={(e) => {
                   if (item.disable) {

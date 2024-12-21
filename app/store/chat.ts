@@ -9,7 +9,6 @@ import {
   DEFAULT_MODELS,
   DEFAULT_SYSTEM_TEMPLATE,
   KnowledgeCutOffDate,
-  ModelProvider,
   StoreKey,
 } from "../constant";
 import type {
@@ -23,11 +22,10 @@ import { prettyObject } from "../utils/format";
 import { estimateTokenLength } from "../utils/token";
 import { nanoid } from "nanoid";
 import { createPersistStore } from "../utils/store";
-import { identifyDefaultClaudeModel } from "../utils/checkers";
-import { collectModelsWithDefaultModel } from "../utils/model";
-import { useAccessStore } from "./access";
 import { safeLocalStorage } from "../utils";
 import { indexedDBStorage } from "@/app/utils/indexedDB-storage";
+import { useAccessStore } from "./access";
+import { ServiceProvider } from "../constant";
 
 const localStorage = safeLocalStorage();
 
@@ -176,6 +174,11 @@ const DEFAULT_CHAT_STATE = {
   currentSessionIndex: 0,
   lastInput: "",
 };
+
+export function getCompressModel() {
+  const compressModel = useAccessStore.getState().compressModel; // 直接访问状态
+  return compressModel;
+}
 
 export const useChatStore = createPersistStore(
   DEFAULT_CHAT_STATE,
@@ -580,6 +583,17 @@ export const useChatStore = createPersistStore(
       ) {
         const config = useAppConfig.getState();
         const session = targetSession;
+
+        const compressModel = getCompressModel();
+        const [compressModelName, compressProviderName] =
+          compressModel.split(/@(?=[^@]*$)/);
+        if (compressModelName) {
+          session.mask.modelConfig.compressModel = compressModelName;
+          if (compressProviderName) {
+            session.mask.modelConfig.translateProviderName =
+              compressProviderName as ServiceProvider;
+          }
+        }
         const modelConfig = session.mask.modelConfig;
 
         const providerName = modelConfig.compressProviderName;

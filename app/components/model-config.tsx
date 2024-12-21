@@ -6,23 +6,35 @@ import { InputRange } from "./input-range";
 import { ListItem, Select } from "./ui-lib";
 import { useAllModels } from "../utils/hooks";
 import { groupBy } from "lodash-es";
-import styles from "./model-config.module.scss";
 
 export function ModelConfigList(props: {
   modelConfig: ModelConfig;
   updateConfig: (updater: (config: ModelConfig) => void) => void;
 }) {
+  // const { compressModel } = useAccessStore();
+  // let [compressModelName, compressModelProviderName] = compressModel.split(/@(?=[^@]*$)/);
+  // compressModelProviderName = compressModelProviderName || compressModelName || "OpenAI";
+  // const compressModelObj = {
+  //   name: compressModelName,
+  //   displayName: compressModelName,
+  //   available: !!compressModelName,
+  //   provider: {
+  //     id: compressModelProviderName.toLowerCase(),
+  //     providerName: compressModelProviderName,
+  //     providerType: compressModelProviderName.toLowerCase(),
+  //   },
+  // }
+
   const allModels = useAllModels();
   const groupModels = groupBy(
     allModels.filter((v) => v.available),
     "provider.providerName",
   );
-  // const { translateModel, ocrModel } = useAccessStore();
   const value = `${props.modelConfig.model}@${props.modelConfig?.providerName}`;
-  const compressModelValue = `${props.modelConfig.compressModel}@${props.modelConfig?.compressProviderName}`;
-  // const translateModelValue = `${props.modelConfig.translateModel}@${props.modelConfig?.translateProviderName}`;
-  // const ocrModelValue = `${props.modelConfig.ocrModel}@${props.modelConfig?.ocrProviderName}`;
-
+  // let compressModelValue = compressModel ?
+  //   `${compressModelName}@${compressModelProviderName}` :
+  //   `${props.modelConfig.compressModel}@${props.modelConfig?.compressProviderName}`;
+  // console.log("compressModelValue", compressModelValue);
   return (
     <>
       <ListItem title={Locale.Settings.Model}>
@@ -241,7 +253,7 @@ export function ModelConfigList(props: {
           }
         ></input>
       </ListItem>
-      <ListItem
+      {/* <ListItem
         title={Locale.Settings.CompressModel.Title}
         subTitle={Locale.Settings.CompressModel.SubTitle}
       >
@@ -250,6 +262,7 @@ export function ModelConfigList(props: {
           aria-label={Locale.Settings.CompressModel.Title}
           value={compressModelValue}
           onChange={(e) => {
+            console.log("e.currentTarget.value", e.currentTarget.value);
             const [model, providerName] =
               e.currentTarget.value.split(/@(?=[^@]*$)/);
             props.updateConfig((config) => {
@@ -266,7 +279,7 @@ export function ModelConfigList(props: {
               </option>
             ))}
         </Select>
-      </ListItem>
+      </ListItem> */}
       {/* <ListItem
         title={Locale.Settings.TranslateModel.Title}
         subTitle={Locale.Settings.TranslateModel.SubTitle}

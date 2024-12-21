@@ -15,6 +15,7 @@ const DANGER_CONFIG = {
   disableFastLink: serverConfig.disableFastLink,
   customModels: serverConfig.customModels,
   defaultModel: serverConfig.defaultModel,
+  compressModel: serverConfig.compressModel,
   translateModel: serverConfig.translateModel,
   ocrModel: serverConfig.ocrModel,
   sidebarTitle: siderbarConfig.title,

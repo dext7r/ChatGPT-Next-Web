@@ -89,8 +89,9 @@ export async function requestOpenai(req: NextRequest) {
       // not undefined and is false
       const models = [
         serverConfig.customModels,
-        serverConfig.ocrModel,
+        serverConfig.compressModel,
         serverConfig.translateModel,
+        serverConfig.ocrModel,
       ];
 
       // 使用filter过滤掉不存在的model，再用join组合成字符串

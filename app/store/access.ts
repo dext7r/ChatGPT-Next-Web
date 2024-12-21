@@ -58,6 +58,7 @@ const DEFAULT_ACCESS_STATE = {
   siteTitle: "NextChat",
 
   // model config
+  compressModel: "" as ModelType,
   translateModel: "" as ModelType,
   ocrModel: "" as ModelType,
 
@@ -80,6 +81,10 @@ export const useAccessStore = createPersistStore(
     setSiteTitle() {
       this.fetch();
       return get().siteTitle;
+    },
+    setCompressModel() {
+      this.fetch();
+      return get().compressModel;
     },
     setTranslateModel() {
       this.fetch();

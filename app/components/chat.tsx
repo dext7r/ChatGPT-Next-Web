@@ -472,7 +472,7 @@ function useScrollToBottom(
 }
 
 export function ChatActions(props: {
-  uploadImage: () => void;
+  uploadImage: () => Promise<string[]>;
   attachImages: string[];
   setAttachImages: (images: string[]) => void;
   setUploading: (uploading: boolean) => void;
@@ -546,11 +546,16 @@ export function ChatActions(props: {
     });
   };
   const handleOCR = async () => {
+    let uploadedImages: string[] = props.attachImages || [];
     if (isEmpty(props.attachImages)) {
-      showToast(Locale.Chat.InputActions.OCR.BlankToast);
-      return;
+      uploadedImages = await props.uploadImage();
+      console.log("uploadedImages", uploadedImages);
+      // 如果上传后仍然没有图片，则退出
+      if (isEmpty(uploadedImages)) {
+        showToast(Locale.Chat.InputActions.OCR.BlankToast);
+        return;
+      }
     }
-    // console.log("[userInput] ", props.userInput);
     setIsOCRing(true);
     showToast(Locale.Chat.InputActions.OCR.isDetectingToast);
     //
@@ -571,7 +576,7 @@ export function ChatActions(props: {
       textValue += `\n(${props.userInput})`;
     }
     const newContext: MultimodalContent[] = [{ type: "text", text: textValue }];
-    for (const image of props.attachImages) {
+    for (const image of uploadedImages) {
       newContext.push({ type: "image_url", image_url: { url: image } });
     }
 
@@ -1623,7 +1628,7 @@ function _Chat() {
     [attachImages, chatStore],
   );
 
-  async function uploadImage() {
+  async function uploadImage(): Promise<string[]> {
     const images: string[] = [];
     images.push(...attachImages);
 
@@ -1666,6 +1671,7 @@ function _Chat() {
       images.splice(3, imagesLength - 3);
     }
     setAttachImages(images);
+    return images;
   }
   // 快捷键 shortcut keys
   const [showShortcutKeyModal, setShowShortcutKeyModal] = useState(false);

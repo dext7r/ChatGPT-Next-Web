@@ -50,7 +50,7 @@ export function Card(props: { children: JSX.Element[]; className?: string }) {
 }
 
 export function ListItem(props: {
-  title: string | JSX.Element;
+  title: string;
   subTitle?: string;
   children?: JSX.Element | JSX.Element[];
   icon?: JSX.Element;
@@ -551,14 +551,8 @@ export function SearchSelector<T>(props: {
                   item.disable && styles["selector-item-disabled"]
                 }`}
                 key={i}
-                title={
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <div style={{ marginRight: 8 }}>
-                      <Avatar model={item.value as string} />
-                    </div>
-                    {item.title}
-                  </div>
-                }
+                icon={<Avatar model={item.value as string} />}
+                title={item.title}
                 subTitle={item.subTitle}
                 onClick={(e) => {
                   if (item.disable) {

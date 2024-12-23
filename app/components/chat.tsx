@@ -854,6 +854,7 @@ export function ChatActions(props: {
                 m?.provider?.providerName?.toLowerCase() === "openai"
                   ? `${m.displayName}`
                   : `${m.displayName} (${m?.provider?.providerName})`,
+              subTitle: m.description,
               value: `${m.name}@${m?.provider?.providerName}`,
             }))}
             onClose={() => setShowModelSelector(false)}

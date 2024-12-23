@@ -17,6 +17,7 @@ export function collectModelTable(
       available: boolean;
       name: string;
       displayName: string;
+      description?: string;
       provider?: LLMModel["provider"]; // Marked as optional
       isDefault?: boolean;
     }
@@ -28,6 +29,7 @@ export function collectModelTable(
     modelTable[`${m.name}@${m?.provider?.id}`] = {
       ...m,
       displayName: m.name, // 'provider' is copied over if it exists
+      description: "",
     };
   });
 
@@ -39,7 +41,16 @@ export function collectModelTable(
       const available = !m.startsWith("-");
       const nameConfig =
         m.startsWith("+") || m.startsWith("-") ? m.slice(1) : m;
-      const [name, displayName] = nameConfig.split("=");
+      // const [name, displayName] = nameConfig.split("=");
+      let name, displayName, description;
+      const regex = /([^=<>]+)(?:=([^<>]*)?)?(?:<([^>]*)>)?/;
+      const match = nameConfig.match(regex);
+
+      if (match) {
+        [, name, displayName, description] = match;
+      } else {
+        name = nameConfig;
+      }
 
       // enable or disable all models
       if (name === "all") {
@@ -62,6 +73,9 @@ export function collectModelTable(
             if (displayName) {
               modelTable[fullName]["displayName"] = displayName;
             }
+            if (description) {
+              modelTable[fullName]["description"] = description;
+            }
           }
         }
         // 2. if model not exists, create new model with available value
@@ -73,13 +87,13 @@ export function collectModelTable(
           modelTable[`${customModelName}@${provider?.id}`] = {
             name: customModelName,
             displayName: displayName || customModelName,
+            description: description || "",
             available,
             provider, // Use optional chaining
           };
         }
       }
     });
-
   return modelTable;
 }
 

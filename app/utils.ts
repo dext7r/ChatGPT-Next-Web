@@ -274,6 +274,10 @@ export function isVisionModel(model: string) {
   );
 }
 
+export function isThinkingModel(model: string) {
+  const thinkingKeywords = ["thinking"]; // 暂时针对 gemini-2.0-flash-thinking-exp 设置
+  return thinkingKeywords.some((keyword) => model.includes(keyword));
+}
 export function safeLocalStorage(): {
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;

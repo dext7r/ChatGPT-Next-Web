@@ -28,8 +28,8 @@ import { getClientConfig } from "@/app/config/client";
 import { makeAzurePath } from "@/app/azure";
 import {
   getMessageTextContent,
-  getMessageImages,
   isVisionModel,
+  isThinkingModel,
 } from "@/app/utils";
 import { preProcessImageContent } from "@/app/utils/chat";
 
@@ -147,6 +147,7 @@ export class ChatGPTApi implements LLMApi {
 
   async chat(options: ChatOptions) {
     const visionModel = isVisionModel(options.config.model);
+    const thinkingModel = isThinkingModel(options.config.model);
     const isO1 =
       options.config.model.startsWith("o1") ||
       options.config.model.startsWith("gpt-o1");
@@ -235,7 +236,10 @@ export class ChatGPTApi implements LLMApi {
     // add max_tokens to vision model
     // if (visionModel && modelConfig.model.includes("preview")) {
     if (
-      (visionModel && modelConfig.model !== "gpt-4-turbo" && !isGlm4v) ||
+      (visionModel &&
+        modelConfig.model !== "gpt-4-turbo" &&
+        !isGlm4v &&
+        !thinkingModel) ||
       isMiniMax
     ) {
       requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);

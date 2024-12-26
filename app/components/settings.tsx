@@ -629,6 +629,8 @@ export function Settings() {
   const builtinCount = SearchService.count.builtin;
   const customCount = promptStore.getUserPrompts().length ?? 0;
   const [shouldShowPromptModal, setShowPromptModal] = useState(false);
+  const [shouldShowPersonalization, setShowPersonalization] = useState(false);
+  const [shouldShowModelSettings, setshouldShowModelSettings] = useState(false);
 
   const showUsage = accessStore.isAuthorized();
   useEffect(() => {
@@ -734,139 +736,167 @@ export function Settings() {
             )}
           </ListItem>
 
-          <ListItem title={Locale.Settings.SendKey}>
-            <Select
-              value={config.submitKey}
-              onChange={(e) => {
-                updateConfig(
-                  (config) =>
-                    (config.submitKey = e.target.value as any as SubmitKey),
-                );
-              }}
-            >
-              {Object.values(SubmitKey).map((v) => (
-                <option value={v} key={v}>
-                  {v}
-                </option>
-              ))}
-            </Select>
-          </ListItem>
-
-          <ListItem title={Locale.Settings.Theme}>
-            <Select
-              value={config.theme}
-              onChange={(e) => {
-                updateConfig(
-                  (config) => (config.theme = e.target.value as any as Theme),
-                );
-              }}
-            >
-              {Object.values(Theme).map((v) => (
-                <option value={v} key={v}>
-                  {v}
-                </option>
-              ))}
-            </Select>
-          </ListItem>
-
-          <ListItem title={Locale.Settings.Lang.Name}>
-            <Select
-              value={getLang()}
-              onChange={(e) => {
-                changeLang(e.target.value as any);
-              }}
-            >
-              {AllLangs.map((lang) => (
-                <option value={lang} key={lang}>
-                  {ALL_LANG_OPTIONS[lang]}
-                </option>
-              ))}
-            </Select>
-          </ListItem>
-
           <ListItem
-            title={Locale.Settings.FontSize.Title}
-            subTitle={Locale.Settings.FontSize.SubTitle}
-          >
-            <InputRange
-              aria={Locale.Settings.FontSize.Title}
-              title={`${config.fontSize ?? 14}px`}
-              value={config.fontSize}
-              min="12"
-              max="40"
-              step="1"
-              onChange={(e) =>
-                updateConfig(
-                  (config) =>
-                    (config.fontSize = Number.parseInt(e.currentTarget.value)),
-                )
-              }
-            ></InputRange>
-          </ListItem>
-
-          <ListItem
-            title={Locale.Settings.AutoGenerateTitle.Title}
-            subTitle={Locale.Settings.AutoGenerateTitle.SubTitle}
+            title={Locale.Settings.Personalization.Title}
+            subTitle={
+              shouldShowPersonalization
+                ? Locale.Settings.Personalization.CloseSubTile
+                : Locale.Settings.Personalization.SubTitle
+            }
           >
             <input
+              aria-label={Locale.Settings.Personalization.Title}
               type="checkbox"
-              checked={config.enableAutoGenerateTitle}
-              onChange={(e) =>
-                updateConfig(
-                  (config) =>
-                    (config.enableAutoGenerateTitle = e.currentTarget.checked),
-                )
-              }
+              checked={shouldShowPersonalization}
+              onChange={(e) => setShowPersonalization(e.currentTarget.checked)}
             ></input>
           </ListItem>
 
-          <ListItem
-            title={Locale.Settings.SendPreviewBubble.Title}
-            subTitle={Locale.Settings.SendPreviewBubble.SubTitle}
-          >
-            <input
-              type="checkbox"
-              checked={config.sendPreviewBubble}
-              onChange={(e) =>
-                updateConfig(
-                  (config) =>
-                    (config.sendPreviewBubble = e.currentTarget.checked),
-                )
-              }
-            ></input>
-          </ListItem>
+          <>
+            {shouldShowPersonalization && (
+              <>
+                <ListItem title={Locale.Settings.SendKey}>
+                  <Select
+                    value={config.submitKey}
+                    onChange={(e) => {
+                      updateConfig(
+                        (config) =>
+                          (config.submitKey = e.target
+                            .value as any as SubmitKey),
+                      );
+                    }}
+                  >
+                    {Object.values(SubmitKey).map((v) => (
+                      <option value={v} key={v}>
+                        {v}
+                      </option>
+                    ))}
+                  </Select>
+                </ListItem>
 
-          <ListItem
-            title={Locale.Mask.Config.Artifacts.Title}
-            subTitle={Locale.Mask.Config.Artifacts.SubTitle}
-          >
-            <input
-              aria-label={Locale.Mask.Config.Artifacts.Title}
-              type="checkbox"
-              checked={config.enableArtifacts}
-              onChange={(e) =>
-                updateConfig(
-                  (config) =>
-                    (config.enableArtifacts = e.currentTarget.checked),
-                )
-              }
-            ></input>
-          </ListItem>
-          <ListItem
-            title={Locale.Mask.Config.CodeFold.Title}
-            subTitle={Locale.Mask.Config.CodeFold.SubTitle}
-          >
-            <input
-              aria-label={Locale.Mask.Config.CodeFold.Title}
-              type="checkbox"
-              checked={config.enableCodeFold}
-              onChange={(e) =>
-                updateConfig(
-                  (config) => (config.enableCodeFold = e.currentTarget.checked),
-                )
-              }
-            ></input>
-          </ListItem>
+                <ListItem title={Locale.Settings.Theme}>
+                  <Select
+                    value={config.theme}
+                    onChange={(e) => {
+                      updateConfig(
+                        (config) =>
+                          (config.theme = e.target.value as any as Theme),
+                      );
+                    }}
+                  >
+                    {Object.values(Theme).map((v) => (
+                      <option value={v} key={v}>
+                        {v}
+                      </option>
+                    ))}
+                  </Select>
+                </ListItem>
+
+                <ListItem title={Locale.Settings.Lang.Name}>
+                  <Select
+                    value={getLang()}
+                    onChange={(e) => {
+                      changeLang(e.target.value as any);
+                    }}
+                  >
+                    {AllLangs.map((lang) => (
+                      <option value={lang} key={lang}>
+                        {ALL_LANG_OPTIONS[lang]}
+                      </option>
+                    ))}
+                  </Select>
+                </ListItem>
+
+                <ListItem
+                  title={Locale.Settings.FontSize.Title}
+                  subTitle={Locale.Settings.FontSize.SubTitle}
+                >
+                  <InputRange
+                    aria={Locale.Settings.FontSize.Title}
+                    title={`${config.fontSize ?? 14}px`}
+                    value={config.fontSize}
+                    min="12"
+                    max="40"
+                    step="1"
+                    onChange={(e) =>
+                      updateConfig(
+                        (config) =>
+                          (config.fontSize = Number.parseInt(
+                            e.currentTarget.value,
+                          )),
+                      )
+                    }
+                  ></InputRange>
+                </ListItem>
+
+                <ListItem
+                  title={Locale.Settings.AutoGenerateTitle.Title}
+                  subTitle={Locale.Settings.AutoGenerateTitle.SubTitle}
+                >
+                  <input
+                    type="checkbox"
+                    checked={config.enableAutoGenerateTitle}
+                    onChange={(e) =>
+                      updateConfig(
+                        (config) =>
+                          (config.enableAutoGenerateTitle =
+                            e.currentTarget.checked),
+                      )
+                    }
+                  ></input>
+                </ListItem>
+
+                <ListItem
+                  title={Locale.Settings.SendPreviewBubble.Title}
+                  subTitle={Locale.Settings.SendPreviewBubble.SubTitle}
+                >
+                  <input
+                    type="checkbox"
+                    checked={config.sendPreviewBubble}
+                    onChange={(e) =>
+                      updateConfig(
+                        (config) =>
+                          (config.sendPreviewBubble = e.currentTarget.checked),
+                      )
+                    }
+                  ></input>
+                </ListItem>
+
+                <ListItem
+                  title={Locale.Mask.Config.Artifacts.Title}
+                  subTitle={Locale.Mask.Config.Artifacts.SubTitle}
+                >
+                  <input
+                    aria-label={Locale.Mask.Config.Artifacts.Title}
+                    type="checkbox"
+                    checked={config.enableArtifacts}
+                    onChange={(e) =>
+                      updateConfig(
+                        (config) =>
+                          (config.enableArtifacts = e.currentTarget.checked),
+                      )
+                    }
+                  ></input>
+                </ListItem>
+                <ListItem
+                  title={Locale.Mask.Config.CodeFold.Title}
+                  subTitle={Locale.Mask.Config.CodeFold.SubTitle}
+                >
+                  <input
+                    aria-label={Locale.Mask.Config.CodeFold.Title}
+                    type="checkbox"
+                    checked={config.enableCodeFold}
+                    onChange={(e) =>
+                      updateConfig(
+                        (config) =>
+                          (config.enableCodeFold = e.currentTarget.checked),
+                      )
+                    }
+                  ></input>
+                </ListItem>
+              </>
+            )}
+          </>
         </List>
 
         <SyncItems />
@@ -1325,9 +1355,11 @@ export function Settings() {
           <ListItem
             title={Locale.Settings.Access.CustomModel.Title}
             subTitle={Locale.Settings.Access.CustomModel.SubTitle}
+            vertical={true}
           >
             <input
               aria-label={Locale.Settings.Access.CustomModel.Title}
+              style={{ width: "100%", maxWidth: "unset", textAlign: "left" }}
               type="text"
               value={config.customModels}
               placeholder="model1,model2,model3"
@@ -1341,14 +1373,33 @@ export function Settings() {
         </List>
 
         <List>
-          <ModelConfigList
-            modelConfig={config.modelConfig}
-            updateConfig={(updater) => {
-              const modelConfig = { ...config.modelConfig };
-              updater(modelConfig);
-              config.update((config) => (config.modelConfig = modelConfig));
-            }}
-          />
+          <ListItem
+            title={Locale.Settings.ModelSettings.Title}
+            subTitle={
+              shouldShowModelSettings
+                ? Locale.Settings.ModelSettings.CloseSubTile
+                : Locale.Settings.ModelSettings.SubTitle
+            }
+          >
+            <input
+              aria-label={Locale.Settings.ModelSettings.Title}
+              type="checkbox"
+              checked={shouldShowModelSettings}
+              onChange={(e) =>
+                setshouldShowModelSettings(e.currentTarget.checked)
+              }
+            ></input>
+          </ListItem>
+          {shouldShowModelSettings && (
+            <ModelConfigList
+              modelConfig={config.modelConfig}
+              updateConfig={(updater) => {
+                const modelConfig = { ...config.modelConfig };
+                updater(modelConfig);
+                config.update((config) => (config.modelConfig = modelConfig));
+              }}
+            />
+          )}
         </List>
 
         {shouldShowPromptModal && (

@@ -243,6 +243,11 @@ const en: LocaleType = {
       FoundUpdate: (x: string) => `Found new version: ${x}`,
       GoToUpdate: "Update",
     },
+    Personalization: {
+      Title: "Personalization Settings",
+      SubTitle: "Click to expand personalization settings",
+      CloseSubTile: "Click to close personalization settings",
+    },
     SendKey: "Send Key",
     Theme: "Theme",
     TightBorder: "Tight Border",
@@ -436,6 +441,11 @@ const en: LocaleType = {
       },
     },
 
+    ModelSettings: {
+      Title: "Model Settings",
+      SubTitle: "Click to expand model settings",
+      CloseSubTile: "Click to close model settings",
+    },
     Model: "Model",
     CompressModel: {
       Title: "Summary Model",

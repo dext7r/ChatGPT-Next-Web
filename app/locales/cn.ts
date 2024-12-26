@@ -93,6 +93,14 @@ const cn = {
         isDetectingToast: "正在 OCR 中...",
         FailDetectToast: "本次识别失败，无权限或请检查模型设置后再次尝试",
         SuccessDetectToast: "本次识别已结束并替换输入图片",
+        DetectSystemPrompt_:
+          "将提供的图像转换为 Markdown 格式。\
+确保所有页面内容都包括在内，如标题、页脚、副文本、图像（尽可能提供替代文本）、表格及任何其他元素。  \
+要求：  \
+- 仅输出 Markdown：只返回 Markdown 内容，不添加任何额外解释或评论。  \
+- 无分隔符：不要使用代码围栏或诸如 ```markdown 的分隔符。  \
+- 完整内容：不要遗漏页面的任何部分，包括标题、页脚和副文本。  \
+- 以 Markdown 表的形式返回表格内容。",
         DetectSystemPrompt:
           "你是一个专业的OCR文字识别工具。请严格按照以下规则:\n\
 1. 只输出图片中实际存在的文字内容,不要添加任何解释、评论或额外内容\n\
@@ -240,6 +248,11 @@ const cn = {
       IsChecking: "正在检查更新...",
       FoundUpdate: (x: string) => `发现新版本：${x}`,
       GoToUpdate: "前往更新",
+    },
+    Personalization: {
+      Title: "个性化设置",
+      SubTitle: "点击展开个性化设置",
+      CloseSubTile: "收起个性化设置",
     },
     SendKey: "发送键",
     Theme: "主题",
@@ -431,6 +444,11 @@ const cn = {
       },
     },
 
+    ModelSettings: {
+      Title: "模型设置",
+      SubTitle: "点击展开对话模型设置",
+      CloseSubTile: "收起对话模型设置",
+    },
     Model: "模型 (model)",
     CompressModel: {
       Title: "对话摘要模型",
@@ -487,7 +505,7 @@ const cn = {
   },
   Store: {
     DefaultTopic: "新的聊天",
-    BotHello: "有什么可以帮你的吗",
+    BotHello: "你好！有什么需要我帮忙的吗？😎",
     Error: "出错了，稍后重试吧",
     Prompt: {
       History: (content: string) => "这是历史聊天总结作为前情提要：" + content,

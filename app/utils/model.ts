@@ -25,8 +25,8 @@ export function collectModelTable(
 
   // default models
   models.forEach((m) => {
-    // using <modelName>@<providerId> as fullName
-    modelTable[`${m.name}@${m?.provider?.id}`] = {
+    // using <modelName>@<providerType> as fullName
+    modelTable[`${m.name}@${m?.provider?.providerType}`] = {
       ...m,
       displayName: m.name, // 'provider' is copied over if it exists
       description: "",
@@ -91,7 +91,7 @@ export function collectModelTable(
           const provider = customProvider(
             customProviderName || customModelName,
           );
-          modelTable[`${customModelName}@${provider?.id}`] = {
+          modelTable[`${customModelName}@${provider?.providerType}`] = {
             name: customModelName,
             displayName: displayName || customModelName,
             description: description || "",

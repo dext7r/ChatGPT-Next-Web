@@ -100,7 +100,7 @@ export async function requestOpenai(req: NextRequest) {
         !isModelAvailableInServer(combinedModels, jsonBody?.model as string, [
           ServiceProvider.OpenAI,
           ServiceProvider.Azure,
-          jsonBody?.model as string,
+          "custom" as string,
         ])
       ) {
         return NextResponse.json(

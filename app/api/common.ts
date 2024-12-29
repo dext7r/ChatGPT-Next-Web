@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSideConfig } from "../config/server";
-import { OPENAI_BASE_URL, ServiceProvider } from "../constant";
+import { OPENAI_BASE_URL, ServiceProvider, OpenaiPath } from "../constant";
 import { isModelAvailableInServer } from "../utils/model";
 import { makeAzurePath } from "../azure";
 
@@ -26,6 +26,7 @@ export async function requestOpenai(req: NextRequest) {
   }
   // console.log("[search] ", req.nextUrl.search);
   let path = `${req.nextUrl.pathname}`.replaceAll("/api/openai/", "");
+  let isChatRequest = path.includes(OpenaiPath.ChatPath);
 
   let baseUrl =
     serverConfig.azureUrl || serverConfig.baseUrl || OPENAI_BASE_URL;
@@ -97,6 +98,7 @@ export async function requestOpenai(req: NextRequest) {
       // 使用filter过滤掉不存在的model，再用join组合成字符串
       const combinedModels = models.filter((model) => model).join(",");
       if (
+        isChatRequest &&
         !isModelAvailableInServer(combinedModels, jsonBody?.model as string, [
           ServiceProvider.OpenAI,
           ServiceProvider.Azure,

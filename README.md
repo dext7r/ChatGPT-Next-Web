@@ -9,7 +9,7 @@
 - 快速搜索聊天记录
 - 可自定义**侧边栏**，支持 html 样式
 - 免导入导出的云备份功能（需配合[文件服务器项目](https://github.com/QAbot-zh/go-file-server)使用）
-- OpenAI 类型支持前端拉取可用模型
+- OpenAI 类型支持前端配置，一键拉取可用模型
 
 ![get models](./docs/images/getModels.png)
 

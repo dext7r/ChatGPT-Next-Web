@@ -41,6 +41,8 @@ interface ChatCommands {
   fork?: Command;
   del?: Command;
   search?: Command;
+  edit?: Command;
+  resend?: Command;
 }
 
 export const ChatCommandPrefix = /^[:：]/;

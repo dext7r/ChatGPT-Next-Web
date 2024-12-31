@@ -44,6 +44,7 @@ const cn = {
       PinToastAction: "查看",
       Delete: "删除",
       Edit: "编辑",
+      EditNoMessage: "没有消息可以编辑",
       FullScreen: "全屏",
       RefreshTitle: "刷新标题",
       RefreshToast: "已发送刷新标题请求",
@@ -60,6 +61,8 @@ const cn = {
       fork: "复制聊天",
       del: "删除聊天",
       search: "搜索聊天",
+      edit: "编辑最后一条用户聊天",
+      resend: "重新获取 AI 回复",
     },
     InputActions: {
       Stop: "停止响应",
@@ -125,7 +128,7 @@ const cn = {
       }
       return (
         inputHints +
-        "，/ 触发补全，: 触发命令\nCtrl + Shift + ;  快速复制最后一个代码块"
+        "，/ 触发补全，: 触发命令\nCtrl + Shift + ;  快速复制最后一个代码块\nCtrl + Shift + L 重新获取 AI 回复"
       );
     },
     Send: "发送",
@@ -142,6 +145,7 @@ const cn = {
       focusInput: "聚焦输入框",
       copyLastMessage: "复制最后一个回复",
       copyLastCode: "复制最后一个代码块",
+      resendLastMessage: "重试最后一个提问",
       showShortcutKey: "显示快捷方式",
       searchChat: "搜索聊天记录",
     },

@@ -1014,6 +1014,10 @@ export function ShortcutKeyModal(props: { onClose: () => void }) {
       keys: isMac ? ["⌘", "Shift", ";"] : ["Ctrl", "Shift", ";"],
     },
     {
+      title: Locale.Chat.ShortcutKey.resendLastMessage,
+      keys: isMac ? ["⌘", "Shift", "L"] : ["Ctrl", "Shift", "L"],
+    },
+    {
       title: Locale.Chat.ShortcutKey.copyLastMessage,
       keys: isMac ? ["⌘", "Shift", "C"] : ["Ctrl", "Shift", "C"],
     },
@@ -1148,14 +1152,55 @@ function _Chat() {
 
   // chat commands shortcuts
   const chatCommands = useChatCommand({
-    new: () => chatStore.newSession(),
-    search: () => navigate(Path.SearchChat),
-    newm: () => navigate(Path.NewChat),
+    edit: async () => {
+      // Get the last user message from current session
+      const lastUserMessage = [...session.messages]
+        .filter((message) => message.role === "user")
+        .pop();
+      if (!lastUserMessage) {
+        showToast(Locale.Chat.Actions.EditNoMessage);
+        return;
+      }
+
+      const newMessage = await showPrompt(
+        Locale.Chat.Actions.Edit,
+        getMessageTextContent(lastUserMessage),
+        10,
+      );
+
+      let newContent: string | MultimodalContent[] = newMessage;
+      const images = getMessageImages(lastUserMessage);
+
+      if (images.length > 0) {
+        newContent = [{ type: "text", text: newMessage }];
+        for (let i = 0; i < images.length; i++) {
+          newContent.push({
+            type: "image_url",
+            image_url: {
+              url: images[i],
+            },
+          });
+        }
+      }
+
+      chatStore.updateTargetSession(session, (session) => {
+        const m = session.mask.context
+          .concat(session.messages)
+          .find((m) => m.id === lastUserMessage.id);
+        if (m) {
+          m.content = newContent;
+        }
+      });
+    },
+    resend: () => onResend(session.messages[session.messages.length - 1]),
     clear: () =>
       chatStore.updateTargetSession(
         session,
         (session) => (session.clearContextIndex = session.messages.length),
       ),
+    new: () => chatStore.newSession(),
+    search: () => navigate(Path.SearchChat),
+    newm: () => navigate(Path.NewChat),
     prev: () => chatStore.nextSession(-1),
     next: () => chatStore.nextSession(1),
     fork: () => chatStore.forkSession(),
@@ -1722,6 +1767,20 @@ function _Chat() {
         if (lastNonUserMessage) {
           const lastMessageContent = getMessageTextContent(lastNonUserMessage);
           copyToClipboard(lastMessageContent);
+        }
+      }
+      // 重试最后一个提问 command + shift + L
+      else if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        event.key.toLowerCase() === "l"
+      ) {
+        event.preventDefault();
+        const lastUserMessage = messages
+          .filter((message) => message.role === "user")
+          .pop();
+        if (lastUserMessage) {
+          onResend(lastUserMessage);
         }
       }
       // 展示快捷键 command + /

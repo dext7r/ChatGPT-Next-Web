@@ -509,7 +509,9 @@ export function SearchSelector<T>(props: {
       (item) =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.subTitle &&
-          item.subTitle.toLowerCase().includes(searchQuery.toLowerCase())),
+          item.subTitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (typeof item.value === "string" &&
+          item.value.toLowerCase().includes(searchQuery.toLowerCase())),
     )
     .sort((a, b) => {
       // 将选中的项目排在前面

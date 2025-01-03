@@ -128,6 +128,10 @@ Set the subtitle of sidebar. Support html parsing. （侧边栏子标题，支�
 
 Set the website title. （网站顶部标题）
 
+### `COMPRESS_MODEL` （optional）
+
+Set the title generation and history compression model. （设置标题生成、历史压缩模型，默认为 gpt-4o-mini）
+
 ### `TRANSLATE_MODEL` （optional）
 
 Set the translate model. （设置翻译模型，默认为 gpt-4o-mini）

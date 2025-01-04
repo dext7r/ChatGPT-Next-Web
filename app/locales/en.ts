@@ -44,6 +44,7 @@ const en: LocaleType = {
       PinToastAction: "View",
       Delete: "Delete",
       Edit: "Edit",
+      EditToInput: "Edit to Input",
       EditNoMessage: "No message to edit",
       FullScreen: "FullScreen",
       RefreshTitle: "Refresh Title",

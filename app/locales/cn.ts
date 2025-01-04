@@ -44,6 +44,7 @@ const cn = {
       PinToastAction: "查看",
       Delete: "删除",
       Edit: "编辑",
+      EditToInput: "编辑为输入",
       EditNoMessage: "没有消息可以编辑",
       FullScreen: "全屏",
       RefreshTitle: "刷新标题",

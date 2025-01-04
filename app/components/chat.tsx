@@ -30,6 +30,7 @@ import SettingsIcon from "../icons/chat-settings.svg";
 import DeleteIcon from "../icons/clear.svg";
 import PinIcon from "../icons/pin.svg";
 import EditIcon from "../icons/rename.svg";
+import EditToInputIcon from "../icons/edit_input.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
 import ImageIcon from "../icons/image.svg";
@@ -2040,6 +2041,13 @@ function _Chat() {
                                   }
                                 />
                               )}
+                              <ChatAction
+                                text={Locale.Chat.Actions.EditToInput}
+                                icon={<EditToInputIcon />}
+                                onClick={() =>
+                                  setUserInput(getMessageTextContent(message))
+                                }
+                              />
                             </>
                           )}
                         </div>

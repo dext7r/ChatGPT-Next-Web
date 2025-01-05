@@ -4,6 +4,8 @@
 
 **分歧节点：2.12.3，侧重维护 OpenAI 类型渠道**
 
+docker 镜像：`justma/chatgpt-next-chat:latest`
+
 ##  二开新增特性
 - 模型选择器优化
 - 快速搜索聊天记录

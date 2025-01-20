@@ -49,10 +49,10 @@ interface RequestPayload {
   }[];
   stream?: boolean;
   model: string;
-  temperature: number;
+  temperature?: number;
   presence_penalty?: number;
   frequency_penalty?: number;
-  top_p: number;
+  top_p?: number;
   max_tokens?: number;
   max_completion_tokens?: number;
 }
@@ -151,6 +151,8 @@ export class ChatGPTApi implements LLMApi {
     const isO1 =
       options.config.model.startsWith("o1") ||
       options.config.model.startsWith("gpt-o1");
+    const isDeepseekReasoner =
+      options.config.model.includes("deepseek-reasoner");
     const model_name = options.config.model.toLowerCase();
     const isGlm4v = model_name.startsWith("glm-4v");
     const isMistral = model_name.startsWith("mistral");
@@ -229,9 +231,13 @@ export class ChatGPTApi implements LLMApi {
       messages,
       stream: options.config.stream,
       model: modelConfig.model,
-      temperature: !isO1 ? modelConfig.temperature : 1,
-      top_p: !isO1 ? modelConfig.top_p : 1,
+      // temperature: !isO1 ? modelConfig.temperature : 1,
+      // top_p: !isO1 ? modelConfig.top_p : 1,
     };
+    if (!isDeepseekReasoner) {
+      (requestPayload["temperature"] = !isO1 ? modelConfig.temperature : 1),
+        (requestPayload["top_p"] = !isO1 ? modelConfig.top_p : 1);
+    }
 
     // add max_tokens to vision model
     // if (visionModel && modelConfig.model.includes("preview")) {
@@ -244,7 +250,7 @@ export class ChatGPTApi implements LLMApi {
     ) {
       requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
     }
-    if (!isMistral) {
+    if (!isMistral && !isDeepseekReasoner) {
       requestPayload["presence_penalty"] = modelConfig.presence_penalty;
       requestPayload["frequency_penalty"] = modelConfig.frequency_penalty;
       if (isO1) {

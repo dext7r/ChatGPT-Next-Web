@@ -1412,6 +1412,11 @@ function _Chat() {
   const accessStore = useAccessStore();
   const [speechStatus, setSpeechStatus] = useState(false);
   const [speechLoading, setSpeechLoading] = useState(false);
+  // cover default hello message
+  BOT_HELLO.content = accessStore.customHello || BOT_HELLO.content;
+  Locale.Error.Unauthorized =
+    accessStore.UnauthorizedInfo || Locale.Error.Unauthorized;
+
   async function openaiSpeech(text: string) {
     if (speechStatus) {
       ttsPlayer.stop();

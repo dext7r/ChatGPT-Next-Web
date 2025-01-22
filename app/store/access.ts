@@ -51,6 +51,8 @@ const DEFAULT_ACCESS_STATE = {
   disableFastLink: false,
   customModels: "",
   defaultModel: "",
+  customHello: "",
+  UnauthorizedInfo: "",
 
   // sidebar config
   sidebarTitle: "",
@@ -93,6 +95,14 @@ export const useAccessStore = createPersistStore(
     setOcrModel() {
       this.fetch();
       return get().ocrModel;
+    },
+    setCustomHello() {
+      this.fetch();
+      return get().customHello;
+    },
+    setUnauthorizedInfo() {
+      this.fetch();
+      return get().UnauthorizedInfo;
     },
     enabledAccessControl() {
       this.fetch();

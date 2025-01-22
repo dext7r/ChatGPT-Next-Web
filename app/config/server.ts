@@ -178,6 +178,8 @@ export const getServerSideConfig = () => {
     fastModels,
     fastChannel,
 
+    customHello: process.env.CUSTOM_HELLO,
+    UnauthorizedInfo: process.env.UNAUTHORIZED_INFO,
     compressModel: process.env.COMPRESS_MODEL,
     translateModel: process.env.TRANSLATE_MODEL,
     ocrModel: process.env.OCR_MODEL,

@@ -4,6 +4,7 @@ import RemarkMath from "remark-math";
 import RemarkBreaks from "remark-breaks";
 import RehypeKatex from "rehype-katex";
 import RemarkGfm from "remark-gfm";
+import RehypeRaw from "rehype-raw";
 import RehypeHighlight from "rehype-highlight";
 import { useRef, useState, RefObject, useEffect, useMemo } from "react";
 import { copyToClipboard, useWindowSize } from "../utils";
@@ -19,6 +20,14 @@ import { useChatStore } from "../store";
 import { IconButton } from "./button";
 
 import { useAppConfig } from "../store/config";
+
+function Details(props: { children: React.ReactNode }) {
+  return <details>{props.children}</details>;
+}
+
+function Summary(props: { children: React.ReactNode }) {
+  return <summary>{props.children}</summary>;
+}
 
 export function Mermaid(props: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -375,6 +384,7 @@ function _MarkDownContent(props: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[RemarkMath, RemarkGfm, RemarkBreaks]}
       rehypePlugins={[
+        RehypeRaw,
         RehypeKatex,
         [
           RehypeHighlight,
@@ -408,6 +418,8 @@ function _MarkDownContent(props: { content: string }) {
           const target = isInternal ? "_self" : aProps.target ?? "_blank";
           return <a {...aProps} target={target} />;
         },
+        details: Details,
+        summary: Summary,
       }}
     >
       {escapedContent}

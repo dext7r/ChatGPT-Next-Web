@@ -30,6 +30,10 @@ docker 镜像：`justma/chatgpt-next-chat:latest`
 ![before privacy](./docs//images/privacy-1.png)
 ![after privacy](./docs//images/privacy-2.png)
 
+- 支持 details、summary 标签渲染，增强页面整洁度、交互性和趣味性
+
+![details render](./docs/images/details%20标签渲染.png)
+
 ## 环境变量
 
 > [简体中文 > 如何配置 api key、访问密码、接口代理](./README_CN.md#环境变量)
@@ -142,6 +146,13 @@ Set the translate model. （设置翻译模型，默认为 gpt-4o-mini）
 
 Set the ocr model. （设置 ocr 模型，默认为 gpt-4o-mini）
 
+### `CUSTOM_HELLO` (optional)
+
+Set the custom hello to cover default bot_hello. （自定义招呼语，覆盖默认的 bot_hello）
+
+### `UNAUTHORIZED_INFO` (optional)
+
+Set the unathorized info to cover default unathorized info. （自定义错误提示，覆盖默认的提示词）
 
 ### `WHITE_WEBDEV_ENDPOINTS` (optional)
 

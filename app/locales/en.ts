@@ -616,6 +616,7 @@ const en: LocaleType = {
     Less: "Fold Code",
     NotShow: "Never Show Again",
     ConfirmNoShow: "Confirm to disable？You can enable it in settings later.",
+    Think: "Thinking part",
   },
 
   UI: {

@@ -351,6 +351,12 @@ function formatBoldText(text: string) {
     return `**${boldText}**${colon}`;
   });
 }
+function formatThinkText(text: string) {
+  const pattern = /^<think>([\s\S]*?)<\/think>/; // 匹配以 <think> 开头，且存在闭合 </think>
+  return text.replace(pattern, (match, thinkContent) => {
+    return `<details>\n<summary>${Locale.NewChat.Think}</summary>\n\n${thinkContent}\n\n</details>`;
+  });
+}
 
 function tryWrapHtmlCode(text: string) {
   // try add wrap html code (fixed: html codeblock include 2 newline)
@@ -376,7 +382,9 @@ function tryWrapHtmlCode(text: string) {
 function _MarkDownContent(props: { content: string }) {
   const escapedContent = useMemo(() => {
     return tryWrapHtmlCode(
-      formatBoldText(escapeBrackets(escapeDollarNumber(props.content))),
+      formatThinkText(
+        formatBoldText(escapeBrackets(escapeDollarNumber(props.content))),
+      ),
     );
   }, [props.content]);
 

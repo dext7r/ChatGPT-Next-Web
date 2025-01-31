@@ -1,4 +1,8 @@
-import { trimTopic, getMessageTextContent } from "../utils";
+import {
+  trimTopic,
+  getMessageTextContent,
+  getMessageTextContentWithoutThinking,
+} from "../utils";
 
 import Locale, { getLang } from "../locales";
 import { showToast } from "../components/ui-lib";
@@ -604,7 +608,14 @@ export const useChatStore = createPersistStore(
         const api: ClientApi = getClientApi(providerName);
 
         // remove error messages if any
-        const messages = session.messages;
+        // const messages = session.messages;
+        const messages = session.messages.map((v) => ({
+          ...v,
+          content:
+            v.role === "assistant"
+              ? getMessageTextContentWithoutThinking(v)
+              : getMessageTextContent(v),
+        }));
 
         // should summarize topic after chating more than 50 words
         const SUMMARIZE_MIN_LEN = 50;

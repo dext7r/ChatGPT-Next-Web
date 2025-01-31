@@ -233,6 +233,21 @@ export function getMessageTextContent(message: RequestMessage) {
   }
   return "";
 }
+export function getMessageTextContentWithoutThinking(message: RequestMessage) {
+  let content = "";
+  if (typeof message.content === "string") {
+    content = message.content;
+  } else {
+    for (const c of message.content) {
+      if (c.type === "text") {
+        content = c.text ?? "";
+        break;
+      }
+    }
+  }
+  const pattern = /^<think>([\s\S]*?)<\/think>/; // 匹配以 <think> 开头，且存在闭合 </think>
+  return content.replace(pattern, "").trim(); // 直接移除匹配的部分
+}
 
 export function getMessageImages(message: RequestMessage): string[] {
   if (typeof message.content === "string") {

@@ -288,6 +288,7 @@ export class ChatGPTApi implements LLMApi {
         let responseText = "";
         let remainText = "";
         let finished = false;
+        let isInThinking = false;
 
         // animate response to make it looks smooth
         function animateResponseText() {
@@ -376,13 +377,29 @@ export class ChatGPTApi implements LLMApi {
             try {
               const json = JSON.parse(text);
               const choices = json.choices as Array<{
-                delta: { content: string };
+                delta: {
+                  content: string | null;
+                  reasoning_content: string | null;
+                };
               }>;
-              const delta = choices[0]?.delta?.content;
+              const reasoning = choices[0]?.delta?.reasoning_content;
+              const content = choices[0]?.delta?.content;
               const textmoderation = json?.prompt_filter_results;
 
-              if (delta) {
-                remainText += delta;
+              if (reasoning && reasoning.trim().length > 0) {
+                if (!isInThinking) {
+                  remainText += "<think>\n" + reasoning;
+                } else {
+                  remainText += reasoning;
+                }
+                isInThinking = true;
+              } else if (content && content.trim().length > 0) {
+                if (isInThinking) {
+                  isInThinking = false;
+                  remainText += "\n</think>\n" + content;
+                } else {
+                  remainText += content;
+                }
               }
 
               if (

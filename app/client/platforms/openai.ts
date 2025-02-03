@@ -386,17 +386,17 @@ export class ChatGPTApi implements LLMApi {
               const content = choices[0]?.delta?.content;
               const textmoderation = json?.prompt_filter_results;
 
-              if (reasoning && reasoning.trim().length > 0) {
+              if (reasoning && reasoning.length > 0) {
                 if (!isInThinking) {
                   remainText += "<think>\n" + reasoning;
                 } else {
                   remainText += reasoning;
                 }
                 isInThinking = true;
-              } else if (content && content.trim().length > 0) {
+              } else if (content && content.length > 0) {
                 if (isInThinking) {
                   isInThinking = false;
-                  remainText += "\n</think>\n" + content;
+                  remainText += "\n</think>\n\n" + content;
                 } else {
                   remainText += content;
                 }

@@ -152,12 +152,13 @@ export class ChatGPTApi implements LLMApi {
     const isO1 =
       options.config.model.startsWith("o1") ||
       options.config.model.startsWith("gpt-o1");
-    const isDeepseekReasoner =
-      options.config.model.includes("deepseek-reasoner");
     const model_name = options.config.model.toLowerCase();
     const isGlm4v = model_name.startsWith("glm-4v");
     const isMistral = model_name.startsWith("mistral");
     const isMiniMax = model_name.startsWith("aabb");
+    const isDeepseekReasoner =
+      model_name.includes("deepseek-reasoner") ||
+      model_name.includes("deepseek-r1");
 
     const messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
@@ -252,6 +253,9 @@ export class ChatGPTApi implements LLMApi {
       isMiniMax
     ) {
       requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
+    }
+    if (isDeepseekReasoner) {
+      requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 8192);
     }
     if (!isMistral && !isDeepseekReasoner) {
       requestPayload["presence_penalty"] = modelConfig.presence_penalty;

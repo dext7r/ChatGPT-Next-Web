@@ -149,24 +149,25 @@ export class ChatGPTApi implements LLMApi {
   async chat(options: ChatOptions) {
     const visionModel = isVisionModel(options.config.model);
     const thinkingModel = isThinkingModel(options.config.model);
-    const isO1 =
-      options.config.model.startsWith("o1") ||
-      options.config.model.startsWith("gpt-o1");
     const model_name = options.config.model.toLowerCase();
+    const isO1 = model_name.startsWith("o1") || model_name.startsWith("gpt-o1");
+    const isO3 = model_name.startsWith("o3") || model_name.startsWith("gpt-o3");
     const isGlm4v = model_name.startsWith("glm-4v");
     const isMistral = model_name.startsWith("mistral");
     const isMiniMax = model_name.startsWith("aabb");
     const isDeepseekReasoner =
       model_name.includes("deepseek-reasoner") ||
       model_name.includes("deepseek-r1");
+    const isThinking =
+      model_name.includes("thinking") || isO1 || isO3 || isDeepseekReasoner;
 
     const messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
       const content = visionModel
         ? await preProcessImageContent(v.content)
         : v.role === "assistant" // 如果 role 是 assistant
-        ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
-        : getMessageTextContent(v); // 否则调用 getMessageTextContent
+          ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
+          : getMessageTextContent(v); // 否则调用 getMessageTextContent
       if (!(isO1 && v.role === "system"))
         messages.push({ role: v.role, content });
     }
@@ -285,7 +286,7 @@ export class ChatGPTApi implements LLMApi {
       // make a fetch request
       const requestTimeoutId = setTimeout(
         () => controller.abort(),
-        isO1 ? REQUEST_TIMEOUT_MS * 2 : REQUEST_TIMEOUT_MS,
+        isThinking ? REQUEST_TIMEOUT_MS * 10 : REQUEST_TIMEOUT_MS,
       );
 
       if (shouldStream) {

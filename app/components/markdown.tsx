@@ -132,7 +132,7 @@ export function PreCode(props: { children: any }) {
       });
       setTimeout(renderArtifacts, 1);
     }
-  }, []);
+  }, [renderArtifacts]);
   return (
     <>
       <pre ref={ref}>
@@ -351,13 +351,23 @@ function formatBoldText(text: string) {
     return `**${boldText}**${colon}`;
   });
 }
-function formatThinkText(text: string) {
+function formatThinkText(text: string): string {
   const pattern = /^<think>([\s\S]*?)<\/think>/; // 匹配以 <think> 开头，且存在闭合 </think>
   return text.replace(pattern, (match, thinkContent) => {
-    return `<details>\n<summary>${Locale.NewChat.Think}</summary>\n\n${thinkContent}\n\n</details>`;
+    // 对 thinkContent 进行处理，每一行都加上 "> "，包括空行
+    const formattedContent = thinkContent
+      .split("\n") // 按行分割
+      .map((line: string) => {
+        if (line.startsWith(">")) {
+          return line; // 如果已经以 ">" 开头，保持不变
+        }
+        return `> ${line}`; // 否则加上 "> "
+      })
+      .join("\n"); // 重新组合为字符串
+
+    return `<details>\n<summary>${Locale.NewChat.Think}</summary>\n\n${formattedContent}\n\n</details>`;
   });
 }
-
 function tryWrapHtmlCode(text: string) {
   // try add wrap html code (fixed: html codeblock include 2 newline)
   // ignore embed codeblock
@@ -379,7 +389,7 @@ function tryWrapHtmlCode(text: string) {
     );
 }
 
-function _MarkDownContent(props: { content: string }) {
+function R_MarkDownContent(props: { content: string }) {
   const escapedContent = useMemo(() => {
     return tryWrapHtmlCode(
       formatThinkText(
@@ -423,7 +433,7 @@ function _MarkDownContent(props: { content: string }) {
             );
           }
           const isInternal = /^\/#/i.test(href);
-          const target = isInternal ? "_self" : aProps.target ?? "_blank";
+          const target = isInternal ? "_self" : (aProps.target ?? "_blank");
           return <a {...aProps} target={target} />;
         },
         details: Details,
@@ -435,7 +445,7 @@ function _MarkDownContent(props: { content: string }) {
   );
 }
 
-export const MarkdownContent = React.memo(_MarkDownContent);
+export const MarkdownContent = React.memo(R_MarkDownContent);
 
 export function Markdown(
   props: {

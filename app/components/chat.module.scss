@@ -364,6 +364,7 @@
     color: var(--black);
     margin-left: 6px;
     font-weight: bold;
+    min-width: 40%;
   }
 }
 
@@ -372,6 +373,24 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+
+  .chat-message-actions {
+    display: flex;
+    box-sizing: border-box;
+    font-size: 12px;
+    align-items: flex-end;
+    justify-content: space-between;
+    transition: all ease 0.3s;
+    transform: scale(0.9) translateY(5px);
+    margin: 0 10px;
+    opacity: 0;
+    pointer-events: none;
+
+    .chat-input-actions {
+      display: flex;
+      flex-wrap: nowrap;
+    }
+  }
 
   &:hover {
     .chat-message-edit {
@@ -503,7 +522,7 @@
 .chat-message-action-date {
   font-size: 12px;
   opacity: 0.6;
-  white-space: nowrap;
+  white-space: wrap;
   transition: all ease 0.6s;
   color: var(--black);
   text-align: right;

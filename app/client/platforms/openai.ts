@@ -164,7 +164,7 @@ export class ChatGPTApi implements LLMApi {
     const messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
       const content = visionModel
-        ? await preProcessImageContent(v.content)
+        ? await preProcessImageContent(v)
         : v.role === "assistant" // 如果 role 是 assistant
           ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
           : getMessageTextContent(v); // 否则调用 getMessageTextContent

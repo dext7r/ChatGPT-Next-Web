@@ -256,7 +256,7 @@ export class ChatGPTApi implements LLMApi {
       requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000);
     }
     if (isDeepseekReasoner) {
-      requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 8192);
+      requestPayload["max_tokens"] = Math.max(modelConfig.max_tokens, 4000); // 兼容部分厂商无法支持8k输出
     }
     if (!isMistral && !isDeepseekReasoner) {
       requestPayload["presence_penalty"] = modelConfig.presence_penalty;

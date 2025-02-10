@@ -25,33 +25,40 @@ import { Collapse } from "antd";
 import styled from "styled-components";
 const { Panel } = Collapse;
 
-const ThinkCollapse = styled(({ title, children, className }) => {
-  // 如果是 Thinking 状态，默认展开，否则折叠
-  const defaultActive = title === Locale.NewChat.Thinking ? ["1"] : [];
-  const [activeKeys, setActiveKeys] = useState(defaultActive);
+interface ThinkCollapseProps {
+  title: string | React.ReactNode;
+  children: React.ReactNode;
+  className?: string; // className 通常是可选的
+}
+const ThinkCollapse = styled(
+  ({ title, children, className }: ThinkCollapseProps) => {
+    // 如果是 Thinking 状态，默认展开，否则折叠
+    const defaultActive = title === Locale.NewChat.Thinking ? ["1"] : [];
+    const [activeKeys, setActiveKeys] = useState(defaultActive);
 
-  // 当标题从 Thinking 变为 Think 时自动折叠
-  useEffect(() => {
-    if (title === Locale.NewChat.Think) {
-      setActiveKeys([]);
-    } else if (title === Locale.NewChat.Thinking) {
-      setActiveKeys(["1"]);
-    }
-  }, [title]);
+    // 当标题从 Thinking 变为 Think 时自动折叠
+    useEffect(() => {
+      if (title === Locale.NewChat.Think) {
+        setActiveKeys([]);
+      } else if (title === Locale.NewChat.Thinking) {
+        setActiveKeys(["1"]);
+      }
+    }, [title]);
 
-  return (
-    <Collapse
-      className={className}
-      size="small"
-      activeKey={activeKeys}
-      onChange={(keys) => setActiveKeys(keys as string[])}
-    >
-      <Panel header={title} key="1">
-        {children}
-      </Panel>
-    </Collapse>
-  );
-})`
+    return (
+      <Collapse
+        className={className}
+        size="small"
+        activeKey={activeKeys}
+        onChange={(keys) => setActiveKeys(keys as string[])}
+      >
+        <Panel header={title} key="1">
+          {children}
+        </Panel>
+      </Collapse>
+    );
+  },
+)`
   .ant-collapse-item {
     border: none !important;
     border-radius: 6px !important;
@@ -486,9 +493,13 @@ function R_MarkDownContent(props: { content: string }) {
         pre: PreCode,
         code: CustomCode,
         p: (pProps) => <p {...pProps} dir="auto" />,
-        thinkcollapse: ({ title, children }) => (
-          <ThinkCollapse title={title}>{children}</ThinkCollapse>
-        ),
+        thinkcollapse: ({
+          title,
+          children,
+        }: {
+          title: string;
+          children: React.ReactNode;
+        }) => <ThinkCollapse title={title}>{children}</ThinkCollapse>,
         a: (aProps) => {
           const href = aProps.href || "";
           if (/\.(aac|mp3|opus|wav)$/.test(href)) {

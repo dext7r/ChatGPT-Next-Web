@@ -8,33 +8,62 @@ docker 镜像：
 - dockerhub 托管: `justma/chatgpt-next-chat:latest`
 - github  托管: `ghcr.io/qabot-zh/chatgpt-next-chat:latest`
 
-##  二开新增特性
+## 二开新增特性
+
 - 模型选择器优化
 - 快速搜索聊天记录
-- 可自定义**侧边栏**，支持 html 样式
+- 可自定义**侧边栏**，支持 HTML 样式
 - 免导入导出的云备份功能（需配合[文件服务器项目](https://github.com/QAbot-zh/go-file-server)使用）
 - OpenAI 类型支持前端配置，一键拉取可用模型
 
-![get models](./docs/images/getModels.png)
+<img src="./docs/images/getModels.png" width="80%" alt="get models"  style="display:inline-block; margin-left:40px"/>
 
 - 基于 AI 模型的中英互译
 
-![before translate](./docs/images/translate-1.png)
-![after translate](./docs/images/translate-2.png)
+   - 翻译前
 
-- 基于 AI 模型的 OCR 
+  <img src="./docs/images/translate-1.png" width="80%" alt="before translate" style="display:inline-block; margin-right:10px"/>
+  
+   - 翻译后
+   
+   <img src="./docs/images/translate-2.png" width="80%" alt="after translate" style="display:inline-block; margin-right:10px"/>
 
-![before ocr](./docs/images/ocr-1.png)
-![after ocr](./docs/images/ocr-2.png)
+- 基于 AI 模型的 OCR
 
-- 基于正则匹配的隐私打码（**所有基于 AI 模型的功能的信息安全请自行把握，包括上述的翻译和ocr，打码功能不基于 AI 实现**）
+  - OCR 前
 
-![before privacy](./docs//images/privacy-1.png)
-![after privacy](./docs//images/privacy-2.png)
+  <img src="./docs/images/ocr-1.png" width="80%" alt="before ocr" style="display:inline-block; margin-right:10px"/>
+
+  - OCR 后
+
+  <img src="./docs/images/ocr-2.png" width="80%" alt="after ocr" style="display:inline-block"/>
+
+- 基于正则匹配的隐私打码（**所有基于 AI 模型的功能的信息安全请自行把握，包括上述的翻译和 OCR，打码功能不基于 AI 实现**）
+
+   - 打码前
+
+    <img src="./docs/images/privacy-1.png" width="80%" alt="before privacy" style="display:inline-block; margin-right:10px"/>
+
+   - 打码后
+
+    <img src="./docs/images/privacy-2.png" width="80%" alt="after privacy" style="display:inline-block; margin-right:10px"/>
+
 
 - 支持 details、summary 标签渲染，增强页面整洁度、交互性和趣味性
 
-![details render](./docs/images/details%20标签渲染.png)
+   <img src="./docs/images/details%20标签渲染.png" width="80%" alt="details render" style="display:inline-block; margin-right:10px"/>
+
+- 适配 `<think>` 标签包裹和以 reasoning_content 参数传递的思考过程，泛化性强
+
+  - 思考中
+
+  <img src="./docs/images/thinking.png" width="80%" alt="thinking" style="display:inline-block; margin-right:10px"/>
+  
+  - 思考结束
+  
+  <img src="./docs/images/think.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
+
+
 
 ## 环境变量
 

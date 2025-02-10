@@ -606,7 +606,10 @@ const cn = {
     SubTitle: "现在开始，与面具背后的灵魂思维碰撞",
     More: "查看全部",
     Less: "折叠代码",
+    Thinking: "正在思考中...",
     Think: "思考过程",
+    ArtifactsInfo:
+      "可在设置中开启/关闭“Artifacts 预览”和“代码折叠”，若预览失败请刷新页面",
   },
 
   URLCommand: {

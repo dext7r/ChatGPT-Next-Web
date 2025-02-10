@@ -21,6 +21,77 @@ import { IconButton } from "./button";
 
 import { useAppConfig } from "../store/config";
 
+import { Collapse } from "antd";
+import styled from "styled-components";
+const { Panel } = Collapse;
+
+const ThinkCollapse = styled(({ title, children, className }) => {
+  // 如果是 Thinking 状态，默认展开，否则折叠
+  const defaultActive = title === Locale.NewChat.Thinking ? ["1"] : [];
+  const [activeKeys, setActiveKeys] = useState(defaultActive);
+
+  // 当标题从 Thinking 变为 Think 时自动折叠
+  useEffect(() => {
+    if (title === Locale.NewChat.Think) {
+      setActiveKeys([]);
+    } else if (title === Locale.NewChat.Thinking) {
+      setActiveKeys(["1"]);
+    }
+  }, [title]);
+
+  return (
+    <Collapse
+      className={className}
+      size="small"
+      activeKey={activeKeys}
+      onChange={(keys) => setActiveKeys(keys as string[])}
+    >
+      <Panel header={title} key="1">
+        {children}
+      </Panel>
+    </Collapse>
+  );
+})`
+  .ant-collapse-item {
+    border: none !important;
+    border-radius: 6px !important;
+    background-color: #fff !important;
+  }
+
+  .ant-collapse-header {
+    color: #333 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    padding: 6px 12px !important;
+    align-items: center !important;
+
+    .ant-collapse-expand-icon {
+      color: #4a90e2 !important;
+    }
+  }
+
+  .ant-collapse-content {
+    background-color: transparent !important;
+    border-top: 1px solid #f0f0f0 !important;
+
+    .ant-collapse-content-box {
+      padding: 8px 12px !important;
+      font-size: 14px;
+      color: #666;
+    }
+  }
+
+  .ant-collapse-item:hover {
+    background-color: #f8f9fa !important;
+  }
+
+  .ant-collapse-item-active {
+    .ant-collapse-header {
+      border-bottom: none;
+    }
+  }
+`;
+
 function Details(props: { children: React.ReactNode }) {
   return <details>{props.children}</details>;
 }
@@ -158,8 +229,7 @@ export function PreCode(props: { children: any }) {
             getCode={() => htmlCode}
           /> */}
           <span className="button-description" style={{ whiteSpace: "normal" }}>
-            可在设置中开启/关闭“Artifacts
-            预览”和“代码折叠”，若预览失败请刷新页面
+            {Locale.NewChat.ArtifactsInfo}
           </span>
           <IconButton
             style={{ position: "absolute", right: 20, top: 10 }}
@@ -352,22 +422,22 @@ function formatBoldText(text: string) {
   });
 }
 function formatThinkText(text: string): string {
-  const pattern = /^<think>([\s\S]*?)<\/think>/; // 匹配以 <think> 开头，且存在闭合 </think>
-  return text.replace(pattern, (match, thinkContent) => {
-    // 对 thinkContent 进行处理，每一行都加上 "> "，包括空行
-    const formattedContent = thinkContent
-      .split("\n") // 按行分割
-      .map((line: string) => {
-        if (line.startsWith(">")) {
-          return line; // 如果已经以 ">" 开头，保持不变
-        }
-        return `> ${line}`; // 否则加上 "> "
-      })
-      .join("\n"); // 重新组合为字符串
+  // 检查是否以 <think> 开头但没有结束标签
+  if (text.startsWith("<think>") && !text.includes("</think>")) {
+    // 获取 <think> 后的所有内容
+    const thinkContent = text.slice("<think>".length);
+    // 渲染为"思考中"状态
+    return `<thinkcollapse title="${Locale.NewChat.Thinking}">\n${thinkContent}\n</thinkcollapse>`;
+  }
 
-    return `<details>\n<summary>${Locale.NewChat.Think}</summary>\n\n${formattedContent}\n\n</details>`;
+  // 处理完整的 think 标签
+  const pattern = /^<think>([\s\S]*?)<\/think>/;
+  return text.replace(pattern, (match, thinkContent) => {
+    // 渲染为"思考完成"状态
+    return `<thinkcollapse title="${Locale.NewChat.Think}">\n${thinkContent}\n</thinkcollapse>`;
   });
 }
+
 function tryWrapHtmlCode(text: string) {
   // try add wrap html code (fixed: html codeblock include 2 newline)
   // ignore embed codeblock
@@ -416,6 +486,9 @@ function R_MarkDownContent(props: { content: string }) {
         pre: PreCode,
         code: CustomCode,
         p: (pProps) => <p {...pProps} dir="auto" />,
+        thinkcollapse: ({ title, children }) => (
+          <ThinkCollapse title={title}>{children}</ThinkCollapse>
+        ),
         a: (aProps) => {
           const href = aProps.href || "";
           if (/\.(aac|mp3|opus|wav)$/.test(href)) {

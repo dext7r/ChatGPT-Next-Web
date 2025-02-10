@@ -616,7 +616,10 @@ const en: LocaleType = {
     Less: "Fold Code",
     NotShow: "Never Show Again",
     ConfirmNoShow: "Confirm to disable？You can enable it in settings later.",
-    Think: "Thinking part",
+    Thinking: "Thinking...",
+    Think: "Content of Thought",
+    ArtifactsInfo:
+      "You can enable/disable 'Artifacts Preview' and 'Code Fold' in settings. If the preview fails, please refresh the page.",
   },
 
   UI: {

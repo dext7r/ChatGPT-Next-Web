@@ -489,40 +489,42 @@ function R_MarkDownContent(props: { content: string }) {
           },
         ],
       ]}
-      components={{
-        pre: PreCode,
-        code: CustomCode,
-        p: (pProps) => <p {...pProps} dir="auto" />,
-        thinkcollapse: ({
-          title,
-          children,
-        }: {
-          title: string;
-          children: React.ReactNode;
-        }) => <ThinkCollapse title={title}>{children}</ThinkCollapse>,
-        a: (aProps) => {
-          const href = aProps.href || "";
-          if (/\.(aac|mp3|opus|wav)$/.test(href)) {
-            return (
-              <figure>
-                <audio controls src={href}></audio>
-              </figure>
-            );
-          }
-          if (/\.(3gp|3g2|webm|ogv|mpeg|mp4|avi)$/.test(href)) {
-            return (
-              <video controls width="99.9%">
-                <source src={href} />
-              </video>
-            );
-          }
-          const isInternal = /^\/#/i.test(href);
-          const target = isInternal ? "_self" : (aProps.target ?? "_blank");
-          return <a {...aProps} target={target} />;
-        },
-        details: Details,
-        summary: Summary,
-      }}
+      components={
+        {
+          pre: PreCode,
+          code: CustomCode,
+          p: (pProps: any) => <p {...pProps} dir="auto" />,
+          thinkcollapse: ({
+            title,
+            children,
+          }: {
+            title: string;
+            children: React.ReactNode;
+          }) => <ThinkCollapse title={title}>{children}</ThinkCollapse>,
+          a: (aProps: any) => {
+            const href = aProps.href || "";
+            if (/\.(aac|mp3|opus|wav)$/.test(href)) {
+              return (
+                <figure>
+                  <audio controls src={href}></audio>
+                </figure>
+              );
+            }
+            if (/\.(3gp|3g2|webm|ogv|mpeg|mp4|avi)$/.test(href)) {
+              return (
+                <video controls width="99.9%">
+                  <source src={href} />
+                </video>
+              );
+            }
+            const isInternal = /^\/#/i.test(href);
+            const target = isInternal ? "_self" : (aProps.target ?? "_blank");
+            return <a {...aProps} target={target} />;
+          },
+          details: Details,
+          summary: Summary,
+        } as any
+      }
     >
       {escapedContent}
     </ReactMarkdown>

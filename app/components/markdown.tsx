@@ -91,12 +91,6 @@ const ThinkCollapse = styled(
       opacity: 0.8;
     }
   }
-
-  .ant-collapse-item-active {
-    .ant-collapse-header {
-      border-bottom-color: transparent !important;
-    }
-  }
 `;
 
 function Details(props: { children: React.ReactNode }) {

@@ -247,10 +247,11 @@ export function getMessageTextContentWithoutThinking(message: RequestMessage) {
   }
   return getMessageTextContentWithoutThinkingFromContent(content);
 }
+
 export function getMessageTextContentWithoutThinkingFromContent(
   content: string,
 ) {
-  const pattern = /^<think>([\s\S]*?)<\/think>/; // 匹配以 <think> 开头，且存在闭合 </think>
+  const pattern = /^<think>[\s\S]*?(<\/think>|$)/; // 匹配以 <think> 开头，至闭合 </think>之间的内容，如果没有闭合，则匹配到结尾
   return content.replace(pattern, "").trim(); // 直接移除匹配的部分
 }
 

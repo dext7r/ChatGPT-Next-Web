@@ -42,7 +42,7 @@ import BottomIcon from "../icons/bottom.svg";
 import StopIcon from "../icons/pause.svg";
 import RobotIcon from "../icons/robot.svg";
 
-import FileExpressIcon from "../icons/upload-and-download.svg";
+import FileExpressIcon from "../icons/cloud.svg";
 import SearchChatIcon from "../icons/zoom.svg";
 import ShortcutkeyIcon from "../icons/shortcutkey.svg";
 import ReloadIcon from "../icons/reload.svg";
@@ -796,7 +796,7 @@ export function ChatActions(props: {
             icon={props.uploading ? <LoadingButtonIcon /> : <ImageIcon />}
           />
         )}
-        { !isMobileScreen && (
+        {!isMobileScreen && (
           <ChatAction
             onClick={nextTheme}
             text={Locale.Chat.InputActions.Theme[theme]}
@@ -820,7 +820,7 @@ export function ChatActions(props: {
           icon={<PromptIcon />}
         />
 
-        { !isMobileScreen && (
+        {!isMobileScreen && (
           <ChatAction
             onClick={() => {
               navigate(Path.Masks);
@@ -912,7 +912,7 @@ export function ChatActions(props: {
           alwaysShowText={isTranslating}
           icon={<TranslateIcon />}
         />
-        { !isMobileScreen && (
+        {!isMobileScreen && (
           <ChatAction
             onClick={handleOCR}
             text={
@@ -1090,7 +1090,7 @@ function ChatInputActions(props: {
   openaiSpeech: (text: string) => void;
   setUserInput: (text: string) => void;
   speechStatus: boolean;
-  config: any; 
+  config: any;
   i: number;
 }) {
   const {
@@ -2168,24 +2168,24 @@ function _Chat() {
                         }`}
                   </div>
                   {showActions && (
-                      <div className={styles["chat-message-actions"]}>
-                        <div className={styles["chat-input-actions"]}>
-                          <ChatInputActions
-                            message={message}
-                            onUserStop={onUserStop}
-                            onResend={onResend}
-                            onDelete={onDelete}
-                            onPinMessage={onPinMessage}
-                            copyToClipboard={copyToClipboard}
-                            openaiSpeech={openaiSpeech}
-                            setUserInput={setUserInput}
-                            speechStatus={speechStatus}
-                            config={config}
-                            i={i}
-                          />
-                        </div>
+                    <div className={styles["chat-message-actions"]}>
+                      <div className={styles["chat-input-actions"]}>
+                        <ChatInputActions
+                          message={message}
+                          onUserStop={onUserStop}
+                          onResend={onResend}
+                          onDelete={onDelete}
+                          onPinMessage={onPinMessage}
+                          copyToClipboard={copyToClipboard}
+                          openaiSpeech={openaiSpeech}
+                          setUserInput={setUserInput}
+                          speechStatus={speechStatus}
+                          config={config}
+                          i={i}
+                        />
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               </div>
               {shouldShowClearContextDivider && <ClearContextDivider />}

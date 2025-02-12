@@ -51,6 +51,7 @@ const ThinkCollapse = styled(
         size="small"
         activeKey={activeKeys}
         onChange={(keys) => setActiveKeys(keys as string[])}
+        bordered={false}
       >
         <Panel header={title} key="1">
           {children}
@@ -60,41 +61,48 @@ const ThinkCollapse = styled(
   },
 )`
   .ant-collapse-item {
-    border: none !important;
-    border-radius: 6px !important;
-    background-color: #fff !important;
+    border: var(--border-in-light) !important;
+    border-radius: 10px !important;
+    background-color: var(--white) !important;
+    margin-bottom: 8px !important;
   }
 
   .ant-collapse-header {
-    color: #333 !important;
+    color: var(--black) !important;
     font-weight: bold !important;
     font-size: 14px !important;
     padding: 6px 12px !important;
     align-items: center !important;
+    transition: all 0.3s ease !important;
 
     .ant-collapse-expand-icon {
-      color: #4a90e2 !important;
+      color: var(--primary) !important;
     }
   }
 
   .ant-collapse-content {
     background-color: transparent !important;
-    border-top: 1px solid #f0f0f0 !important;
+    border-top: 1px solid var(--border-in-light) !important;
 
     .ant-collapse-content-box {
       padding: 8px 12px !important;
       font-size: 14px;
-      color: #666;
+      color: var(--black);
+      opacity: 0.8;
     }
   }
 
   .ant-collapse-item:hover {
-    background-color: #f8f9fa !important;
+    background-color: color-mix(
+      in srgb,
+      var(--hover-color) 40%,
+      transparent
+    ) !important;
   }
 
   .ant-collapse-item-active {
     .ant-collapse-header {
-      border-bottom: none;
+      border-bottom-color: transparent !important;
     }
   }
 `;
@@ -518,7 +526,7 @@ function R_MarkDownContent(props: { content: string }) {
               );
             }
             const isInternal = /^\/#/i.test(href);
-            const target = isInternal ? "_self" : (aProps.target ?? "_blank");
+            const target = isInternal ? "_self" : aProps.target ?? "_blank";
             return <a {...aProps} target={target} />;
           },
           details: Details,

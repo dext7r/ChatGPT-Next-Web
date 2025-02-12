@@ -34,11 +34,13 @@ const ThinkCollapse = styled(
   ({ title, children, className }: ThinkCollapseProps) => {
     // 如果是 Thinking 状态，默认展开，否则折叠
     const defaultActive = title === Locale.NewChat.Thinking ? ["1"] : [];
+    // 如果是 NoThink 状态，禁用
+    const disabled = title === Locale.NewChat.NoThink;
     const [activeKeys, setActiveKeys] = useState(defaultActive);
 
-    // 当标题从 Thinking 变为 Think 时自动折叠
+    // 当标题从 Thinking 变为 Think 或 NoThink 时自动折叠
     useEffect(() => {
-      if (title === Locale.NewChat.Think) {
+      if (title === Locale.NewChat.Think || title === Locale.NewChat.NoThink) {
         setActiveKeys([]);
       } else if (title === Locale.NewChat.Thinking) {
         setActiveKeys(["1"]);
@@ -47,10 +49,10 @@ const ThinkCollapse = styled(
 
     return (
       <Collapse
-        className={className}
+        className={`${className} ${disabled ? "disabled" : ""}`}
         size="small"
         activeKey={activeKeys}
-        onChange={(keys) => setActiveKeys(keys as string[])}
+        onChange={(keys) => !disabled && setActiveKeys(keys as string[])}
         bordered={false}
       >
         <Panel header={title} key="1">
@@ -89,6 +91,18 @@ const ThinkCollapse = styled(
       font-size: 14px;
       color: var(--black);
       opacity: 0.8;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.9;
+    pointer-events: none;
+    .ant-collapse-item {
+      border: none !important;
+      background-color: transparent !important;
+    }
+    .ant-collapse-header {
+      padding: 6px 0px !important;
     }
   }
 `;
@@ -435,6 +449,10 @@ function formatThinkText(text: string): string {
   const pattern = /^<think>([\s\S]*?)<\/think>/;
   return text.replace(pattern, (match, thinkContent) => {
     // 渲染为"思考完成"状态
+    // 如果 thinkContent 为空，则渲染为"没有思考过程"状态
+    if (thinkContent.trim() === "") {
+      return `<thinkcollapse title="${Locale.NewChat.NoThink}">\n</thinkcollapse>`;
+    }
     return `<thinkcollapse title="${Locale.NewChat.Think}">\n${thinkContent}\n</thinkcollapse>`;
   });
 }

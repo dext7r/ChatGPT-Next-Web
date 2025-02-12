@@ -28,10 +28,11 @@ const { Panel } = Collapse;
 interface ThinkCollapseProps {
   title: string | React.ReactNode;
   children: React.ReactNode;
-  className?: string; // className 通常是可选的
+  className?: string;
+  fontSize?: number;
 }
 const ThinkCollapse = styled(
-  ({ title, children, className }: ThinkCollapseProps) => {
+  ({ title, children, className, fontSize }: ThinkCollapseProps) => {
     // 如果是 Thinking 状态，默认展开，否则折叠
     const defaultActive = title === Locale.NewChat.Thinking ? ["1"] : [];
     // 如果是 NoThink 状态，禁用
@@ -61,7 +62,7 @@ const ThinkCollapse = styled(
       </Collapse>
     );
   },
-)`
+)<{ fontSize?: number }>`
   .ant-collapse-item {
     border: var(--border-in-light) !important;
     border-radius: 10px !important;
@@ -72,7 +73,7 @@ const ThinkCollapse = styled(
   .ant-collapse-header {
     color: var(--black) !important;
     font-weight: bold !important;
-    font-size: 14px !important;
+    font-size: ${(props) => props.fontSize ?? 14}px !important;
     padding: 6px 12px !important;
     align-items: center !important;
     transition: all 0.3s ease !important;
@@ -88,7 +89,7 @@ const ThinkCollapse = styled(
 
     .ant-collapse-content-box {
       padding: 8px 12px !important;
-      font-size: 14px;
+      font-size: ${(props) => props.fontSize ?? 14}px;
       color: var(--black);
       opacity: 0.8;
     }
@@ -478,7 +479,7 @@ function tryWrapHtmlCode(text: string) {
     );
 }
 
-function R_MarkDownContent(props: { content: string }) {
+function R_MarkDownContent(props: { content: string; fontSize?: number }) {
   const escapedContent = useMemo(() => {
     return tryWrapHtmlCode(
       formatThinkText(
@@ -512,7 +513,11 @@ function R_MarkDownContent(props: { content: string }) {
           }: {
             title: string;
             children: React.ReactNode;
-          }) => <ThinkCollapse title={title}>{children}</ThinkCollapse>,
+          }) => (
+            <ThinkCollapse title={title} fontSize={props.fontSize}>
+              {children}
+            </ThinkCollapse>
+          ),
           a: (aProps: any) => {
             const href = aProps.href || "";
             if (/\.(aac|mp3|opus|wav)$/.test(href)) {
@@ -530,7 +535,7 @@ function R_MarkDownContent(props: { content: string }) {
               );
             }
             const isInternal = /^\/#/i.test(href);
-            const target = isInternal ? "_self" : aProps.target ?? "_blank";
+            const target = isInternal ? "_self" : (aProps.target ?? "_blank");
             return <a {...aProps} target={target} />;
           },
           details: Details,
@@ -570,7 +575,7 @@ export function Markdown(
       {props.loading ? (
         <LoadingIcon />
       ) : (
-        <MarkdownContent content={props.content} />
+        <MarkdownContent content={props.content} fontSize={props.fontSize} />
       )}
     </div>
   );

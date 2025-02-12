@@ -92,14 +92,6 @@ const ThinkCollapse = styled(
     }
   }
 
-  .ant-collapse-item:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--hover-color) 40%,
-      transparent
-    ) !important;
-  }
-
   .ant-collapse-item-active {
     .ant-collapse-header {
       border-bottom-color: transparent !important;

@@ -73,14 +73,14 @@ export function CloudBackupPage() {
 
   const handleBackup = async () => {
     if (serverAddress.trim() === "") {
-      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
+      setMessage({ text: "文件服务器地址不能为空", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage({ text: "无效的文件服务器地址。", type: "error" });
+      setMessage({ text: "无效的文件服务器地址", type: "error" });
       return;
     }
     setBackupLoading(true);
@@ -145,7 +145,7 @@ export function CloudBackupPage() {
     // 监听请求错误
     xhr.onerror = () => {
       setMessage({
-        text: "云备份失败，请重试。",
+        text: "云备份失败，请重试",
         type: "error",
       });
       setBackupLoading(false);
@@ -157,14 +157,14 @@ export function CloudBackupPage() {
 
   const handleImport = async () => {
     if (serverAddress.trim() === "") {
-      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
+      setMessage({ text: "文件服务器地址不能为空", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage({ text: "无效的文件服务器地址。", type: "error" });
+      setMessage({ text: "无效的文件服务器地址", type: "error" });
       return;
     }
     setImportLoading(true);
@@ -186,7 +186,7 @@ export function CloudBackupPage() {
     } catch (error: any) {
       console.error(error);
       setMessage({
-        text: error.message || "获取文件列表失败，请重试。",
+        text: error.message || "获取文件列表失败，请重试",
         type: "error",
       });
     } finally {
@@ -214,7 +214,7 @@ export function CloudBackupPage() {
   const handleRenameSubmit = async (fileName: string) => {
     const newName = renameInputs[fileName]?.trim();
     if (!newName) {
-      setMessage({ text: "文件名不能为空。", type: "error" });
+      setMessage({ text: "文件名不能为空", type: "error" });
       return;
     }
     setRenamingFileNames((prev) => {
@@ -223,14 +223,14 @@ export function CloudBackupPage() {
       return newSet;
     });
     if (serverAddress.trim() === "") {
-      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
+      setMessage({ text: "文件服务器地址不能为空", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage({ text: "无效的文件服务器地址。", type: "error" });
+      setMessage({ text: "无效的文件服务器地址", type: "error" });
       return;
     }
     setLoading(true);
@@ -259,7 +259,7 @@ export function CloudBackupPage() {
     } catch (error: any) {
       console.error(error);
       setMessage({
-        text: error.message || "文件重命名失败，请重试。",
+        text: error.message || "文件重命名失败，请重试",
         type: "error",
       });
     } finally {
@@ -277,14 +277,14 @@ export function CloudBackupPage() {
     }
 
     if (serverAddress.trim() === "") {
-      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
+      setMessage({ text: "文件服务器地址不能为空", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage({ text: "无效的文件服务器地址。", type: "error" });
+      setMessage({ text: "无效的文件服务器地址", type: "error" });
       return;
     }
     setImportingFileNames((prev) => new Set(prev).add(fileName));
@@ -318,7 +318,7 @@ export function CloudBackupPage() {
     } catch (error: any) {
       console.error(error);
       setMessage({
-        text: error.message || `文件 ${fileName} 导入失败，请重试。`,
+        text: error.message || `文件 ${fileName} 导入失败，请重试`,
         type: "error",
       });
     } finally {
@@ -336,14 +336,14 @@ export function CloudBackupPage() {
     }
 
     if (serverAddress.trim() === "") {
-      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
+      setMessage({ text: "文件服务器地址不能为空", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage({ text: "无效的文件服务器地址。", type: "error" });
+      setMessage({ text: "无效的文件服务器地址", type: "error" });
       return;
     }
     setLoading(true);
@@ -372,7 +372,7 @@ export function CloudBackupPage() {
     } catch (error: any) {
       console.error(error);
       setMessage({
-        text: error.message || `文件 ${fileName} 删除失败，请重试。`,
+        text: error.message || `文件 ${fileName} 删除失败，请重试`,
         type: "error",
       });
     } finally {
@@ -387,14 +387,14 @@ export function CloudBackupPage() {
     }
 
     if (serverAddress.trim() === "") {
-      setMessage({ text: "文件服务器地址不能为空。", type: "error" });
+      setMessage({ text: "文件服务器地址不能为空", type: "error" });
       return;
     }
     try {
       const parsedUrl = new URL(serverAddress);
       collisionString = parsedUrl.hostname;
     } catch (error) {
-      setMessage({ text: "无效的文件服务器地址。", type: "error" });
+      setMessage({ text: "无效的文件服务器地址", type: "error" });
       return;
     }
     setLoading(true);
@@ -420,7 +420,7 @@ export function CloudBackupPage() {
     } catch (error: any) {
       console.error(error);
       setMessage({
-        text: error.message || `云端对话记录已成功清除删除失败，请重试。`,
+        text: error.message || `云端对话记录已成功清除删除失败，请重试`,
         type: "error",
       });
     } finally {

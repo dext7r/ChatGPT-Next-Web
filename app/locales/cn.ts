@@ -9,8 +9,8 @@ const cn = {
   WIP: "该功能仍在开发中……",
   Error: {
     Unauthorized: isApp
-      ? "检测到无效 API Key，请前往[设置](/#/settings)页检查 API Key 是否配置正确。"
-      : "访问密码不正确或为空，请前往[登录](/#/auth)页输入正确的访问密码，或者在[设置](/#/settings)页填入你自己的 OpenAI API Key。",
+      ? "检测到无效 API Key，请前往[设置](/#/settings)页检查 API Key 是否配置正确"
+      : "访问密码不正确或为空，请前往[登录](/#/auth)页输入正确的访问密码，或者在[设置](/#/settings)页填入你自己的 OpenAI API Key",
   },
   Auth: {
     Title: "需要密码",
@@ -81,7 +81,7 @@ const cn = {
       CloudBackup: "云备份",
       Translate: {
         Title: "中英互译",
-        BlankToast: "输入内容为空，不执行本次翻译。",
+        BlankToast: "输入内容为空，不执行本次翻译",
         isTranslatingToast: "正在翻译中...",
         FailTranslateToast: "本次翻译失败，无权限或请检查模型设置后再次尝试",
         SuccessTranslateToast: "本次翻译已结束并替换输入文本",
@@ -113,8 +113,8 @@ const cn = {
           "请帮我识别这张图片中的文字内容,按照上述规则输出结果，确保输出结果的准确性且没有多余内容。",
       },
       Privacy: {
-        Title: "输入隐私打码,不可撤销",
-        BlankToast: "输入内容为空，不执行本次打码。",
+        Title: "隐私打码(不可撤销)",
+        BlankToast: "输入内容为空，不执行本次打码",
         isPrivacyToast: "正在打码中...",
         FailPrivacyToast: "本次打码失败，无权限或请检查模型设置后再次尝试",
         SuccessPrivacyToast: "本次打码已结束并替换输入内容",
@@ -517,8 +517,8 @@ const cn = {
     Failed: "复制失败，请赋予剪切板权限",
   },
   Download: {
-    Success: "内容已下载到您的目录。",
-    Failed: "下载失败。",
+    Success: "内容已下载到您的目录",
+    Failed: "下载失败",
   },
   Context: {
     Toast: (x: any) => `包含 ${x} 条预设提示词`,
@@ -608,6 +608,7 @@ const cn = {
     Less: "折叠代码",
     Thinking: "正在思考中...",
     Think: "思考过程",
+    NoThink: "没有思考过程",
     ArtifactsInfo:
       "可在设置中开启/关闭“Artifacts 预览”和“代码折叠”，若预览失败请刷新页面",
   },

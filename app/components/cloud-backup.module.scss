@@ -10,8 +10,8 @@
 
 .backup-header {
   padding: 8px 12px;
-  background-color: #f9f9f9;
-  border-bottom: 1px solid #ddd;
+  background-color: var(--white);
+  border-bottom: var(--border-in-light);
   flex-shrink: 0;
   max-height: 50vh; /* 限制最大高度为视口的50% */
   overflow-y: auto; /* 当内容过多时允许滚动 */
@@ -21,7 +21,7 @@
     text-align: center;
     margin-bottom: 10px;
     font-size: 18px;
-    color: #333333;
+    color: var(--black);
   }
   .window-action-button {
     position: absolute;
@@ -41,7 +41,7 @@
     margin-bottom: 6px;
     font-weight: bold;
     font-size: 14px;
-    color: #555555;
+    color: var(--text-color-secondary);
   }
 
   .input {
@@ -49,21 +49,23 @@
     width: 100%;
     min-width: 400px;
     padding: 6px 10px;
-    border: 1px solid #cccccc;
+    border: var(--border-in-light);
     border-radius: 5px;
     font-size: 14px;
     margin-right: 0.2rem;
     box-sizing: border-box;
     transition: border-color 0.3s ease;
     display: block;
+    background-color: var(--white);
+    color: var(--black);
 
     &:focus {
-      border-color: #007bff;
+      border-color: var(--primary);
       outline: none;
     }
 
     &:disabled {
-      background-color: #f5f5f5;
+      background-color: var(--button-disabled-bg);
     }
   }
 
@@ -78,19 +80,19 @@
     padding: 10px 20px;
     margin-bottom: 5px;
     font-size: 14px;
-    color: #ffffff;
-    background-color: #007bff;
+    color: var(--white);
+    background-color: var(--primary);
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 
     &:hover:not(:disabled) {
-      background-color: #0056b3;
+      opacity: 0.8;
     }
 
     &:disabled {
-      background-color: #6c757d;
+      background-color: var(--button-disabled-bg);
       cursor: not-allowed;
     }
   }
@@ -100,6 +102,7 @@
     text-align: center;
     font-weight: bold;
     font-size: 16px;
+    color: var(--text-color);
   }
 }
 
@@ -109,33 +112,33 @@
   padding: 10px;
   max-height: 55vh;
   overflow-y: auto;
-  background-color: #fafafa;
+  background-color: var(--background-color-secondary);
 
   // 滚动条样式
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: #3298eb #f1f1f1; /* Firefox */
-  
+
   .fileListContainer::-webkit-scrollbar {
     width: 16px;
   }
-  
+
   .fileListContainer::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 8px;
   }
-  
+
   .fileListContainer::-webkit-scrollbar-thumb {
     background:  #3298eb;
     border-radius: 8px;
   }
-  
+
   .fileListContainer::-webkit-scrollbar-thumb:hover {
     background: #499ee5;
   }
 
   .subtitle {
     font-size: 18px;
-    color: #333333;
+    color: var(--black);
     margin-bottom: 18px;
     text-align: center;
   }
@@ -151,30 +154,32 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 10px;
-    border: 1px solid #eee;
+    border: var(--border-in-light);
     border-radius: 5px;
     margin-bottom: 8px;
-    background-color: #ffffff;
+    background-color: var(--white);
     transition: background-color 0.3s ease;
 
     &:hover {
-      background-color: #f9f9f9;
+      background-color: var(--hover-color);
     }
 
     .fileInfo {
       flex: 2;
       font-size: 14px;
-      color: #555555;
+      color: var(--text-color-secondary);
       word-break: break-all;
     }
 
     .renameInput {
       width: 100%;
       padding: 6px 10px;
-      border: 1px solid #cccccc;
+      border: var(--border-in-light);
       border-radius: 4px;
       font-size: 13px;
       box-sizing: border-box;
+      background-color: var(--white);
+      color: var(--black);
     }
 
     .fileActions {
@@ -187,19 +192,19 @@
     .actionButton {
       padding: 6px 10px;
       font-size: 13px;
-      color: #ffffff;
-      background-color: #007bff;
+      color: var(--white);
+      background-color: var(--primary);
       border: none;
       border-radius: 4px;
       cursor: pointer;
       transition: background-color 0.3s ease;
 
       &:hover:not(:disabled) {
-        background-color: #0056b3;
+        background-color: var(--primary-hover);
       }
 
       &:disabled {
-        background-color: #6c757d;
+        background-color: var(--button-disabled-bg);
         cursor: not-allowed;
       }
     }

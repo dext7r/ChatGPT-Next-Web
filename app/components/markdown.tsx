@@ -6,6 +6,8 @@ import RehypeKatex from "rehype-katex";
 import RemarkGfm from "remark-gfm";
 import RehypeRaw from "rehype-raw";
 import RehypeHighlight from "rehype-highlight";
+import rehypeSanitize from "rehype-sanitize";
+import { defaultSchema } from "rehype-sanitize";
 import { useRef, useState, RefObject, useEffect, useMemo } from "react";
 import { copyToClipboard, useWindowSize } from "../utils";
 import mermaid from "mermaid";
@@ -98,6 +100,18 @@ const ThinkCollapse = styled(
     }
   }
 `;
+
+// 配置安全策略，允许 thinkcollapse 标签，防止html注入造成页面崩溃
+const sanitizeOptions = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames || []), "thinkcollapse"],
+  attributes: {
+    ...defaultSchema.attributes,
+    thinkcollapse: ["title", "className"],
+    pre: ["className"],
+    code: ["className"],
+  },
+};
 
 function Details(props: { children: React.ReactNode }) {
   return <details>{props.children}</details>;
@@ -480,6 +494,7 @@ function R_MarkDownContent(props: { content: string }) {
       remarkPlugins={[RemarkMath, RemarkGfm, RemarkBreaks]}
       rehypePlugins={[
         RehypeRaw,
+        [rehypeSanitize, sanitizeOptions],
         RehypeKatex,
         [
           RehypeHighlight,
@@ -518,7 +533,7 @@ function R_MarkDownContent(props: { content: string }) {
               );
             }
             const isInternal = /^\/#/i.test(href);
-            const target = isInternal ? "_self" : (aProps.target ?? "_blank");
+            const target = isInternal ? "_self" : aProps.target ?? "_blank";
             return <a {...aProps} target={target} />;
           },
           details: Details,

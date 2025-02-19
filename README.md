@@ -196,6 +196,11 @@ You can use this option if you want to increase the number of webdav service add
 
 Customize the default template used to initialize the User Input Preprocessing configuration item in Settings.
 
+### `VISION_MODELS` (optional)
+
+Set up models that support visual capabilities, separated by English commas, as a supplement to built-in visual capabilities.
+
+(英文逗号分隔，设置具备视觉能力的模型，为内置视觉模型进行额外补充)
 
 ## LICENSE
 

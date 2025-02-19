@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { showToast } from "./components/ui-lib";
 import Locale from "./locales";
 import { RequestMessage } from "./client/api";
+import { useAccessStore } from "./store";
+import { VISION_MODEL_REGEXES, EXCLUDE_VISION_MODEL_REGEXES } from "./constant";
 
 export function trimTopic(topic: string) {
   // Fix an issue where double quotes still show in the Indonesian language
@@ -269,29 +271,14 @@ export function getMessageImages(message: RequestMessage): string[] {
 }
 
 export function isVisionModel(model: string) {
-  // Note: This is a better way using the TypeScript feature instead of `&&` or `||` (ts v5.5.0-dev.20240314 I've been using)
-
-  const excludeKeywords = ["claude-3-5-haiku-20241022"];
-  const visionKeywords = [
-    "vision",
-    "gpt-4o",
-    "claude-3",
-    "gemini-1.5",
-    "gemini-2.0",
-    "gemini-exp",
-    "learnlm",
-    "pixtral",
-    "qwen-vl",
-    "qwen2-vl",
-    "glm-4v",
-  ];
-  const isGpt4Turbo =
-    model.includes("gpt-4-turbo") && !model.includes("preview");
-
+  const visionModels = useAccessStore.getState().visionModels;
+  const envVisionModels = visionModels?.split(",").map((m) => m.trim());
+  if (envVisionModels?.includes(model)) {
+    return true;
+  }
   return (
-    (!excludeKeywords.some((keyword) => model.includes(keyword)) &&
-      visionKeywords.some((keyword) => model.includes(keyword))) ||
-    isGpt4Turbo
+    !EXCLUDE_VISION_MODEL_REGEXES.some((regex) => regex.test(model)) &&
+    VISION_MODEL_REGEXES.some((regex) => regex.test(model))
   );
 }
 

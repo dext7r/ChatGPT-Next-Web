@@ -51,6 +51,7 @@ const DEFAULT_ACCESS_STATE = {
   disableFastLink: false,
   customModels: "",
   defaultModel: "",
+  visionModels: "",
   customHello: "",
   UnauthorizedInfo: "",
 
@@ -109,7 +110,10 @@ export const useAccessStore = createPersistStore(
 
       return get().needCode;
     },
-
+    getVisionModels() {
+      this.fetch();
+      return get().visionModels;
+    },
     edgeVoiceName() {
       this.fetch();
 

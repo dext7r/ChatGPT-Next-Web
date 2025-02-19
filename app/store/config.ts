@@ -64,10 +64,15 @@ export const DEFAULT_CONFIG = {
     model: "gpt-4o-mini" as ModelType,
     providerName: "OpenAI" as ServiceProvider,
     temperature: 0.5,
+    temperature_enabled: true,
     top_p: 0.99,
+    top_p_enabled: true,
     max_tokens: 4000,
+    max_tokens_enabled: true,
     presence_penalty: 0,
+    presence_penalty_enabled: true,
     frequency_penalty: 0,
+    frequency_penalty_enabled: true,
     sendMemory: true,
     historyMessageCount: 4,
     compressMessageLengthThreshold: 1000,
@@ -179,7 +184,7 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 4,
+    version: 4.1,
 
     merge(persistedState, currentState) {
       const state = persistedState as ChatConfig | undefined;
@@ -245,7 +250,13 @@ export const useAppConfig = createPersistStore(
         state.modelConfig.ocrProviderName =
           DEFAULT_CONFIG.modelConfig.ocrProviderName;
       }
-
+      if (version < 4.1) {
+        state.modelConfig.temperature_enabled = true;
+        state.modelConfig.top_p_enabled = true;
+        state.modelConfig.max_tokens_enabled = true;
+        state.modelConfig.presence_penalty_enabled = true;
+        state.modelConfig.frequency_penalty_enabled = true;
+      }
       return state as any;
     },
   },

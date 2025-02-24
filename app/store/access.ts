@@ -55,6 +55,9 @@ const DEFAULT_ACCESS_STATE = {
   customHello: "",
   UnauthorizedInfo: "",
 
+  // icon position
+  iconPosition: "",
+
   // sidebar config
   sidebarTitle: "",
   sidebarSubTitle: "",
@@ -97,6 +100,10 @@ export const useAccessStore = createPersistStore(
       this.fetch();
       return get().ocrModel;
     },
+    setIconPosition() {
+      this.fetch();
+      return get().iconPosition;
+    },
     setCustomHello() {
       this.fetch();
       return get().customHello;
@@ -107,7 +114,6 @@ export const useAccessStore = createPersistStore(
     },
     enabledAccessControl() {
       this.fetch();
-
       return get().needCode;
     },
     getVisionModels() {

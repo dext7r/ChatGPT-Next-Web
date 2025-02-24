@@ -19,6 +19,7 @@ const DANGER_CONFIG = {
   compressModel: serverConfig.compressModel,
   customHello: serverConfig.customHello,
   UnauthorizedInfo: serverConfig.UnauthorizedInfo,
+  iconPosition: serverConfig.iconPosition,
   translateModel: serverConfig.translateModel,
   ocrModel: serverConfig.ocrModel,
   sidebarTitle: siderbarConfig.title,

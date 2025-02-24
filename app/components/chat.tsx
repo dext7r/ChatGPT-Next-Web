@@ -1506,6 +1506,11 @@ function _Chat() {
   Locale.Error.Unauthorized =
     accessStore.UnauthorizedInfo || Locale.Error.Unauthorized;
 
+  // icon position
+  const iconPosition = accessStore.iconPosition.toLowerCase() || "down";
+  const iconUpEnabled = iconPosition === "up" || iconPosition === "both";
+  const iconDownEnabled = iconPosition === "down" || iconPosition === "both";
+
   async function openaiSpeech(text: string) {
     if (speechStatus) {
       ttsPlayer.stop();
@@ -2079,7 +2084,7 @@ function _Chat() {
                       </div>
                     )}
 
-                    {!isMobileScreen && showActions && (
+                    {iconUpEnabled && showActions && (
                       <div className={styles["chat-message-actions"]}>
                         <div className={styles["chat-input-actions"]}>
                           <ChatInputActions
@@ -2167,7 +2172,7 @@ function _Chat() {
                           message.model ? ` - Model: ${message.model}` : ""
                         }`}
                   </div>
-                  {showActions && (
+                  {iconDownEnabled && showActions && (
                     <div className={styles["chat-message-actions"]}>
                       <div className={styles["chat-input-actions"]}>
                         <ChatInputActions

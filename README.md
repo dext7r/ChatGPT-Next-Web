@@ -13,7 +13,7 @@ docker 镜像：
 - 模型选择器优化
 - 快速搜索聊天记录
 - 可自定义**侧边栏**，支持 HTML 样式
-- 免导入导出的云备份功能（需配合[文件服务器项目](https://github.com/QAbot-zh/go-file-server)使用）
+- 免导入导出的云备份功能（需配合[文件服务器项目](https://github.com/QAbot-zh/go-file-server)使用）：[文件服务器搭建参考](#平台搭建)
 - OpenAI 类型支持前端配置，一键拉取可用模型
 
 <img src="./docs/images/getModels.png" width="80%" alt="get models"  style="display:inline-block; margin-left:40px"/>
@@ -93,6 +93,7 @@ docker 镜像：
 | `WHITE_WEBDEV_ENDPOINTS`  | 可选。增加允许访问的 WebDAV 服务地址，每个地址需为完整的 endpoint，例如：`https://xxxx/yyy`，多个地址用逗号分隔，默认值为空。|
 | `DEFAULT_INPUT_TEMPLATE`  | 可选。自定义默认模板，用于初始化设置中的用户输入预处理配置项，默认值为空。|
 | `VISION_MODELS`           | 可选。设置具备视觉能力的模型，多个模型用英文逗号分隔，用于补充内置视觉能力模型，默认值为空。|
+| `ICON_POSITION`           | 可选。设置消息功能图标的位置，候选项：UP,DOWN,BOTH。默认值为 DOWN（对手机窄屏使用更友好）。|
 
 
 ------
@@ -129,7 +130,18 @@ docker 镜像：
 
 ![alt text](image.png)
 
+### `ICON_POSITION` 位置示意图
 
+![icon position](./docs/images/icon_position.png)
+
+---------
+## 平台搭建
+感谢 [Reno](https://linux.do/u/Reno) 奉献的教程： 
+[零成本搭建可扩展的AI对话平台，含文件服务搭建](https://linux.do/t/topic/444807)
+
+> **ps：不覆盖 api 成本**
+
+-------
 ## LICENSE
 
 [MIT](https://opensource.org/license/mit/)

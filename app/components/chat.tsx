@@ -72,6 +72,8 @@ import {
   getMessageImages,
   isVisionModel,
   safeLocalStorage,
+  isThinkingModel,
+  wrapThinkingPart,
 } from "../utils";
 
 import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
@@ -2112,7 +2114,11 @@ function _Chat() {
                   <div className={styles["chat-message-item"]}>
                     <Markdown
                       key={message.streaming ? "loading" : "done"}
-                      content={getMessageTextContent(message)}
+                      content={
+                        !message.streaming && isThinkingModel(message.model)
+                          ? wrapThinkingPart(getMessageTextContent(message))
+                          : getMessageTextContent(message)
+                      }
                       loading={
                         (message.preview || message.streaming) &&
                         message.content.length === 0 &&

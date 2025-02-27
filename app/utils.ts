@@ -286,17 +286,18 @@ export function isThinkingModel(model: string | undefined) {
   if (!model) {
     return false;
   }
+  const model_name = model.toLowerCase();
   const thinkingRegex = [
     /thinking/,
     /reason/,
-    /^deepseek-r1/,
+    /deepseek-r1/,
     /^o1/,
     /^gpt-o1/,
     /^o3/,
     /^gpt-o3/,
   ];
 
-  return thinkingRegex.some((regex) => regex.test(model));
+  return thinkingRegex.some((regex) => regex.test(model_name));
 }
 export function wrapThinkingPart(full_reply: string) {
   // 处理无闭合<think>标签的情况

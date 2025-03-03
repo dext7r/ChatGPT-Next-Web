@@ -553,7 +553,7 @@ export function SearchSelector<T>(props: {
                   item.disable && styles["selector-item-disabled"]
                 }`}
                 key={i}
-                icon={<Avatar model={item.value as string} />}
+                icon={<Avatar model={item.title as string} />}
                 title={item.title}
                 subTitle={item.subTitle}
                 onClick={(e) => {

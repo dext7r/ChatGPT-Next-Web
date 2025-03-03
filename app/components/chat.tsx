@@ -120,7 +120,11 @@ import { prettyObject } from "../utils/format";
 import { ExportMessageModal } from "./exporter";
 import { getClientConfig } from "../config/client";
 import { useAllModels } from "../utils/hooks";
-import { MultimodalContent, getClientApi } from "../client/api";
+import {
+  LLMModelProvider,
+  MultimodalContent,
+  getClientApi,
+} from "../client/api";
 
 import { ClientApi } from "../client/api";
 import { createTTSPlayer } from "../utils/audio";
@@ -136,6 +140,14 @@ const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
 });
 
+interface Model {
+  available: boolean;
+  name: string;
+  displayName?: string;
+  description?: string;
+  provider?: LLMModelProvider;
+  isDefault?: boolean;
+}
 export function SessionConfigModel(props: { onClose: () => void }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
@@ -487,6 +499,7 @@ export function ChatActions(props: {
   setShowShortcutKeyModal: React.Dispatch<React.SetStateAction<boolean>>;
   userInput: string;
   setUserInput: (input: string) => void;
+  modelTable: Model[];
 }) {
   const config = useAppConfig();
   const navigate = useNavigate();
@@ -718,24 +731,16 @@ export function ChatActions(props: {
   const stopAll = () => ChatControllerPool.stopAll();
 
   // switch model
-  const currentModel = chatStore.currentSession().mask.modelConfig.model;
+  const models = props.modelTable;
+  const currentModel = session.mask.modelConfig.model;
   const currentProviderName =
     session.mask.modelConfig?.providerName || ServiceProvider.OpenAI;
-  const allModels = useAllModels();
-  const models = useMemo(() => {
-    const filteredModels = allModels.filter((m) => m.available);
-    const defaultModel = filteredModels.find((m) => m.isDefault);
+  const currentModelDisplayName = models.find(
+    (m) =>
+      m.name === currentModel &&
+      m.provider?.providerName === currentProviderName,
+  )?.displayName;
 
-    if (defaultModel) {
-      const arr = [
-        defaultModel,
-        ...filteredModels.filter((m) => m !== defaultModel),
-      ];
-      return arr;
-    } else {
-      return filteredModels;
-    }
-  }, [allModels]);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showUploadImage, setShowUploadImage] = useState(false);
 
@@ -850,7 +855,7 @@ export function ChatActions(props: {
         <ChatAction
           onClick={() => setShowModelSelector(true)}
           alwaysShowText={true}
-          text={currentModel}
+          text={currentModelDisplayName || currentModel}
           icon={<RobotIcon />}
         />
 
@@ -1162,7 +1167,7 @@ function ChatInputActions(props: {
     </div>
   );
 }
-function _Chat() {
+function _Chat({ modelTable }: { modelTable: Model[] }) {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
@@ -2073,7 +2078,9 @@ function _Chat() {
                             <MaskAvatar
                               avatar={session.mask.avatar}
                               model={
-                                message.model || session.mask.modelConfig.model
+                                message.displayName ||
+                                message.model ||
+                                session.mask.modelConfig.model
                               }
                             />
                           )}
@@ -2082,7 +2089,7 @@ function _Chat() {
                     </div>
                     {!isUser && (
                       <div className={styles["chat-model-name"]}>
-                        {message.model}
+                        {message.displayName || message.model}
                       </div>
                     )}
 
@@ -2175,7 +2182,11 @@ function _Chat() {
                     {isContext
                       ? Locale.Chat.IsContext
                       : `${message.date.toLocaleString()}${
-                          message.model ? ` - Model: ${message.model}` : ""
+                          message.model
+                            ? ` - Model: ${
+                                message.displayName || message.model
+                              }`
+                            : ""
                         }`}
                   </div>
                   {iconDownEnabled && showActions && (
@@ -2231,6 +2242,7 @@ function _Chat() {
           setShowShortcutKeyModal={setShowShortcutKeyModal}
           userInput={userInput}
           setUserInput={setUserInput}
+          modelTable={modelTable}
         />
         <label
           className={`${styles["chat-input-panel-inner"]} ${
@@ -2312,5 +2324,50 @@ function _Chat() {
 export function Chat() {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
-  return <_Chat key={session.id}></_Chat>;
+  const allModels = useAllModels();
+  const hasUpdatedDisplayName = useRef(false);
+
+  const modelTable = useMemo(() => {
+    const filteredModels = allModels.filter((m) => m.available);
+    const defaultModel = filteredModels.find((m) => m.isDefault);
+
+    if (defaultModel) {
+      const arr = [
+        defaultModel,
+        ...filteredModels.filter((m) => m !== defaultModel),
+      ];
+      return arr;
+    } else {
+      return filteredModels;
+    }
+  }, [allModels]);
+  // Update session messages based on modelTable
+  useEffect(() => {
+    // 仅在 modelTable 变化或首次加载 session 时执行, 且当前会话未更新过displayName
+    if (hasUpdatedDisplayName.current) return;
+
+    let messagesChanged = false;
+    for (let i = 0; i < session.messages.length; i++) {
+      const message = session.messages[i];
+      // 增加对 message.provider 的存在性检查
+      if (message.role !== "user" && !message.displayName && message.model) {
+        const displayName = modelTable.find(
+          (model) =>
+            model.name === message.model &&
+            model.provider?.providerName === message.providerName,
+        )?.displayName;
+
+        if (displayName !== message.displayName) {
+          // 仅当 displayName 发生变化时才更新
+          session.messages[i].displayName = displayName;
+          messagesChanged = true;
+        }
+      }
+    }
+    if (messagesChanged) {
+      hasUpdatedDisplayName.current = true;
+    }
+  }, [session.messages[session.messages.length - 1]?.id]);
+
+  return <_Chat key={session.id} modelTable={modelTable}></_Chat>;
 }

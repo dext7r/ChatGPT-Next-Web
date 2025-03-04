@@ -186,6 +186,7 @@ export const getServerSideConfig = () => {
     compressModel: process.env.COMPRESS_MODEL,
     translateModel: process.env.TRANSLATE_MODEL,
     ocrModel: process.env.OCR_MODEL,
+    selectLabels: process.env.SELECT_LABELS,
 
     iconPosition: process.env.ICON_POSITION || "down",
   };

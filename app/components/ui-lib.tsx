@@ -23,6 +23,7 @@ import React, {
   useRef,
 } from "react";
 import { IconButton } from "./button";
+import { useAccessStore } from "../store";
 
 export function Popover(props: {
   children: JSX.Element;
@@ -482,6 +483,13 @@ export function SearchSelector<T>(props: {
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const accessStore = useAccessStore();
+
+  const [presetRules, setPresetRules] = useState<string[]>(
+    accessStore.selectLabels.split(","),
+  );
+  const [selectedRule, setSelectedRule] = useState<string>("");
+
   // 当组件加载时自动聚焦到输入框
   useEffect(() => {
     if (inputRef.current) {
@@ -505,14 +513,23 @@ export function SearchSelector<T>(props: {
   };
   // 过滤列表项
   const filteredItems = props.items
-    .filter(
-      (item) =>
+    .filter((item) => {
+      // 检查是否匹配搜索框
+      const searchMatch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.subTitle &&
           item.subTitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (typeof item.value === "string" &&
-          item.value.toLowerCase().includes(searchQuery.toLowerCase())),
-    )
+          item.value.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      // 检查是否匹配下拉列表规则，仅匹配模型描述中的文本
+      const ruleMatch =
+        selectedRule === "" || // 如果未选择规则，则规则匹配为 true
+        (typeof item.subTitle === "string" &&
+          item.subTitle.toLowerCase().includes(selectedRule.toLowerCase()));
+
+      return searchMatch && ruleMatch; // 两者都匹配才返回 true
+    })
     .sort((a, b) => {
       // 将选中的项目排在前面
       const aSelected = selectedValues.includes(a.value);
@@ -544,6 +561,21 @@ export function SearchSelector<T>(props: {
               onChange={(e) => setSearchQuery(e.target.value)}
               onClick={(e) => e.stopPropagation()}
             />
+            <select
+              className={styles["selector-rule-select"]}
+              value={selectedRule}
+              onChange={(e) => {
+                setSelectedRule(e.target.value);
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="">{Locale.UI.SelectALL}</option>
+              {presetRules.map((rule, index) => (
+                <option key={index} value={rule}>
+                  {rule}
+                </option>
+              ))}
+            </select>
           </div>
           {filteredItems.map((item, i) => {
             const selected = selectedValues.includes(item.value);

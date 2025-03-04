@@ -70,6 +70,9 @@ const DEFAULT_ACCESS_STATE = {
 
   // tts config
   edgeTTSVoiceName: "zh-CN-YunxiNeural",
+
+  // select labels
+  selectLabels: "",
 };
 
 export const useAccessStore = createPersistStore(
@@ -122,8 +125,11 @@ export const useAccessStore = createPersistStore(
     },
     edgeVoiceName() {
       this.fetch();
-
       return get().edgeTTSVoiceName;
+    },
+    getSelectLabels() {
+      this.fetch();
+      return get().selectLabels;
     },
 
     isValidOpenAI() {

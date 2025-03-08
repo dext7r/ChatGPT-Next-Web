@@ -21,7 +21,7 @@ import SpeakStopIcon from "../icons/speak-stop.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 import LoadingButtonIcon from "../icons/loading.svg";
 import PromptIcon from "../icons/prompt.svg";
-import MaskIcon from "../icons/mask.svg";
+// import MaskIcon from "../icons/mask.svg";
 import MaxIcon from "../icons/max.svg";
 import MinIcon from "../icons/min.svg";
 import ResetIcon from "../icons/reload.svg";
@@ -35,9 +35,9 @@ import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
 import ImageIcon from "../icons/image.svg";
 
-import LightIcon from "../icons/light.svg";
-import DarkIcon from "../icons/dark.svg";
-import AutoIcon from "../icons/auto.svg";
+// import LightIcon from "../icons/light.svg";
+// import DarkIcon from "../icons/dark.svg";
+// import AutoIcon from "../icons/auto.svg";
 import BottomIcon from "../icons/bottom.svg";
 import StopIcon from "../icons/pause.svg";
 import RobotIcon from "../icons/robot.svg";
@@ -803,7 +803,7 @@ export function ChatActions(props: {
             icon={props.uploading ? <LoadingButtonIcon /> : <ImageIcon />}
           />
         )}
-        {!isMobileScreen && (
+        {/* {!isMobileScreen && (
           <ChatAction
             onClick={nextTheme}
             text={Locale.Chat.InputActions.Theme[theme]}
@@ -819,7 +819,7 @@ export function ChatActions(props: {
               </>
             }
           />
-        )}
+        )} */}
 
         <ChatAction
           onClick={props.showPromptHints}
@@ -827,7 +827,7 @@ export function ChatActions(props: {
           icon={<PromptIcon />}
         />
 
-        {!isMobileScreen && (
+        {/* {!isMobileScreen && (
           <ChatAction
             onClick={() => {
               navigate(Path.Masks);
@@ -835,7 +835,7 @@ export function ChatActions(props: {
             text={Locale.Chat.InputActions.Masks}
             icon={<MaskIcon />}
           />
-        )}
+        )} */}
 
         <ChatAction
           text={Locale.Chat.InputActions.Clear}
@@ -1227,13 +1227,14 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
   );
 
   // auto grow input
-  const [inputRows, setInputRows] = useState(2);
+  const minInputRows = 3;
+  const [inputRows, setInputRows] = useState(minInputRows);
   const measure = useDebouncedCallback(
     () => {
       const rows = inputRef.current ? autoGrowTextArea(inputRef.current) : 1;
       const inputRows = Math.min(
         20,
-        Math.max(2 + Number(!isMobileScreen), rows),
+        Math.max(minInputRows + Number(!isMobileScreen), rows),
       );
       setInputRows(inputRows);
     },
@@ -2294,7 +2295,7 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
           )}
           <IconButton
             icon={<SendWhiteIcon />}
-            text={Locale.Chat.Send}
+            text={isMobileScreen ? "" : Locale.Chat.Send}
             className={styles["chat-input-send"]}
             type="primary"
             onClick={() => doSubmit(userInput)}

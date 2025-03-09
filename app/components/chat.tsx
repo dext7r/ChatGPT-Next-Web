@@ -75,6 +75,7 @@ import {
   isThinkingModel,
   wrapThinkingPart,
 } from "../utils";
+import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
 import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
 import Image from "next/image";
@@ -2293,13 +2294,18 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
               })}
             </div>
           )}
-          <IconButton
-            icon={<SendWhiteIcon />}
-            text={isMobileScreen ? "" : Locale.Chat.Send}
-            className={styles["chat-input-send"]}
-            type="primary"
-            onClick={() => doSubmit(userInput)}
-          />
+          <div className={styles["chat-input-textarea"]}>
+            <div className={styles["token-counter"]}>
+              ({estimateTokenLengthInLLM(userInput)})
+            </div>
+            <IconButton
+              icon={<SendWhiteIcon />}
+              text={isMobileScreen ? "" : Locale.Chat.Send}
+              // className={styles["chat-input-send"]}
+              type="primary"
+              onClick={() => doSubmit(userInput)}
+            />
+          </div>
         </label>
       </div>
 

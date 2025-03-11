@@ -41,6 +41,14 @@ export type ChatMessage = RequestMessage & {
   model?: ModelType;
   displayName?: string;
   providerName?: string;
+
+  statistic?: {
+    completionTokens?: number;
+    reasoningTokens?: number;
+    firstReplyLatency?: number;
+    totalReplyLatency?: number;
+    reasoningLatency?: number;
+  };
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -432,7 +440,19 @@ export const useChatStore = createPersistStore(
           onFinish(message) {
             botMessage.streaming = false;
             if (message) {
-              botMessage.content = message;
+              botMessage.content =
+                typeof message === "string" ? message : message.content;
+              if (typeof message !== "string") {
+                if (!botMessage.statistic) {
+                  botMessage.statistic = {};
+                }
+                botMessage.statistic.completionTokens =
+                  message?.usage?.completion_tokens;
+                botMessage.statistic.firstReplyLatency =
+                  message?.usage?.first_content_latency;
+                botMessage.statistic.totalReplyLatency =
+                  message?.usage?.total_latency;
+              }
               botMessage.date = new Date().toLocaleString();
               get().onNewMessage(botMessage, session);
             }
@@ -651,7 +671,9 @@ export const useChatStore = createPersistStore(
             },
             onFinish(message, responseRes) {
               if (responseRes?.status === 200) {
-                if (!isValidMessage(message)) {
+                let replyContent: string =
+                  typeof message === "string" ? message : message.content;
+                if (!isValidMessage(replyContent)) {
                   showToast(Locale.Chat.Actions.FailTitleToast);
                   return;
                 }
@@ -659,7 +681,9 @@ export const useChatStore = createPersistStore(
                   session,
                   (session) =>
                     (session.topic =
-                      message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC),
+                      replyContent.length > 0
+                        ? trimTopic(replyContent)
+                        : DEFAULT_TOPIC),
                 );
               }
             },
@@ -731,12 +755,14 @@ export const useChatStore = createPersistStore(
             onFinish(message, responseRes) {
               if (responseRes?.status === 200) {
                 console.log("[Memory] ", message);
-                if (!isValidMessage(message)) {
+                let replyContent =
+                  typeof message === "string" ? message : message.content;
+                if (!isValidMessage(replyContent)) {
                   return;
                 }
                 get().updateTargetSession(session, (session) => {
                   session.lastSummarizeIndex = lastSummarizeIndex;
-                  session.memoryPrompt = message; // Update the memory prompt for stored it in local storage
+                  session.memoryPrompt = replyContent; // Update the memory prompt for stored it in local storage
                 });
               }
             },

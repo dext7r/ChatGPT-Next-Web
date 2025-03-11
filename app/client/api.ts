@@ -45,13 +45,23 @@ export interface SpeechOptions {
   speed?: number;
   onController?: (controller: AbortController) => void;
 }
-
+export interface RichMessage {
+  content: string;
+  reasoning_content: string;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+    first_content_latency?: number;
+    total_latency?: number;
+  };
+}
 export interface ChatOptions {
   messages: RequestMessage[];
   config: LLMConfig;
 
   onUpdate?: (message: string, chunk: string) => void;
-  onFinish: (message: string, responseRes: Response) => void;
+  onFinish: (message: string | RichMessage, responseRes: Response) => void;
   onError?: (err: Error) => void;
   onController?: (controller: AbortController) => void;
 }

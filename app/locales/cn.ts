@@ -122,14 +122,17 @@ const cn = {
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
-    Input: (submitKey: string) => {
+    Input: (submitKey: string, isMobileScreen: boolean = false) => {
+      if (isMobileScreen) {
+        return "/ 触发预设，: 触发命令\n输入你的问题...";
+      }
       var inputHints = `${submitKey} 发送`;
       if (submitKey === String(SubmitKey.Enter)) {
         inputHints += "，Shift + Enter 换行";
       }
       return (
         inputHints +
-        "，/ 触发补全，: 触发命令\nCtrl + Shift + ;  快速复制最后一个代码块\nCtrl + Shift + L 重新获取 AI 回复"
+        "\n/ 触发预设，: 触发命令\nCtrl + Shift + ;  快速复制最后一个代码块\nCtrl + Shift + L 重新获取 AI 回复"
       );
     },
     Send: "发送",
@@ -452,6 +455,11 @@ const cn = {
       CloseSubTile: "收起对话模型设置",
     },
     Model: "模型 (model)",
+    StreamUsageEnable: {
+      Title: "开启原生流式用量统计",
+      SubTitle:
+        "是否开启原生流式用量统计，需要 api 支持 stream_options 参数，否则按照默认编码器进行统计",
+    },
     CompressModel: {
       Title: "对话摘要模型",
       SubTitle: "用于压缩历史记录、生成对话标题的模型",

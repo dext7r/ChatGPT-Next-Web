@@ -124,6 +124,7 @@ import { useAllModels } from "../utils/hooks";
 import {
   LLMModelProvider,
   MultimodalContent,
+  RichMessage,
   getClientApi,
 } from "../client/api";
 
@@ -553,7 +554,11 @@ export function ChatActions(props: {
             showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
             return;
           }
-          props.setUserInput(message);
+          if (typeof message === "string") {
+            props.setUserInput(message);
+          } else {
+            props.setUserInput(message.content);
+          }
           showToast(Locale.Chat.InputActions.Translate.SuccessTranslateToast);
         } else {
           showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
@@ -614,6 +619,9 @@ export function ChatActions(props: {
       },
       onFinish(message, responseRes) {
         if (responseRes?.status === 200) {
+          if (typeof message !== "string") {
+            message = message.content;
+          }
           if (!isValidMessage(message)) {
             showToast(Locale.Chat.InputActions.OCR.FailDetectToast);
             return;
@@ -1168,7 +1176,7 @@ function ChatInputActions(props: {
     </div>
   );
 }
-function _Chat({ modelTable }: { modelTable: Model[] }) {
+function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
@@ -1230,13 +1238,16 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
   // auto grow input
   const minInputRows = 3;
   const [inputRows, setInputRows] = useState(minInputRows);
+  const [isExpanded, setIsExpanded] = useState(false);
   const measure = useDebouncedCallback(
     () => {
       const rows = inputRef.current ? autoGrowTextArea(inputRef.current) : 1;
-      const inputRows = Math.min(
-        20,
-        Math.max(minInputRows + Number(!isMobileScreen), rows),
-      );
+      const inputRows = isExpanded
+        ? 20
+        : Math.min(
+            20,
+            Math.max(minInputRows + 2 * Number(!isMobileScreen), rows),
+          );
       setInputRows(inputRows);
     },
     100,
@@ -1247,7 +1258,10 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(measure, [userInput]);
+  useEffect(measure, [userInput, isExpanded]);
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   // chat commands shortcuts
   const chatCommands = useChatCommand({
@@ -1917,6 +1931,35 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
     };
   }, [messages, chatStore, navigate]);
 
+  const formatMessage = (message: RenderMessage) => {
+    const { completionTokens, totalReplyLatency } = message.statistic ?? {};
+    const tokenString =
+      completionTokens !== undefined ? `${completionTokens}` : "N/A";
+
+    // 计算输出速度 (T/s)
+    const speed =
+      totalReplyLatency && completionTokens
+        ? ((1000 * completionTokens) / totalReplyLatency).toFixed(2)
+        : "N/A";
+
+    const mainInfo = `${message.date.toLocaleString()}${
+      message.model ? ` - ${message.displayName || message.model}` : ""
+    }`;
+
+    const statInfo = `↓ ${tokenString} Tokens - ${speed} T/s`;
+
+    return !message.statistic ? (
+      `${mainInfo}`
+    ) : isMobileScreen ? (
+      <>
+        {mainInfo}
+        <br />
+        {statInfo}
+      </>
+    ) : (
+      `${mainInfo} - ${statInfo}`
+    );
+  };
   return (
     <div className={styles.chat} key={session.id}>
       <div className="window-header" data-tauri-drag-region>
@@ -2181,15 +2224,7 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
                   </div>
 
                   <div className={styles["chat-message-action-date"]}>
-                    {isContext
-                      ? Locale.Chat.IsContext
-                      : `${message.date.toLocaleString()}${
-                          message.model
-                            ? ` - Model: ${
-                                message.displayName || message.model
-                              }`
-                            : ""
-                        }`}
+                    {isContext ? Locale.Chat.IsContext : formatMessage(message)}
                   </div>
                   {iconDownEnabled && showActions && (
                     <div className={styles["chat-message-actions"]}>
@@ -2258,11 +2293,11 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
             id="chat-input"
             ref={inputRef}
             className={styles["chat-input"]}
-            placeholder={Locale.Chat.Input(submitKey)}
+            placeholder={Locale.Chat.Input(submitKey, isMobileScreen)}
             onInput={(e) => onInput(e.currentTarget.value)}
             value={userInput}
             onKeyDown={onInputKeyDown}
-            onFocus={scrollToBottom}
+            // onFocus={scrollToBottom}
             onClick={scrollToBottom}
             onPaste={handlePaste}
             rows={inputRows}
@@ -2298,13 +2333,21 @@ function _Chat({ modelTable }: { modelTable: Model[] }) {
             <div className={styles["token-counter"]}>
               ({estimateTokenLengthInLLM(userInput)})
             </div>
-            <IconButton
-              icon={<SendWhiteIcon />}
-              text={isMobileScreen ? "" : Locale.Chat.Send}
-              // className={styles["chat-input-send"]}
-              type="primary"
-              onClick={() => doSubmit(userInput)}
-            />
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <IconButton
+                icon={isExpanded ? <MinIcon /> : <MaxIcon />}
+                bordered
+                title={Locale.Chat.Actions.FullScreen}
+                aria={Locale.Chat.Actions.FullScreen}
+                onClick={toggleExpand}
+              />
+              <IconButton
+                icon={<SendWhiteIcon />}
+                text={isMobileScreen ? "" : Locale.Chat.Send}
+                type="primary"
+                onClick={() => doSubmit(userInput)}
+              />
+            </div>
           </div>
         </label>
       </div>
@@ -2370,5 +2413,7 @@ export function Chat() {
     }
   }, [session.messages[session.messages.length - 1]?.id]);
 
-  return <_Chat key={session.id} modelTable={modelTable}></_Chat>;
+  return (
+    <ChatComponent key={session.id} modelTable={modelTable}></ChatComponent>
+  );
 }

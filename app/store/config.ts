@@ -83,6 +83,7 @@ export const DEFAULT_CONFIG = {
     ocrModel: "gpt-4o-mini" as ModelType,
     ocrProviderName: "OpenAI" as ServiceProvider,
     enableInjectSystemPrompts: false,
+    enableStreamUsageOptions: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
   },
 
@@ -238,7 +239,7 @@ export const useAppConfig = createPersistStore(
         state.modelConfig.template =
           state.modelConfig.template !== DEFAULT_INPUT_TEMPLATE
             ? state.modelConfig.template
-            : config?.template ?? DEFAULT_INPUT_TEMPLATE;
+            : (config?.template ?? DEFAULT_INPUT_TEMPLATE);
       }
 
       if (version < 4) {

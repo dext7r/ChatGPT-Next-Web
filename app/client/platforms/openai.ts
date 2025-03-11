@@ -17,6 +17,7 @@ import {
   LLMUsage,
   MultimodalContent,
   SpeechOptions,
+  RichMessage,
 } from "../api";
 import Locale from "../../locales";
 import {
@@ -34,6 +35,7 @@ import {
   wrapThinkingPart,
 } from "@/app/utils";
 import { preProcessImageContent } from "@/app/utils/chat";
+import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
 export interface OpenAIListModelResponse {
   object: string;
@@ -57,6 +59,9 @@ interface RequestPayload {
   top_p?: number;
   max_tokens?: number;
   max_completion_tokens?: number;
+  stream_options?: {
+    include_usage?: boolean;
+  };
 }
 
 export class ChatGPTApi implements LLMApi {
@@ -168,8 +173,8 @@ export class ChatGPTApi implements LLMApi {
       const content = visionModel
         ? await preProcessImageContent(v)
         : v.role === "assistant" // 如果 role 是 assistant
-        ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
-        : getMessageTextContent(v); // 否则调用 getMessageTextContent
+          ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
+          : getMessageTextContent(v); // 否则调用 getMessageTextContent
       if (!(isO1 && v.role === "system"))
         messages.push({ role: v.role, content });
     }
@@ -241,6 +246,9 @@ export class ChatGPTApi implements LLMApi {
       // temperature: !isO1 ? modelConfig.temperature : 1,
       // top_p: !isO1 ? modelConfig.top_p : 1,
     };
+    if (modelConfig.enableStreamUsageOptions && options.config.stream) {
+      requestPayload["stream_options"] = { include_usage: true };
+    }
     if (!isDeepseekReasoner) {
       if (modelConfig.temperature_enabled) {
         requestPayload["temperature"] = !isO1 ? modelConfig.temperature : 1;
@@ -313,6 +321,14 @@ export class ChatGPTApi implements LLMApi {
         let isInThinking = false;
         let thinkingStartTime = 0;
         let totalThinkingTime = 0;
+        let startRequestTime = Date.now();
+        let firstReplyTime = 0;
+        let totalReplyTime = 0;
+        let completionTokens = 0;
+        let richMessage: RichMessage = {
+          content: "",
+          reasoning_content: "",
+        };
 
         // animate response to make it looks smooth
         function animateResponseText() {
@@ -346,9 +362,20 @@ export class ChatGPTApi implements LLMApi {
               const finalThinkingDuration = Date.now() - thinkingStartTime;
               totalThinkingTime += finalThinkingDuration;
             }
+            totalReplyTime = Date.now() - startRequestTime;
             let full_reply = responseText + remainText;
             full_reply = wrapThinkingPart(full_reply);
-            options.onFinish(full_reply, new Response(null, { status: 200 }));
+            if (completionTokens == 0) {
+              completionTokens = estimateTokenLengthInLLM(full_reply);
+            }
+            richMessage.content = full_reply;
+            richMessage.usage = {
+              completion_tokens: completionTokens,
+              first_content_latency: firstReplyTime,
+              total_latency: totalReplyTime,
+            };
+
+            options.onFinish(richMessage, new Response(null, { status: 200 }));
           }
         };
 
@@ -400,6 +427,9 @@ export class ChatGPTApi implements LLMApi {
             if (msg.data === "[DONE]" || finished) {
               return finish();
             }
+            if (firstReplyTime == 0) {
+              firstReplyTime = Date.now() - startRequestTime;
+            }
             const text = msg.data;
             try {
               const json = JSON.parse(text);
@@ -412,6 +442,8 @@ export class ChatGPTApi implements LLMApi {
               const reasoning = choices[0]?.delta?.reasoning_content;
               const content = choices[0]?.delta?.content;
               const textmoderation = json?.prompt_filter_results;
+              completionTokens =
+                json?.usage?.completion_tokens || completionTokens;
 
               if (reasoning && reasoning.length > 0) {
                 if (!isInThinking) {

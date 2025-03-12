@@ -359,7 +359,8 @@ export class ChatGPTApi implements LLMApi {
           if (!finished) {
             finished = true;
             if (isInThinking || !totalThinkingLatency) {
-              totalThinkingLatency = Date.now() - startRequestTime;
+              totalThinkingLatency =
+                Date.now() - startRequestTime - firstReplyLatency;
             }
             totalReplyLatency = Date.now() - startRequestTime;
             let full_reply = responseText + remainText;
@@ -453,11 +454,13 @@ export class ChatGPTApi implements LLMApi {
                   remainText += reasoning;
                 }
                 isInThinking = true;
-                totalThinkingLatency = Date.now() - startRequestTime;
+                totalThinkingLatency =
+                  Date.now() - startRequestTime - firstReplyLatency;
               } else if (content && content.length > 0) {
                 if (isInThinking) {
                   isInThinking = false;
-                  totalThinkingLatency = Date.now() - startRequestTime;
+                  totalThinkingLatency =
+                    Date.now() - startRequestTime - firstReplyLatency;
                   remainText += "\n</think>\n\n" + content;
                 } else {
                   // 检查是否遇到第一个非空且不以 '>' 开头的行
@@ -469,13 +472,15 @@ export class ChatGPTApi implements LLMApi {
                     for (const line of lines) {
                       if (line.trim() !== "" && !line.startsWith(">")) {
                         foundFirstNonEmptyLineOrNonReference = true;
-                        totalThinkingLatency = Date.now() - startRequestTime;
+                        totalThinkingLatency =
+                          Date.now() - startRequestTime - firstReplyLatency;
                         break;
                       }
                     }
                   }
                   if (content.includes("</think>")) {
-                    totalThinkingLatency = Date.now() - startRequestTime;
+                    totalThinkingLatency =
+                      Date.now() - startRequestTime - firstReplyLatency;
                   }
                   remainText += content;
                 }

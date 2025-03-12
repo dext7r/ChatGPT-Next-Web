@@ -43,7 +43,10 @@ const ThinkCollapse = styled(
 
     // 当标题从 Thinking 变为 Think 或 NoThink 时自动折叠
     useEffect(() => {
-      if (title === Locale.NewChat.Think || title === Locale.NewChat.NoThink) {
+      if (
+        (typeof title === "string" && title.includes(Locale.NewChat.Think)) ||
+        title === Locale.NewChat.NoThink
+      ) {
         setActiveKeys([]);
       } else if (title === Locale.NewChat.Thinking) {
         setActiveKeys(["1"]);
@@ -486,7 +489,7 @@ function formatBoldText(text: string) {
     return `**${boldText}**${colon}`;
   });
 }
-function formatThinkText(text: string): string {
+function formatThinkText(text: string, thinkingTime?: number): string {
   text = text.trimStart();
   // 检查是否以 <think> 开头但没有结束标签
   if (text.startsWith("<think>") && !text.includes("</think>")) {
@@ -504,7 +507,7 @@ function formatThinkText(text: string): string {
     if (thinkContent.trim() === "") {
       return `<thinkcollapse title="${Locale.NewChat.NoThink}">\n</thinkcollapse>\n`;
     }
-    return `<thinkcollapse title="${Locale.NewChat.Think}">\n${thinkContent}\n\n</thinkcollapse>\n`;
+    return `<thinkcollapse title="${Locale.NewChat.Think}${Locale.NewChat.ThinkFormat(thinkingTime)}">\n${thinkContent}\n\n</thinkcollapse>\n`;
   });
 }
 
@@ -529,11 +532,16 @@ function tryWrapHtmlCode(text: string) {
     );
 }
 
-function R_MarkDownContent(props: { content: string; fontSize?: number }) {
+function R_MarkDownContent(props: {
+  content: string;
+  thinkingTime?: number;
+  fontSize?: number;
+}) {
   const escapedContent = useMemo(() => {
     return tryWrapHtmlCode(
       formatThinkText(
         formatBoldText(escapeBrackets(escapeDollarNumber(props.content))),
+        props.thinkingTime,
       ),
     );
   }, [props.content]);
@@ -586,7 +594,7 @@ function R_MarkDownContent(props: { content: string; fontSize?: number }) {
               );
             }
             const isInternal = /^\/#/i.test(href);
-            const target = isInternal ? "_self" : aProps.target ?? "_blank";
+            const target = isInternal ? "_self" : (aProps.target ?? "_blank");
             return <a {...aProps} target={target} />;
           },
           details: Details,
@@ -608,6 +616,7 @@ export function Markdown(
     fontSize?: number;
     parentRef?: RefObject<HTMLDivElement>;
     defaultShow?: boolean;
+    thinkingTime?: number;
   } & React.DOMAttributes<HTMLDivElement>,
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
@@ -626,7 +635,11 @@ export function Markdown(
       {props.loading ? (
         <LoadingIcon />
       ) : (
-        <MarkdownContent content={props.content} fontSize={props.fontSize} />
+        <MarkdownContent
+          content={props.content}
+          thinkingTime={props.thinkingTime}
+          fontSize={props.fontSize}
+        />
       )}
     </div>
   );

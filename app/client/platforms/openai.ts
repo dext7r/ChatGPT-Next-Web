@@ -319,11 +319,11 @@ export class ChatGPTApi implements LLMApi {
         let remainText = "";
         let finished = false;
         let isInThinking = false;
-        let thinkingStartTime = 0;
-        let totalThinkingTime = 0;
+        let foundFirstNonEmptyLineOrNonReference = false;
+        let totalThinkingLatency = 0;
         let startRequestTime = Date.now();
-        let firstReplyTime = 0;
-        let totalReplyTime = 0;
+        let firstReplyLatency = 0;
+        let totalReplyLatency = 0;
         let completionTokens = 0;
         let richMessage: RichMessage = {
           content: "",
@@ -358,11 +358,10 @@ export class ChatGPTApi implements LLMApi {
         const finish = () => {
           if (!finished) {
             finished = true;
-            if (isInThinking) {
-              const finalThinkingDuration = Date.now() - thinkingStartTime;
-              totalThinkingTime += finalThinkingDuration;
+            if (isInThinking || !totalThinkingLatency) {
+              totalThinkingLatency = Date.now() - startRequestTime;
             }
-            totalReplyTime = Date.now() - startRequestTime;
+            totalReplyLatency = Date.now() - startRequestTime;
             let full_reply = responseText + remainText;
             full_reply = wrapThinkingPart(full_reply);
             if (completionTokens == 0) {
@@ -371,8 +370,9 @@ export class ChatGPTApi implements LLMApi {
             richMessage.content = full_reply;
             richMessage.usage = {
               completion_tokens: completionTokens,
-              first_content_latency: firstReplyTime,
-              total_latency: totalReplyTime,
+              first_content_latency: firstReplyLatency,
+              total_latency: totalReplyLatency,
+              thinking_time: totalThinkingLatency,
             };
 
             options.onFinish(richMessage, new Response(null, { status: 200 }));
@@ -427,8 +427,8 @@ export class ChatGPTApi implements LLMApi {
             if (msg.data === "[DONE]" || finished) {
               return finish();
             }
-            if (firstReplyTime == 0) {
-              firstReplyTime = Date.now() - startRequestTime;
+            if (firstReplyLatency == 0) {
+              firstReplyLatency = Date.now() - startRequestTime;
             }
             const text = msg.data;
             try {
@@ -447,20 +447,36 @@ export class ChatGPTApi implements LLMApi {
 
               if (reasoning && reasoning.length > 0) {
                 if (!isInThinking) {
-                  thinkingStartTime = Date.now();
                   isInThinking = true;
                   remainText += "<think>\n" + reasoning;
                 } else {
                   remainText += reasoning;
                 }
                 isInThinking = true;
+                totalThinkingLatency = Date.now() - startRequestTime;
               } else if (content && content.length > 0) {
                 if (isInThinking) {
                   isInThinking = false;
-                  const thinkingDuration = Date.now() - thinkingStartTime;
-                  totalThinkingTime += thinkingDuration;
+                  totalThinkingLatency = Date.now() - startRequestTime;
                   remainText += "\n</think>\n\n" + content;
                 } else {
+                  // 检查是否遇到第一个非空且不以 '>' 开头的行
+                  if (
+                    !totalThinkingLatency &&
+                    !foundFirstNonEmptyLineOrNonReference
+                  ) {
+                    const lines = content.split("\n");
+                    for (const line of lines) {
+                      if (line.trim() !== "" && !line.startsWith(">")) {
+                        foundFirstNonEmptyLineOrNonReference = true;
+                        totalThinkingLatency = Date.now() - startRequestTime;
+                        break;
+                      }
+                    }
+                  }
+                  if (content.includes("</think>")) {
+                    totalThinkingLatency = Date.now() - startRequestTime;
+                  }
                   remainText += content;
                 }
               }

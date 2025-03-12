@@ -1932,25 +1932,37 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   }, [messages, chatStore, navigate]);
 
   const formatMessage = (message: RenderMessage) => {
-    const { completionTokens, totalReplyLatency } = message.statistic ?? {};
-    const tokenString =
-      completionTokens !== undefined ? `${completionTokens}` : "N/A";
-
-    // 计算输出速度 (T/s)
-    const speed =
-      totalReplyLatency && completionTokens
-        ? ((1000 * completionTokens) / totalReplyLatency).toFixed(2)
-        : "N/A";
-
     const mainInfo = `${message.date.toLocaleString()}${
       message.model ? ` - ${message.displayName || message.model}` : ""
     }`;
+    const { statistic } = message;
+    if (!statistic) return mainInfo;
 
-    const statInfo = `↓ ${tokenString} Tokens - ${speed} T/s`;
+    const { completionTokens, firstReplyLatency, totalReplyLatency } =
+      statistic;
 
-    return !message.statistic ? (
-      `${mainInfo}`
-    ) : isMobileScreen ? (
+    if (
+      completionTokens === undefined ||
+      !firstReplyLatency ||
+      !totalReplyLatency
+    ) {
+      return (
+        message.date.toLocaleString() +
+        (message.model ? ` - ${message.displayName || message.model}` : "")
+      );
+    }
+
+    const tokenString = `${completionTokens}`;
+    const ttft = (firstReplyLatency / 1000).toFixed(2);
+    const latency = (totalReplyLatency / 1000).toFixed(2);
+    const speed = (
+      (1000 * completionTokens) /
+      (totalReplyLatency - firstReplyLatency)
+    ).toFixed(2);
+
+    const statInfo = `📊${tokenString} Tokens ⚡ ${speed} T/s ⏱️ FT:${ttft}s | TT:${latency}s`;
+
+    return isMobileScreen ? (
       <>
         {mainInfo}
         <br />
@@ -2184,6 +2196,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       fontSize={fontSize}
                       parentRef={scrollRef}
                       defaultShow={i >= messages.length - 6}
+                      thinkingTime={message.statistic?.reasoningLatency}
                     />
                     {getMessageImages(message).length == 1 && (
                       <Image

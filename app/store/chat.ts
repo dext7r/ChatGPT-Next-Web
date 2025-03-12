@@ -452,6 +452,8 @@ export const useChatStore = createPersistStore(
                   message?.usage?.first_content_latency;
                 botMessage.statistic.totalReplyLatency =
                   message?.usage?.total_latency;
+                botMessage.statistic.reasoningLatency =
+                  message?.usage?.thinking_time;
               }
               botMessage.date = new Date().toLocaleString();
               get().onNewMessage(botMessage, session);

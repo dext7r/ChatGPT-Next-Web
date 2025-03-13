@@ -463,12 +463,13 @@ export class ChatGPTApi implements LLMApi {
                     Date.now() - startRequestTime - firstReplyLatency;
                   remainText += "\n</think>\n\n" + content;
                 } else {
+                  remainText += content;
                   // 检查是否遇到第一个非空且不以 '>' 开头的行
                   if (
                     !totalThinkingLatency &&
                     !foundFirstNonEmptyLineOrNonReference
                   ) {
-                    const lines = content.split("\n");
+                    const lines = responseText.split("\n");
                     for (const line of lines) {
                       if (line.trim() !== "" && !line.startsWith(">")) {
                         foundFirstNonEmptyLineOrNonReference = true;
@@ -482,7 +483,6 @@ export class ChatGPTApi implements LLMApi {
                     totalThinkingLatency =
                       Date.now() - startRequestTime - firstReplyLatency;
                   }
-                  remainText += content;
                 }
               }
 

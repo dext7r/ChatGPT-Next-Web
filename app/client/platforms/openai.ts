@@ -155,8 +155,12 @@ export class ChatGPTApi implements LLMApi {
   async chat(options: ChatOptions) {
     const visionModel = isVisionModel(options.config.model);
     const model_name = options.config.model.toLowerCase();
+    const isPureGPT =
+      model_name.startsWith("gpt-") || model_name.startsWith("chatgpt-");
     const isO1 = model_name.startsWith("o1") || model_name.startsWith("gpt-o1");
     const isO3 = model_name.startsWith("o3") || model_name.startsWith("gpt-o3");
+    const isGPT = isPureGPT || isO1 || isO3;
+    const isClaude = model_name.startsWith("claude");
     const isGlm4v = model_name.startsWith("glm-4v");
     const isMistral = model_name.startsWith("mistral");
     const isMiniMax = model_name.startsWith("aabb");
@@ -181,7 +185,7 @@ export class ChatGPTApi implements LLMApi {
 
     // For claude model: roles must alternate between "user" and "assistant" in claude, so add a fake assistant message between two user messages
     const keys = ["system", "user"];
-    if (options.config.model.includes("claude")) {
+    if (isClaude) {
       // 新的处理方式
       // 忽略所有不是 user 或 system 的开头消息
       while (
@@ -246,7 +250,11 @@ export class ChatGPTApi implements LLMApi {
       // temperature: !isO1 ? modelConfig.temperature : 1,
       // top_p: !isO1 ? modelConfig.top_p : 1,
     };
-    if (modelConfig.enableStreamUsageOptions && options.config.stream) {
+    if (
+      modelConfig.enableStreamUsageOptions &&
+      options.config.stream &&
+      isGPT
+    ) {
       requestPayload["stream_options"] = { include_usage: true };
     }
     if (!isDeepseekReasoner) {

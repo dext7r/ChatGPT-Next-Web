@@ -62,6 +62,22 @@ export function ModelConfigList(props: {
         </Select>
       </ListItem>
       <ListItem
+        title={Locale.Settings.StreamUsageEnable.Title}
+        subTitle={Locale.Settings.StreamUsageEnable.SubTitle}
+      >
+        <input
+          aria-label={Locale.Settings.StreamUsageEnable.Title}
+          type="checkbox"
+          checked={props.modelConfig.enableStreamUsageOptions}
+          onChange={(e) =>
+            props.updateConfig(
+              (config) =>
+                (config.enableStreamUsageOptions = e.currentTarget.checked),
+            )
+          }
+        ></input>
+      </ListItem>
+      <ListItem
         title={Locale.Settings.Temperature.Title}
         subTitle={Locale.Settings.Temperature.SubTitle}
       >

@@ -122,7 +122,7 @@ const cn = {
       },
       UploadFile: {
         Title: "上传文本文件",
-        FileTooLarge: "暂不支持上传超过1M的文件",
+        FileTooLarge: "暂不支持上传超过100k的文件",
         TooManyFile: "超出可上传文件数量",
         UnsupportedFileType: "不支持的文件类型",
         FailToRead: "文件内容读取失败",

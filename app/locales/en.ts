@@ -126,7 +126,7 @@ const en: LocaleType = {
       },
       UploadFile: {
         Title: "Upload Plain Text File",
-        FileTooLarge: "Only support to upload single file with 1MB.",
+        FileTooLarge: "Only support to upload single file with 100k.",
         TooManyFile: "Exceeds the maximum number of files allowed for upload.",
         UnsupportedFileType: "Unsupported File Type.",
         FailToRead: "File content reading failed.",

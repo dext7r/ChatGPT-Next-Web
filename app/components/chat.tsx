@@ -1967,8 +1967,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                 };
 
                 // 限制文件大小
-                if (tokenCount > 1) {
+                if (tokenCount > 100) {
                   showToast(Locale.Chat.InputActions.UploadFile.FileTooLarge);
+                  setUploading(false);
                 } else {
                   // 检查是否有同名且内容相同的文件
                   const isDuplicate = files.some(
@@ -1983,6 +1984,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                         file.name,
                       ),
                     );
+                    setUploading(false);
                   } else if (dataUrl && tokenCount > 0) {
                     // 如果不是重复文件且有效，则添加到filesData
                     filesData.push(fileData);

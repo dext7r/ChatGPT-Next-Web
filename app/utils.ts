@@ -1,9 +1,115 @@
 import { useEffect, useState } from "react";
 import { showToast } from "./components/ui-lib";
 import Locale from "./locales";
-import { RequestMessage } from "./client/api";
+import { RequestMessage, UploadFile } from "./client/api";
 import { useAccessStore } from "./store";
 import { VISION_MODEL_REGEXES, EXCLUDE_VISION_MODEL_REGEXES } from "./constant";
+
+export const readFileContent = async (
+  file: UploadFile,
+): Promise<string | null> => {
+  // 检查是否是 Data URL
+  if (file.url.startsWith("data:")) {
+    try {
+      // 从 Data URL 中提取内容类型
+      const contentTypePart = file.url.split(",")[0];
+      const contentType = contentTypePart.split(":")[1]?.split(";")[0];
+
+      // 处理文本内容
+      // console.log("contentType: ", contentType);
+      // if (contentType && !contentType.startsWith('text/')) {
+      //   showToast('Only text files are supported.');
+      //   return null;
+      // }
+      // 解码 Base64 内容
+      const base64Content = file.url.split(",")[1];
+      // 使用现代Web API直接解码
+      try {
+        // 方法1: 使用fetch API和Blob (最现代的方法)
+        const response = await fetch(`data:text/plain;base64,${base64Content}`);
+        const content = await response.text();
+        console.log("use fetch api to decode the file: ", file.name);
+        return content;
+      } catch (e) {
+        // 方法2: 如果fetch不支持data URL，回退到这个方法
+        const binary = atob(base64Content);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const content = new TextDecoder("utf-8").decode(bytes);
+        console.log("use TextDecoder to decode the file: ", file.name);
+        return content;
+      }
+    } catch (error) {
+      showToast(`${Locale.Chat.InputActions.UploadFile.FailToRead}: ${error}`);
+      return null;
+    }
+  } else {
+    // 处理普通 URL
+    const host_url = new URL(window.location.href);
+    const file_url = new URL(file.url);
+
+    // 允许同源URL或特定的可信域名
+    const allowedHosts = [
+      host_url.host,
+      // 添加其他可信的域名，例如您的API服务器
+      // 'api.yourservice.com',
+      // 'storage.yourservice.com'
+    ];
+
+    if (!allowedHosts.includes(file_url.host)) {
+      console.warn(
+        `URL host mismatch: ${file_url.host} vs allowed: ${allowedHosts.join(
+          ", ",
+        )}`,
+      );
+      showToast(Locale.Chat.InputActions.UploadFile.FailToRead);
+      return null;
+    }
+
+    try {
+      const response = await fetch(file.url);
+      if (!response.ok) {
+        showToast(Locale.Chat.InputActions.UploadFile.FailToRead);
+        return null;
+      }
+
+      // 检查 Content-Type 头
+      const contentType = response.headers.get("Content-Type");
+      if (
+        contentType &&
+        !contentType.includes("text/") &&
+        !contentType.includes("application/json")
+      ) {
+        showToast(Locale.Chat.InputActions.UploadFile.UnsupportedFileType);
+        return null;
+      }
+
+      // 获取文本内容
+      const content = await response.text();
+
+      return content;
+    } catch (error) {
+      console.error("Error reading file content:", error);
+      showToast(`${Locale.Chat.InputActions.UploadFile.FailToRead}: ${error}`);
+      return null;
+    }
+  }
+};
+
+/**
+ * Estimates the token count of a text file using character-based weights.
+ * Note: This is a rough estimation as standard tokenizers cannot be used due to environment constraints.
+ * @param text - The file content
+ * @returns Estimated token count in thousands (K)
+ */
+export const countTokens = (text: string | null) => {
+  let totalTokens = 0;
+  if (!text) return totalTokens;
+  const totalTokenCount: number = +(text.length / 1024).toFixed(2);
+  return totalTokenCount;
+};
 
 export function trimTopic(topic: string) {
   // Fix an issue where double quotes still show in the Indonesian language
@@ -289,6 +395,19 @@ export function getMessageImages(message: RequestMessage): string[] {
     }
   }
   return urls;
+}
+
+export function getMessageFiles(message: RequestMessage): UploadFile[] {
+  if (typeof message.content === "string") {
+    return [];
+  }
+  const files: UploadFile[] = [];
+  for (const c of message.content) {
+    if (c.type === "file_url" && c.file_url) {
+      files.push(c.file_url);
+    }
+  }
+  return files;
 }
 
 export function isVisionModel(model: string) {

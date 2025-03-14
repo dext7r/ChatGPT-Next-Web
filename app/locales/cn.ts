@@ -1,3 +1,4 @@
+import Title from "antd/es/skeleton/Title";
 import { ShortcutKeyModal } from "../components/chat";
 import { SearchChatPage } from "../components/search-chat";
 import { getClientConfig } from "../config/client";
@@ -118,6 +119,15 @@ const cn = {
         isPrivacyToast: "正在打码中...",
         FailPrivacyToast: "本次打码失败，无权限或请检查模型设置后再次尝试",
         SuccessPrivacyToast: "本次打码已结束并替换输入内容",
+      },
+      UploadFile: {
+        Title: "上传文本文件",
+        FileTooLarge: "暂不支持上传超过1M的文件",
+        TooManyFile: "超出可上传文件数量",
+        UnsupportedFileType: "不支持的文件类型",
+        FailToRead: "文件内容读取失败",
+        DuplicateFile: (filename: string) =>
+          `文件 "${filename}" 已存在，请勿重复上传`,
       },
     },
     Rename: "重命名对话",

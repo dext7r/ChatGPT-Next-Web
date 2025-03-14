@@ -49,6 +49,7 @@ import ReloadIcon from "../icons/reload.svg";
 import TranslateIcon from "../icons/translate.svg";
 import OcrIcon from "../icons/ocr.svg";
 import PrivacyIcon from "../icons/privacy.svg";
+import UploadDocIcon from "../icons/upload-doc.svg";
 
 import {
   ChatMessage,
@@ -70,14 +71,18 @@ import {
   useMobileScreen,
   getMessageTextContent,
   getMessageImages,
+  getMessageFiles,
   isVisionModel,
   safeLocalStorage,
   isThinkingModel,
   wrapThinkingPart,
+  countTokens,
 } from "../utils";
 import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
+import type { UploadFile } from "../client/api";
 import { uploadImage as uploadImageRemote } from "@/app/utils/chat";
+import { uploadFileRemote } from "@/app/utils/chat";
 import Image from "next/image";
 
 import dynamic from "next/dynamic";
@@ -99,6 +104,8 @@ import {
   showToast,
 } from "./ui-lib";
 import { useNavigate } from "react-router-dom";
+import { FileIcon, defaultStyles } from "react-file-icon";
+import type { DefaultExtensionType } from "react-file-icon";
 import {
   CHAT_PAGE_SIZE,
   DEFAULT_TTS_ENGINE,
@@ -124,7 +131,6 @@ import { useAllModels } from "../utils/hooks";
 import {
   LLMModelProvider,
   MultimodalContent,
-  RichMessage,
   getClientApi,
 } from "../client/api";
 
@@ -489,9 +495,11 @@ function useScrollToBottom(
 }
 
 export function ChatActions(props: {
+  uploadDocument: () => void;
   uploadImage: () => Promise<string[]>;
   attachImages: string[];
   setAttachImages: (images: string[]) => void;
+  setAttachFiles: (files: UploadFile[]) => void;
   setUploading: (uploading: boolean) => void;
   showPromptModal: () => void;
   scrollToBottom: () => void;
@@ -812,6 +820,11 @@ export function ChatActions(props: {
             icon={props.uploading ? <LoadingButtonIcon /> : <ImageIcon />}
           />
         )}
+        <ChatAction
+          onClick={props.uploadDocument}
+          text={Locale.Chat.InputActions.UploadFile.Title}
+          icon={props.uploading ? <LoadingButtonIcon /> : <UploadDocIcon />}
+        />
         {/* {!isMobileScreen && (
           <ChatAction
             onClick={nextTheme}
@@ -830,11 +843,13 @@ export function ChatActions(props: {
           />
         )} */}
 
-        <ChatAction
-          onClick={props.showPromptHints}
-          text={Locale.Chat.InputActions.Prompt}
-          icon={<PromptIcon />}
-        />
+        {!isMobileScreen && (
+          <ChatAction
+            onClick={props.showPromptHints}
+            text={Locale.Chat.InputActions.Prompt}
+            icon={<PromptIcon />}
+          />
+        )}
 
         {/* {!isMobileScreen && (
           <ChatAction
@@ -1221,6 +1236,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const isMobileScreen = useMobileScreen();
   const navigate = useNavigate();
   const [attachImages, setAttachImages] = useState<string[]>([]);
+  const [attachFiles, setAttachFiles] = useState<UploadFile[]>([]);
   const [uploading, setUploading] = useState(false);
 
   // prompt hints
@@ -1351,9 +1367,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     }
     setIsLoading(true);
     chatStore
-      .onUserInput(userInput, attachImages)
+      .onUserInput(userInput, attachImages, attachFiles)
       .then(() => setIsLoading(false));
     setAttachImages([]);
+    setAttachFiles([]);
     chatStore.setLastInput(userInput);
     setUserInput("");
     setPromptHints([]);
@@ -1496,6 +1513,20 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       return;
     }
 
+    // 提取用户消息中的文件附件
+    const userAttachFiles: UploadFile[] = [];
+    if (Array.isArray(userMessage.content)) {
+      userMessage.content.forEach((item) => {
+        if (item.type === "file_url" && item.file_url) {
+          userAttachFiles.push({
+            name: item.file_url.name,
+            url: item.file_url.url,
+            tokenCount: item.file_url.tokenCount,
+          });
+        }
+      });
+    }
+
     // delete the original messages
     deleteMessage(userMessage.id);
     deleteMessage(botMessage?.id);
@@ -1504,7 +1535,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     setIsLoading(true);
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
-    chatStore.onUserInput(textContent, images).then(() => setIsLoading(false));
+    // 将图片和文件附件传递给 onUserInput
+    chatStore
+      .onUserInput(textContent, images, userAttachFiles)
+      .then(() => setIsLoading(false));
     inputRef.current?.focus();
   };
 
@@ -1796,6 +1830,190 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     },
     [attachImages, chatStore],
   );
+
+  async function uploadDocument() {
+    const files: UploadFile[] = [...attachFiles];
+
+    const MAX_DOC_CNT = 6;
+    const textFileExtensions = [
+      "txt",
+      "md",
+      "markdown",
+      "json",
+      "csv",
+      "tsv",
+      "xml",
+      "html",
+      "htm",
+      "css",
+      "js",
+      "ts",
+      "jsx",
+      "tsx",
+      "py",
+      "java",
+      "c",
+      "cpp",
+      "h",
+      "cs",
+      "php",
+      "rb",
+      "go",
+      "rs",
+      "swift",
+      "kt",
+      "sql",
+      "yaml",
+      "yml",
+      "toml",
+      "ini",
+      "cfg",
+      "conf",
+      "log",
+      "sh",
+      "bat",
+      "ps1",
+      "tex",
+      "rtf",
+      "scss",
+      "sass",
+      "less", // CSS预处理器
+      "vue",
+      "svelte", // 前端框架文件
+      "graphql",
+      "gql", // GraphQL
+      "r",
+      "pl",
+      "pm", // R语言、Perl
+      "lua",
+      "groovy",
+      "scala", // 其他编程语言
+      "dart",
+      "haskell",
+      "hs", // Dart、Haskell
+      "clj",
+      "erl",
+      "ex",
+      "exs", // Clojure、Erlang、Elixir
+      "jsp",
+      "asp",
+      "aspx", // 服务器页面
+      "pug",
+      "jade",
+      "ejs", // 模板引擎
+      "diff",
+      "patch", // 差异文件
+      "properties",
+      "env", // 配置文件
+      "plist",
+      "proto", // 特定格式配置
+      "gradle",
+      "rake", // 构建系统
+      "htaccess",
+      "htpasswd", // Apache配置
+      "dockerfile",
+      "dockerignore", // Docker相关
+      "gitignore",
+      "gitattributes", // Git相关
+      "eslintrc",
+      "prettierrc", // 代码规范配置
+      "babelrc",
+      "stylelintrc", // 工具配置
+      "cmake",
+      "makefile", // 构建配置
+      "vbs",
+      "vbe", // VBScript
+      "rst",
+      "adoc", // 其他标记语言
+      "srt",
+      "vtt", // 字幕文件
+    ];
+    // 构建accept属性的值
+    const acceptTypes = textFileExtensions.map((ext) => `.${ext}`).join(",");
+
+    files.push(
+      ...(await new Promise<UploadFile[]>((res, rej) => {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = acceptTypes;
+        fileInput.multiple = true;
+        fileInput.onchange = (event: any) => {
+          setUploading(true);
+          const inputFiles = event.target.files;
+          const filesData: UploadFile[] = [];
+
+          (async () => {
+            for (let i = 0; i < inputFiles.length; i++) {
+              const file = inputFiles[i];
+              // 检查文件类型是否在允许列表中
+              const fileExtension = file.name.split(".").pop()?.toLowerCase();
+              if (
+                !fileExtension ||
+                !textFileExtensions.includes(fileExtension)
+              ) {
+                setUploading(false);
+                showToast(
+                  Locale.Chat.InputActions.UploadFile.UnsupportedFileType,
+                );
+                return;
+              }
+              try {
+                const dataUrl = await uploadFileRemote(file);
+                const tokenCount: number = countTokens(dataUrl);
+                const fileData: UploadFile = {
+                  name: file.name,
+                  url: dataUrl,
+                  tokenCount: tokenCount,
+                };
+
+                // 限制文件大小
+                if (tokenCount > 1) {
+                  showToast(Locale.Chat.InputActions.UploadFile.FileTooLarge);
+                } else {
+                  // 检查是否有同名且内容相同的文件
+                  const isDuplicate = files.some(
+                    (existingFile) =>
+                      existingFile.name === fileData.name &&
+                      existingFile.url === fileData.url,
+                  );
+                  if (isDuplicate) {
+                    // 如果是重复文件，显示提示但不添加到filesData
+                    showToast(
+                      Locale.Chat.InputActions.UploadFile.DuplicateFile(
+                        file.name,
+                      ),
+                    );
+                  } else if (dataUrl && tokenCount > 0) {
+                    // 如果不是重复文件且有效，则添加到filesData
+                    filesData.push(fileData);
+                  }
+                }
+
+                if (
+                  filesData.length === MAX_DOC_CNT ||
+                  filesData.length === inputFiles.length
+                ) {
+                  setUploading(false);
+                  res(filesData);
+                }
+              } catch (e) {
+                setUploading(false);
+                rej(e);
+              }
+            }
+          })();
+        };
+        fileInput.click();
+      })),
+    );
+
+    const filesLength = files.length;
+    if (filesLength > MAX_DOC_CNT) {
+      files.splice(MAX_DOC_CNT, filesLength - MAX_DOC_CNT);
+      showToast(Locale.Chat.InputActions.UploadFile.TooManyFile);
+    }
+    setAttachFiles(files);
+  }
 
   async function uploadImage(): Promise<string[]> {
     const images: string[] = [];
@@ -2097,19 +2315,53 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                               getMessageTextContent(message),
                               10,
                             );
-                            let newContent: string | MultimodalContent[] =
-                              newMessage;
-                            const images = getMessageImages(message);
-                            if (images.length > 0) {
+                            // 检查原始消息是否包含多模态内容（图片或文件）
+                            const hasMultimodalContent =
+                              Array.isArray(message.content) &&
+                              message.content.some(
+                                (item) =>
+                                  item.type === "image_url" ||
+                                  item.type === "file_url",
+                              );
+
+                            let newContent: string | MultimodalContent[];
+
+                            if (hasMultimodalContent) {
+                              // 如果有多模态内容，直接创建为数组类型
                               newContent = [{ type: "text", text: newMessage }];
-                              for (let i = 0; i < images.length; i++) {
-                                newContent.push({
-                                  type: "image_url",
-                                  image_url: {
-                                    url: images[i],
-                                  },
+
+                              // 如果原始消息是数组形式，遍历并保留所有非文本内容
+                              if (Array.isArray(message.content)) {
+                                // 保留所有图片和文件
+                                message.content.forEach((item) => {
+                                  if (
+                                    item.type === "image_url" &&
+                                    item.image_url
+                                  ) {
+                                    (newContent as MultimodalContent[]).push({
+                                      type: "image_url",
+                                      image_url: {
+                                        url: item.image_url.url,
+                                      },
+                                    });
+                                  } else if (
+                                    item.type === "file_url" &&
+                                    item.file_url
+                                  ) {
+                                    (newContent as MultimodalContent[]).push({
+                                      type: "file_url",
+                                      file_url: {
+                                        url: item.file_url.url,
+                                        name: item.file_url.name,
+                                        tokenCount: item.file_url.tokenCount,
+                                      },
+                                    });
+                                  }
                                 });
                               }
+                            } else {
+                              // 如果没有多模态内容，就直接使用文本
+                              newContent = newMessage;
                             }
                             chatStore.updateTargetSession(
                               session,
@@ -2234,6 +2486,41 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                         })}
                       </div>
                     )}
+                    {getMessageFiles(message).length > 0 && (
+                      <div className={styles["chat-message-item-files"]}>
+                        {getMessageFiles(message).map((file, index) => {
+                          const extension: DefaultExtensionType = file.name
+                            .split(".")
+                            .pop()
+                            ?.toLowerCase() as DefaultExtensionType;
+                          const style = defaultStyles[extension];
+                          return (
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              key={index}
+                              className={styles["chat-message-item-file"]}
+                            >
+                              <div
+                                className={
+                                  styles["chat-message-item-file-icon"] +
+                                  " no-dark"
+                                }
+                              >
+                                <FileIcon {...style} glyphColor="#303030" />
+                              </div>
+                              <div
+                                className={
+                                  styles["chat-message-item-file-name"]
+                                }
+                              >
+                                {file.name} ({file.tokenCount}K)
+                              </div>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div className={styles["chat-message-action-date"]}>
@@ -2270,9 +2557,11 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
         <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
 
         <ChatActions
+          uploadDocument={uploadDocument}
           uploadImage={uploadImage}
           attachImages={attachImages}
           setAttachImages={setAttachImages}
+          setAttachFiles={setAttachFiles}
           setUploading={setUploading}
           showPromptModal={() => setShowPromptModal(true)}
           scrollToBottom={scrollToBottom}
@@ -2296,7 +2585,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
         />
         <label
           className={`${styles["chat-input-panel-inner"]} ${
-            attachImages.length != 0
+            attachImages.length != 0 || attachFiles.length != 0
               ? styles["chat-input-panel-inner-attach"]
               : ""
           }`}
@@ -2319,7 +2608,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
               fontSize: config.fontSize,
             }}
           />
-          {attachImages.length != 0 && (
+          {/* {attachImages.length != 0 && (
             <div className={styles["attach-images"]}>
               {attachImages.map((image, index) => {
                 return (
@@ -2341,7 +2630,78 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                 );
               })}
             </div>
-          )}
+          )} */}
+          <div className={styles["attachments"]}>
+            {attachImages.length != 0 && (
+              <div className={styles["attach-images"]}>
+                {attachImages.map((image, index) => {
+                  return (
+                    <div
+                      key={index}
+                      className={styles["attach-image"]}
+                      style={{ backgroundImage: `url("${image}")` }}
+                    >
+                      <div className={styles["attach-image-mask"]}>
+                        <DeleteImageButton
+                          deleteImage={() => {
+                            setAttachImages(
+                              attachImages.filter((_, i) => i !== index),
+                            );
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {attachFiles.length != 0 && (
+              <div className={styles["attach-files"]}>
+                {attachFiles.map((file, index) => {
+                  const extension: DefaultExtensionType = file.name
+                    .split(".")
+                    .pop()
+                    ?.toLowerCase() as DefaultExtensionType;
+                  const style = defaultStyles[extension];
+                  const getFileNameClassName = (attachImagesLength: number) => {
+                    if (attachImagesLength <= 1)
+                      return styles["attach-file-name-full"];
+                    if (attachImagesLength === 2)
+                      return styles["attach-file-name-half"];
+                    if (attachImagesLength === 3)
+                      return styles["attach-file-name-less"];
+                    if (attachImagesLength === 4)
+                      return styles["attach-file-name-min"];
+                    return styles["attach-file-name-tiny"]; // 5个或更多
+                  };
+                  return (
+                    <div key={index} className={styles["attach-file"]}>
+                      <div
+                        className={styles["attach-file-icon"] + " no-dark"}
+                        key={extension}
+                      >
+                        <FileIcon {...style} glyphColor="#303030" />
+                      </div>
+                      <div
+                        className={getFileNameClassName(attachImages.length)}
+                      >
+                        {file.name} ({file.tokenCount}K)
+                      </div>
+                      <div className={styles["attach-image-mask"]}>
+                        <DeleteImageButton
+                          deleteImage={() => {
+                            setAttachFiles(
+                              attachFiles.filter((_, i) => i !== index),
+                            );
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <div className={styles["chat-input-textarea"]}>
             <div className={styles["token-counter"]}>
               ({estimateTokenLengthInLLM(userInput)})

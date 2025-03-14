@@ -16,11 +16,22 @@ export const TTSModels = ["tts-1", "tts-1-hd"] as const;
 export type ChatModel = ModelType;
 
 export interface MultimodalContent {
-  type: "text" | "image_url";
+  type: "text" | "image_url" | "file_url";
   text?: string;
   image_url?: {
     url: string;
   };
+  file_url?: {
+    url: string;
+    name: string;
+    tokenCount?: number;
+  };
+}
+
+export interface UploadFile {
+  name: string;
+  url: string;
+  tokenCount?: number;
 }
 
 export interface RequestMessage {
@@ -193,8 +204,8 @@ export function getHeaders(ignoreHeaders: boolean = false) {
   const apiKey = isGoogle
     ? accessStore.googleApiKey
     : isAzure
-      ? accessStore.azureApiKey
-      : accessStore.openaiApiKey;
+    ? accessStore.azureApiKey
+    : accessStore.openaiApiKey;
   const clientConfig = getClientConfig();
   const makeBearer = (s: string) => `${isAzure ? "" : "Bearer "}${s.trim()}`;
   const validString = (x: string) => x && x.length > 0;

@@ -124,6 +124,15 @@ const en: LocaleType = {
         SuccessPrivacyToast:
           "This privacy mosaic has been completed and replaced the input content.",
       },
+      UploadFile: {
+        Title: "Upload Plain Text File",
+        FileTooLarge: "Only support to upload single file with 1MB.",
+        TooManyFile: "Exceeds the maximum number of files allowed for upload.",
+        UnsupportedFileType: "Unsupported File Type.",
+        FailToRead: "File content reading failed.",
+        DuplicateFile: (filename: string) =>
+          `The file "${filename}" already exists. Please do not upload it again.`,
+      },
     },
     Rename: "Rename Chat",
     Typing: "Typing…",

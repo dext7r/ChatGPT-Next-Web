@@ -19,6 +19,7 @@ import type {
   ClientApi,
   RequestMessage,
   MultimodalContent,
+  UploadFile,
 } from "../client/api";
 import { getClientApi } from "../client/api";
 import { ChatControllerPool } from "../client/controller";
@@ -26,7 +27,7 @@ import { prettyObject } from "../utils/format";
 import { estimateTokenLengthInLLM } from "../utils/token";
 import { nanoid } from "nanoid";
 import { createPersistStore } from "../utils/store";
-import { safeLocalStorage } from "../utils";
+import { safeLocalStorage, readFileContent } from "../utils";
 import { indexedDBStorage } from "@/app/utils/indexedDB-storage";
 import { useAccessStore } from "./access";
 import { ServiceProvider } from "../constant";
@@ -366,7 +367,11 @@ export const useChatStore = createPersistStore(
         get().summarizeSession(false, targetSession);
       },
 
-      async onUserInput(content: string, attachImages?: string[]) {
+      async onUserInput(
+        content: string,
+        attachImages?: string[],
+        attachFiles?: UploadFile[],
+      ) {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
 
@@ -374,8 +379,73 @@ export const useChatStore = createPersistStore(
         console.log("[User Input] after template: ", userContent);
 
         let mContent: string | MultimodalContent[] = userContent;
+        let displayContent: string | MultimodalContent[] = userContent;
+        displayContent = [
+          {
+            type: "text",
+            text: userContent,
+          },
+        ];
 
-        if (attachImages && attachImages.length > 0) {
+        if (attachFiles && attachFiles.length > 0) {
+          let fileContent = "";
+
+          // 处理每个文件，按照模板格式构建内容
+          // 遵循deepseek-ai推荐模板：https://github.com/deepseek-ai/DeepSeek-R1?tab=readme-ov-file#official-prompts
+          for (let i = 0; i < attachFiles.length; i++) {
+            let curFileContent = await readFileContent(attachFiles[i]);
+            if (curFileContent) {
+              fileContent += `[file name]: ${attachFiles[i].name}\n`;
+              fileContent += `[file content begin]\n`;
+              fileContent += curFileContent;
+              fileContent += `\n[file content end]\n`;
+            }
+          }
+          // 添加用户问题
+          fileContent += userContent;
+
+          mContent = [
+            {
+              type: "text",
+              text: fileContent,
+            },
+          ];
+          displayContent = displayContent.concat(
+            attachFiles.map((file) => {
+              return {
+                type: "file_url",
+                file_url: {
+                  url: file.url,
+                  name: file.name,
+                  tokenCount: file.tokenCount,
+                },
+              };
+            }),
+          );
+
+          if (attachImages && attachImages.length > 0) {
+            mContent = mContent.concat(
+              attachImages.map((url) => {
+                return {
+                  type: "image_url",
+                  image_url: {
+                    url: url,
+                  },
+                };
+              }),
+            );
+            displayContent = displayContent.concat(
+              attachImages.map((url) => {
+                return {
+                  type: "image_url",
+                  image_url: {
+                    url: url,
+                  },
+                };
+              }),
+            );
+          }
+        } else if (attachImages && attachImages.length > 0) {
           mContent = [
             {
               type: "text",
@@ -392,6 +462,19 @@ export const useChatStore = createPersistStore(
               };
             }),
           );
+          displayContent = displayContent.concat(
+            attachImages.map((url) => {
+              return {
+                type: "image_url",
+                image_url: {
+                  url: url,
+                },
+              };
+            }),
+          );
+        } else {
+          mContent = userContent;
+          displayContent = userContent;
         }
         let userMessage: ChatMessage = createMessage({
           role: "user",
@@ -414,7 +497,8 @@ export const useChatStore = createPersistStore(
         get().updateCurrentSession((session) => {
           const savedUserMessage = {
             ...userMessage,
-            content: mContent,
+            //content: mContent,
+            content: displayContent,
           };
           session.messages = session.messages.concat([
             savedUserMessage,

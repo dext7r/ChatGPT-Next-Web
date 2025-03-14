@@ -1,9 +1,17 @@
 @import "../styles/animation.scss";
 
-.attach-images {
+.attachments {
   position: absolute;
   left: 30px;
   bottom: 32px;
+  display: flex;
+  flex-direction: row;
+}
+
+.attach-images {
+  //position: absolute;
+  //left: 30px;
+  //bottom: 32px;
   display: flex;
 }
 
@@ -41,6 +49,112 @@
     background-color: var(--white);
   }
 }
+
+.attach-files {
+  display: flex;
+  flex-direction: row; /* 横向排列 */
+  flex-wrap: wrap; /* 允许换行 */
+  gap: 10px; /* 文件间距 */
+  width: 100%;
+}
+
+.attach-file {
+  cursor: default;
+  display: flex;
+  flex-direction: row;
+  // column-gap: 4px;
+  justify-content: flex-start;
+  color: var(--black);
+  font-size: 14px;
+  border-radius: 5px;
+  // width: 40%; /* 限制宽度为30% */
+  // max-width: 40%; /* 确保不超过30% */
+  box-sizing: border-box; /* 确保padding和border不会增加元素宽度 */
+
+  %attach-file-name-common {
+    display: flex;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: 1; /* 让文件名占据剩余空间 */
+  }
+  
+  .attach-file-name-full {
+    @extend %attach-file-name-common;
+    max-width: 100%; /* 相对于父元素的宽度 */
+  }
+
+  .attach-file-name-half {
+    @extend %attach-file-name-common;
+    max-width: 100%;
+  }
+
+  .attach-file-name-less {
+    @extend %attach-file-name-common;
+    max-width: 100%;
+  }
+
+  .attach-file-name-min {
+    @extend %attach-file-name-common;
+    max-width: 100%;
+  }
+
+  .attach-file-name-tiny {
+    @extend %attach-file-name-common;
+    max-width: 100%;
+  }
+
+  .attach-file-icon {
+    min-width: 16px;
+    max-width: 16px;
+  }
+
+  .attach-file-icon:hover {
+    opacity: 0;
+  }
+
+  .attach-image-mask {
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: all ease 0.2s;
+    position: absolute;
+  }
+
+  .attach-image-mask:hover {
+    opacity: 1;
+  }
+  
+  .delete-image {
+    width: 16px;
+    height: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    float: left;
+    background-color: var(--white);
+  }
+}
+
+/* 手机端响应式优化 */
+@media screen and (max-width: 768px) {
+  .attach-file {
+    width: 45%; /* 在平板上稍微放大一点 */
+    max-width: 45%;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .attach-file {
+    width: 100%; /* 在手机上一行显示一个 */
+    max-width: 100%;
+    margin-right: 0;
+  }
+  
+  .attach-files {
+    gap: 8px; /* 减少间距 */
+  }
+}
+
 .chat-input-actions {
   display: flex;
   flex-wrap: nowrap;
@@ -508,6 +622,28 @@
   border: rgba($color: #888, $alpha: 0.2) 1px solid;
 }
 
+.chat-message-item-files {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.chat-message-item-file {
+  display: flex;
+  flex-direction: row;
+  column-gap: 6px;
+
+}
+.chat-message-item-file-icon {
+  max-width: 16px;
+}
+
+.chat-message-item-file-name {
+  max-width:100%;  
+}
 
 @media only screen and (max-width: 600px) {
   $calc-image-width: calc(100vw/3*2/var(--image-count));

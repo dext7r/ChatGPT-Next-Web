@@ -1,5 +1,5 @@
 import { CACHE_URL_PREFIX, UPLOAD_URL } from "@/app/constant";
-import { RequestMessage } from "@/app/client/api";
+import { RequestMessage, UploadFile } from "@/app/client/api";
 import { getMessageTextContentWithoutThinkingFromContent } from "@/app/utils";
 
 export function compressImage(file: Blob, maxSize: number): Promise<string> {
@@ -143,11 +143,126 @@ export function uploadImage(file: Blob): Promise<string> {
         return res?.data;
       }
       throw Error(`upload Error: ${res?.msg}`);
+    })
+    .catch((error) => {
+      console.error("Fetch error:", error);
+      throw new Error("Network error or server unavailable");
     });
 }
 
 export function removeImage(imageUrl: string) {
   return fetch(imageUrl, {
+    method: "DELETE",
+    mode: "cors",
+    credentials: "include",
+  });
+}
+
+/**
+ * 上传文件到远程服务器
+ * @param file 要上传的文件对象
+ * @returns 返回上传后的文件URL
+ */
+export function uploadFileRemote(file: File): Promise<string> {
+  if (!window._SW_ENABLED) {
+    return readFileAsDataURL(file)
+      .then((dataUrl) => {
+        return dataUrl;
+      })
+      .catch((error) => {
+        throw error;
+      });
+  }
+
+  const body = new FormData();
+  body.append("file", file);
+
+  return fetch(UPLOAD_URL, {
+    method: "post",
+    body,
+    mode: "cors",
+    credentials: "include",
+  })
+    .then((res) => {
+      return res.json();
+    })
+    .then((res) => {
+      console.log("File upload response:", res);
+      if (res?.code == 0 && res?.data) {
+        return res?.data;
+      }
+      throw Error(`Upload Error: ${res?.msg}`);
+    })
+    .catch((error) => {
+      console.error("File upload error:", error);
+      throw new Error("Network error or server unavailable during file upload");
+    });
+}
+
+/**
+ * 将文件读取为 DataURL
+ * @param file 要读取的文件
+ * @returns 返回文件的 DataURL
+ */
+function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        resolve(event.target.result as string);
+      } else {
+        reject(new Error("Failed to read file"));
+      }
+    };
+    reader.onerror = (error) => {
+      reject(error);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * 处理文件内容，用于消息发送前的预处理
+ * @param message 请求消息对象
+ * @returns 处理后的内容
+ */
+export async function preProcessFileContent(message: RequestMessage) {
+  const content = message.content;
+  if (typeof content === "string") {
+    return content;
+  }
+
+  const result = [];
+  for (const part of content) {
+    if (part?.type === "file_url" && part?.file_url?.url) {
+      try {
+        // 这里可以添加文件缓存逻辑，类似于图片缓存
+        result.push({
+          type: part.type,
+          file_url: {
+            url: part.file_url.url,
+            name: part.file_url.name,
+            tokenCount: part.file_url.tokenCount,
+          },
+        });
+      } catch (error) {
+        console.error("Error processing file URL:", error);
+      }
+    } else {
+      // 保留其他类型的内容
+      result.push({ ...part });
+    }
+  }
+  return result;
+}
+
+/**
+ * 从远程服务器删除文件
+ * @param fileUrl 要删除的文件URL
+ * @returns 删除操作的响应
+ */
+export function removeFile(fileUrl: string) {
+  return fetch(fileUrl, {
     method: "DELETE",
     mode: "cors",
     credentials: "include",

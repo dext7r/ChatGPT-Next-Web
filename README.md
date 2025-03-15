@@ -1,7 +1,6 @@
 # ChatGPT Next Web 二创
 > 原项目：[ChatGPTNextWeb](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
 
-
 **分歧节点：2.12.3，侧重维护 OpenAI 类型渠道**
 
 docker 镜像：
@@ -12,6 +11,7 @@ docker 镜像：
 
 - 模型选择器优化
 - 快速搜索聊天记录
+- 纯文本文件上传，遵循[ds官方实践模板](https://github.com/deepseek-ai/DeepSeek-R1?tab=readme-ov-file#official-prompts)
 - 可自定义**侧边栏**，支持 HTML 样式
 - 免导入导出的云备份功能（需配合[文件服务器项目](https://github.com/QAbot-zh/go-file-server)使用）：[文件服务器搭建参考](#平台搭建)
 - OpenAI 类型支持前端配置，一键拉取可用模型
@@ -59,9 +59,13 @@ docker 镜像：
 
   <img src="./docs/images/thinking.png" width="80%" alt="thinking" style="display:inline-block; margin-right:10px"/>
   
-  - 思考结束
-  
+  - 思考结束(已增加思考计时)
+
   <img src="./docs/images/think.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
+
+- 回复 token 统计（api 若未包含相关用量则以 gpt-3.5-turbo 为模型编码器计算
+
+   <img src="./docs/images/completions-stat.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
 
 
 
@@ -145,6 +149,16 @@ docker 镜像：
 [零成本搭建可扩展的AI对话平台，含文件服务搭建](https://linux.do/t/topic/444807)
 
 > **ps：不覆盖 api 成本**
+
+
+-------
+## 致谢
+> 参考过创意或实现的其他项目（排名不分先后）：
+> - [ChatGPTNextWeb-Langchain](https://github.com/Hk-Gosuto/ChatGPT-Next-Web-LangChain)
+> - [ChatgptNextWeb-kiritoko](https://github.com/kiritoko1029/ChatGPT-Next-Web)
+> - [ChatgptNextWeb-earlybird](https://github.com/Dogtiti/ChatGPT-Next-Web-EarlyBird)
+> - [ChatgptNextWeb-X](https://github.com/Dakai/ChatGPT-Next-Web-X/tree/upload_doc)
+> - [NeatChat](https://github.com/tianzhentech/NeatChat)
 
 -------
 ## LICENSE

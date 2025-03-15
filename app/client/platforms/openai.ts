@@ -177,8 +177,8 @@ export class ChatGPTApi implements LLMApi {
       const content = visionModel
         ? await preProcessImageContent(v)
         : v.role === "assistant" // 如果 role 是 assistant
-          ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
-          : getMessageTextContent(v); // 否则调用 getMessageTextContent
+        ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
+        : getMessageTextContent(v); // 否则调用 getMessageTextContent
       if (!(isO1 && v.role === "system"))
         messages.push({ role: v.role, content });
     }
@@ -326,10 +326,13 @@ export class ChatGPTApi implements LLMApi {
         let responseText = "";
         let remainText = "";
         let finished = false;
+        let isInSearching = false;
+        let searchLatency = 0;
         let isInThinking = false;
         let foundFirstNonEmptyLineOrNonReference = false;
         let totalThinkingLatency = 0;
         let startRequestTime = Date.now();
+        let isFirstReply = false;
         let firstReplyLatency = 0;
         let totalReplyLatency = 0;
         let completionTokens = 0;
@@ -380,8 +383,9 @@ export class ChatGPTApi implements LLMApi {
             richMessage.usage = {
               completion_tokens: completionTokens,
               first_content_latency: firstReplyLatency,
-              total_latency: totalReplyLatency,
+              searching_time: searchLatency,
               thinking_time: totalThinkingLatency,
+              total_latency: totalReplyLatency,
             };
 
             options.onFinish(richMessage, new Response(null, { status: 200 }));
@@ -436,9 +440,6 @@ export class ChatGPTApi implements LLMApi {
             if (msg.data === "[DONE]" || finished) {
               return finish();
             }
-            if (firstReplyLatency == 0) {
-              firstReplyLatency = Date.now() - startRequestTime;
-            }
             const text = msg.data;
             try {
               const json = JSON.parse(text);
@@ -454,6 +455,12 @@ export class ChatGPTApi implements LLMApi {
               completionTokens =
                 json?.usage?.completion_tokens || completionTokens;
 
+              if (firstReplyLatency == 0) {
+                firstReplyLatency = Date.now() - startRequestTime;
+                isFirstReply = true;
+              } else {
+                isFirstReply = false;
+              }
               if (reasoning && reasoning.length > 0) {
                 if (!isInThinking) {
                   isInThinking = true;
@@ -465,10 +472,21 @@ export class ChatGPTApi implements LLMApi {
                 totalThinkingLatency =
                   Date.now() - startRequestTime - firstReplyLatency;
               } else if (content && content.length > 0) {
+                if (isFirstReply && content.startsWith("<search>")) {
+                  isInSearching = true;
+                }
+                if (isInSearching && content.includes("</search>")) {
+                  isInSearching = false;
+                  searchLatency =
+                    Date.now() - startRequestTime - firstReplyLatency;
+                }
                 if (isInThinking) {
                   isInThinking = false;
                   totalThinkingLatency =
-                    Date.now() - startRequestTime - firstReplyLatency;
+                    Date.now() -
+                    startRequestTime -
+                    firstReplyLatency -
+                    searchLatency;
                   remainText += "\n</think>\n\n" + content;
                 } else {
                   remainText += content;
@@ -482,14 +500,20 @@ export class ChatGPTApi implements LLMApi {
                       if (line.trim() !== "" && !line.startsWith(">")) {
                         foundFirstNonEmptyLineOrNonReference = true;
                         totalThinkingLatency =
-                          Date.now() - startRequestTime - firstReplyLatency;
+                          Date.now() -
+                          startRequestTime -
+                          firstReplyLatency -
+                          searchLatency;
                         break;
                       }
                     }
                   }
                   if (content.includes("</think>")) {
                     totalThinkingLatency =
-                      Date.now() - startRequestTime - firstReplyLatency;
+                      Date.now() -
+                      startRequestTime -
+                      firstReplyLatency -
+                      searchLatency;
                   }
                 }
               }

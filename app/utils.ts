@@ -441,20 +441,33 @@ export function isThinkingModel(model: string | undefined) {
 }
 export function wrapThinkingPart(full_reply: string) {
   full_reply = full_reply.trimStart();
-  // 处理无闭合<think>标签的情况
-  if (full_reply.includes("</think>") && !full_reply.startsWith("<think>")) {
-    return `<think>\n${full_reply}`;
+
+  const searchPattern = /^<search>([\s\S]*?)<\/search>/;
+  const searchMatch = full_reply.match(searchPattern);
+
+  let searchText = "";
+  let remainText = full_reply;
+  if (searchMatch) {
+    searchText = `<search>\n${searchMatch[1]}\n</search>\n`;
+    remainText = full_reply.substring(searchMatch[0].length); // 提取剩余文本
   }
-  if (full_reply.includes("<think>") && !full_reply.includes("</think>")) {
-    return `${full_reply}\n</think>`;
+
+  remainText = remainText.trimStart();
+
+  // 处理无闭合<think>标签的情况
+  if (remainText.includes("</think>") && !remainText.startsWith("<think>")) {
+    return searchText + `<think>\n${remainText}`;
+  }
+  if (remainText.includes("<think>") && !remainText.includes("</think>")) {
+    return searchText + `${remainText}\n</think>`;
   }
   // 处理引用式思考回复的情况
-  if (!full_reply.startsWith(">")) {
-    return full_reply;
+  if (!remainText.startsWith(">")) {
+    return searchText + remainText;
   }
   // 使用正则表达式匹配以 > 开头的连续行
   const thinkingPattern = /(^>.*(\n(?:>.*|\s*$))*)/m;
-  const match = full_reply.match(thinkingPattern);
+  const match = remainText.match(thinkingPattern);
 
   if (match) {
     // 获取匹配到的 thinking part
@@ -462,12 +475,12 @@ export function wrapThinkingPart(full_reply: string) {
     // 将 thinking part 包裹在 <think> 标签中
     const wrappedThinkingPart = `<think>\n${thinkingPart}\n</think>\n`;
     // 替换原字符串中的 thinking part
-    const result = full_reply.replace(thinkingPattern, wrappedThinkingPart);
-    return result;
+    const result = remainText.replace(thinkingPattern, wrappedThinkingPart);
+    return searchText + result;
   }
 
   // 如果没有匹配到 thinking part，则返回原字符串
-  return full_reply;
+  return searchText + remainText;
 }
 export function safeLocalStorage(): {
   getItem: (key: string) => string | null;

@@ -641,13 +641,20 @@ const en: LocaleType = {
     Less: "Fold Code",
     NotShow: "Never Show Again",
     ConfirmNoShow: "Confirm to disable？You can enable it in settings later.",
+    Searching: "Searching...",
+    Search: "Search Results",
+    NoSearch: "No Search Results",
+    SearchFormat: (SearchTime?: number) =>
+      SearchTime !== undefined
+        ? `(Search for ${Math.round(SearchTime / 1000)} s)`
+        : "",
     Thinking: "Thinking...",
     Think: "Content of Thought",
+    NoThink: "No Thought",
     ThinkFormat: (thinkingTime?: number) =>
       thinkingTime !== undefined
         ? `(Thinking for ${Math.round(thinkingTime / 1000)} s)`
         : "",
-    NoThink: "No Thought",
     ArtifactsInfo:
       "You can enable/disable 'Artifacts Preview' and 'Code Fold' in settings. If the preview fails, please refresh the page.",
   },

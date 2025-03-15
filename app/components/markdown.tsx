@@ -27,6 +27,91 @@ import { Collapse } from "antd";
 import styled from "styled-components";
 const { Panel } = Collapse;
 
+interface SearchCollapseProps {
+  title?: string | React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}
+
+const SearchCollapse = styled(
+  ({ title, children, className }: SearchCollapseProps) => {
+    const defaultActive = title === Locale.NewChat.Searching ? ["1"] : [];
+    const [activeKeys, setActiveKeys] = useState(defaultActive);
+
+    useEffect(() => {
+      if (typeof title === "string" && title.includes(Locale.NewChat.Search)) {
+        setActiveKeys([]);
+      } else if (title === Locale.NewChat.Searching) {
+        setActiveKeys(["1"]);
+      }
+    }, [title]);
+
+    const toggleCollapse = () => {
+      setActiveKeys(activeKeys.length ? [] : ["1"]);
+    };
+
+    const handleRightClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      toggleCollapse();
+    };
+
+    const handleDoubleClick = () => {
+      toggleCollapse();
+    };
+
+    return (
+      <div
+        onContextMenu={handleRightClick}
+        onDoubleClick={handleDoubleClick}
+        className={className}
+      >
+        <Collapse
+          size="small"
+          activeKey={activeKeys}
+          onChange={(keys) => setActiveKeys(keys as string[])}
+          bordered={false}
+        >
+          <Panel header={title} key="1">
+            {children}
+          </Panel>
+        </Collapse>
+      </div>
+    );
+  },
+)`
+  .ant-collapse-item {
+    border: var(--border-in-light) !important;
+    border-radius: 10px !important;
+    background-color: var(--white) !important;
+    margin-bottom: 8px !important;
+  }
+
+  .ant-collapse-header {
+    color: var(--black) !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    padding: 6px 12px !important;
+    align-items: center !important;
+    transition: all 0.3s ease !important;
+
+    .ant-collapse-expand-icon {
+      color: var(--primary) !important;
+    }
+  }
+
+  .ant-collapse-content {
+    background-color: transparent !important;
+    border-top: 1px solid var(--border-in-light) !important;
+
+    .ant-collapse-content-box {
+      padding: 8px 12px !important;
+      font-size: 14px;
+      color: var(--black);
+      opacity: 0.8;
+    }
+  }
+`;
+
 interface ThinkCollapseProps {
   title: string | React.ReactNode;
   children: React.ReactNode;
@@ -157,6 +242,7 @@ const sanitizeOptions = {
   },
   tagNames: [
     ...(defaultSchema.tagNames || []),
+    "searchcollapse",
     "thinkcollapse",
     "math",
     "semantics",
@@ -489,26 +575,87 @@ function formatBoldText(text: string) {
     return `**${boldText}**${colon}`;
   });
 }
-function formatThinkText(text: string, thinkingTime?: number): string {
+
+function formatSearchText(
+  text: string,
+  searchingTime?: number,
+): {
+  searchText: string;
+  remainText: string;
+} {
+  text = text.trimStart();
+
+  // 检查是否以 <search> 开头但没有结束标签
+  if (text.startsWith("<search>") && !text.includes("</search>")) {
+    // 获取 <search> 后的所有内容
+    const searchContent = text.slice("<search>".length);
+    // 渲染为"搜索中"状态
+    const searchText = `<searchcollapse title="${Locale.NewChat.Searching}">\n${searchContent}\n</searchcollapse>\n`;
+    const remainText = ""; // 剩余文本为空
+    return { searchText, remainText };
+  }
+  const pattern = /^<search>([\s\S]*?)<\/search>/;
+  const match = text.match(pattern);
+
+  if (match) {
+    const searchContent = match[1];
+    let searchText = "";
+    if (searchContent.trim() === "") {
+      searchText = `<searchcollapse title="${Locale.NewChat.NoSearch}">\n</searchcollapse>\n`;
+    } else {
+      searchText = `<searchcollapse title="${
+        Locale.NewChat.Search
+      }${Locale.NewChat.ThinkFormat(
+        searchingTime,
+      )}">\n${searchContent}\n</searchcollapse>\n`;
+    }
+    const remainText = text.substring(match[0].length); // 提取剩余文本
+    return { searchText, remainText };
+  }
+
+  // 没有找到 search 标签
+  return { searchText: "", remainText: text };
+}
+
+function formatThinkText(
+  text: string,
+  thinkingTime?: number,
+): {
+  thinkText: string;
+  remainText: string;
+} {
   text = text.trimStart();
   // 检查是否以 <think> 开头但没有结束标签
   if (text.startsWith("<think>") && !text.includes("</think>")) {
     // 获取 <think> 后的所有内容
     const thinkContent = text.slice("<think>".length);
     // 渲染为"思考中"状态
-    return `<thinkcollapse title="${Locale.NewChat.Thinking}">\n${thinkContent}\n</thinkcollapse>`;
+    const thinkText = `<thinkcollapse title="${Locale.NewChat.Thinking}">\n${thinkContent}\n</thinkcollapse>\n`;
+    const remainText = ""; // 剩余文本为空
+    return { thinkText, remainText };
   }
 
   // 处理完整的 think 标签
   const pattern = /^<think>([\s\S]*?)<\/think>/;
-  return text.replace(pattern, (match, thinkContent) => {
-    // 渲染为"思考完成"状态
-    // 如果 thinkContent 为空，则渲染为"没有思考过程"状态
+  const match = text.match(pattern);
+  if (match) {
+    const thinkContent = match[1];
+    let thinkText = "";
     if (thinkContent.trim() === "") {
-      return `<thinkcollapse title="${Locale.NewChat.NoThink}">\n</thinkcollapse>\n`;
+      thinkText = `<thinkcollapse title="${Locale.NewChat.NoThink}">\n</thinkcollapse>\n`;
+    } else {
+      thinkText = `<thinkcollapse title="${
+        Locale.NewChat.Think
+      }${Locale.NewChat.ThinkFormat(
+        thinkingTime,
+      )}">\n${thinkContent}\n</thinkcollapse>\n`;
     }
-    return `<thinkcollapse title="${Locale.NewChat.Think}${Locale.NewChat.ThinkFormat(thinkingTime)}">\n${thinkContent}\n\n</thinkcollapse>\n`;
-  });
+    const remainText = text.substring(match[0].length); // 提取剩余文本
+    return { thinkText, remainText };
+  }
+
+  // 没有找到 think 标签
+  return { thinkText: "", remainText: text };
 }
 
 function tryWrapHtmlCode(text: string) {
@@ -534,16 +681,24 @@ function tryWrapHtmlCode(text: string) {
 
 function R_MarkDownContent(props: {
   content: string;
+  searchingTime?: number;
   thinkingTime?: number;
   fontSize?: number;
 }) {
   const escapedContent = useMemo(() => {
-    return tryWrapHtmlCode(
-      formatThinkText(
-        formatBoldText(escapeBrackets(escapeDollarNumber(props.content))),
-        props.thinkingTime,
-      ),
+    const originalContent = formatBoldText(
+      escapeBrackets(escapeDollarNumber(props.content)),
     );
+    const { searchText, remainText: searchRemainText } = formatSearchText(
+      originalContent,
+      props.searchingTime,
+    );
+    const { thinkText, remainText } = formatThinkText(
+      searchRemainText,
+      props.thinkingTime,
+    );
+    const content = searchText + thinkText + remainText;
+    return tryWrapHtmlCode(content);
   }, [props.content]);
 
   return (
@@ -566,6 +721,13 @@ function R_MarkDownContent(props: {
           pre: PreCode,
           code: CustomCode,
           p: (pProps: any) => <p {...pProps} dir="auto" />,
+          searchcollapse: ({
+            title,
+            children,
+          }: {
+            title?: string;
+            children: React.ReactNode;
+          }) => <SearchCollapse title={title}>{children}</SearchCollapse>,
           thinkcollapse: ({
             title,
             children,
@@ -594,7 +756,7 @@ function R_MarkDownContent(props: {
               );
             }
             const isInternal = /^\/#/i.test(href);
-            const target = isInternal ? "_self" : (aProps.target ?? "_blank");
+            const target = isInternal ? "_self" : aProps.target ?? "_blank";
             return <a {...aProps} target={target} />;
           },
           details: Details,
@@ -616,6 +778,7 @@ export function Markdown(
     fontSize?: number;
     parentRef?: RefObject<HTMLDivElement>;
     defaultShow?: boolean;
+    searchingTime?: number;
     thinkingTime?: number;
   } & React.DOMAttributes<HTMLDivElement>,
 ) {
@@ -637,6 +800,7 @@ export function Markdown(
       ) : (
         <MarkdownContent
           content={props.content}
+          searchingTime={props.searchingTime}
           thinkingTime={props.thinkingTime}
           fontSize={props.fontSize}
         />

@@ -47,8 +47,9 @@ export type ChatMessage = RequestMessage & {
     completionTokens?: number;
     reasoningTokens?: number;
     firstReplyLatency?: number;
-    totalReplyLatency?: number;
+    searchingLatency?: number;
     reasoningLatency?: number;
+    totalReplyLatency?: number;
   };
 };
 
@@ -538,6 +539,8 @@ export const useChatStore = createPersistStore(
                   message?.usage?.total_latency;
                 botMessage.statistic.reasoningLatency =
                   message?.usage?.thinking_time;
+                botMessage.statistic.searchingLatency =
+                  message?.usage?.searching_time;
               }
               botMessage.date = new Date().toLocaleString();
               get().onNewMessage(botMessage, session);

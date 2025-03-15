@@ -2450,6 +2450,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       fontSize={fontSize}
                       parentRef={scrollRef}
                       defaultShow={i >= messages.length - 6}
+                      searchingTime={message.statistic?.searchingLatency}
                       thinkingTime={message.statistic?.reasoningLatency}
                     />
                     {getMessageImages(message).length == 1 && (

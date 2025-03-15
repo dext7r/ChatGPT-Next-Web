@@ -64,8 +64,9 @@ export interface RichMessage {
     completion_tokens?: number;
     total_tokens?: number;
     first_content_latency?: number;
-    total_latency?: number;
     thinking_time?: number;
+    searching_time?: number;
+    total_latency?: number;
   };
 }
 export interface ChatOptions {

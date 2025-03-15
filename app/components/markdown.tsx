@@ -228,6 +228,10 @@ const sanitizeOptions = {
       ...(defaultSchema.attributes?.div || []),
       ["className", "math", "math-display"],
     ],
+    img: [
+      ...(defaultSchema.attributes?.img || []),
+      ["src", ["http:", "https:", "data"]],
+    ],
     math: [["xmlns", "http://www.w3.org/1998/Math/MathML"], "display"],
     annotation: ["encoding"],
     span: ["className", "style"],
@@ -257,6 +261,10 @@ const sanitizeOptions = {
     "svg",
     "path",
   ],
+  protocols: {
+    ...defaultSchema.protocols,
+    src: ["http", "https", "data"], // 允许的协议列表
+  },
 };
 
 function Details(props: { children: React.ReactNode }) {

@@ -8,20 +8,41 @@ WORKDIR /app
 
 COPY package.json yarn.lock ./
 
-RUN echo "Checking registries..." && \
-    REGISTRIES=("https://registry.npmmirror.com/" "https://registry.npm.taobao.org/" "https://registry.yarnpkg.com/") && \
-    for REG in "${REGISTRIES[@]}"; do \
-        if curl -s -m 5 "$REG" > /dev/null 2>&1; then \
-            yarn config set registry "$REG" && \
-            echo "Selected registry: $REG" && break; \
+# 设置多个Yarn镜像源并尝试安装（含超时和自动回退）
+RUN set -e; \
+    registries=("https://registry.npmmirror.com/" "https://registry.npmjs.org/" "https://registry.yarnpkg.com/"); \
+    success=0; \
+    for registry in "${registries[@]}"; do \
+        echo "尝试Yarn镜像源: $registry"; \
+        yarn config set registry "$registry"; \
+        if yarn install --network-timeout 300000; then \
+            echo "成功使用镜像源: $registry"; \
+            success=1; \
+            break; \
+        else \
+            echo "镜像源 $registry 失败，尝试下一个..."; \
+            yarn cache clean; \
         fi; \
-    done && \
-    yarn config set network-timeout 600000 -g && \
-    yarn config set http-retry 5 && \
-    yarn install --frozen-lockfile
+    done; \
+    if [ $success -ne 1 ]; then echo "所有镜像源尝试失败"; exit 1; fi
 
-# 安装 sharp 用于图像优化
-RUN npm install sharp
+# 安装sharp时设置多个npm镜像源
+RUN set -e; \
+    registries=("https://registry.npmmirror.com/" "https://registry.npmjs.org/" "https://registry.yarnpkg.com/"); \
+    success=0; \
+    for registry in "${registries[@]}"; do \
+        echo "尝试npm镜像源: $registry"; \
+        npm config set registry "$registry"; \
+        if npm install sharp; then \
+            echo "成功使用镜像源安装sharp: $registry"; \
+            success=1; \
+            break; \
+        else \
+            echo "镜像源 $registry 安装sharp失败，尝试下一个..."; \
+            npm cache clean --force; \
+        fi; \
+    done; \
+    if [ $success -ne 1 ]; then echo "所有sharp安装尝试失败"; exit 1; fi
 
 FROM base AS builder
 

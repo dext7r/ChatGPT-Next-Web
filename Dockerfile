@@ -8,8 +8,17 @@ WORKDIR /app
 
 COPY package.json yarn.lock ./
 
-RUN yarn config set registry 'https://registry.npmmirror.com/'
-RUN yarn install
+RUN echo "Checking registries..." && \
+    REGISTRIES=("https://registry.npmmirror.com/" "https://registry.npm.taobao.org/" "https://registry.yarnpkg.com/") && \
+    for REG in "${REGISTRIES[@]}"; do \
+        if curl -s -m 5 "$REG" > /dev/null 2>&1; then \
+            yarn config set registry "$REG" && \
+            echo "Selected registry: $REG" && break; \
+        fi; \
+    done && \
+    yarn config set network-timeout 600000 -g && \
+    yarn config set http-retry 5 && \
+    yarn install --frozen-lockfile
 
 # 安装 sharp 用于图像优化
 RUN npm install sharp

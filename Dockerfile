@@ -8,11 +8,11 @@ WORKDIR /app
 
 COPY package.json yarn.lock ./
 
-# 设置多个Yarn镜像源并尝试安装（含超时和自动回退）
+# 设置多个Yarn镜像源并尝试安装（POSIX兼容写法）
 RUN set -e; \
-    registries=("https://registry.npmmirror.com/" "https://registry.npmjs.org/" "https://registry.yarnpkg.com/"); \
+    registries="https://registry.npmmirror.com/ https://registry.npmjs.org/ https://registry.yarnpkg.com/"; \
     success=0; \
-    for registry in "${registries[@]}"; do \
+    for registry in $registries; do \
         echo "尝试Yarn镜像源: $registry"; \
         yarn config set registry "$registry"; \
         if yarn install --network-timeout 300000; then \
@@ -26,11 +26,11 @@ RUN set -e; \
     done; \
     if [ $success -ne 1 ]; then echo "所有镜像源尝试失败"; exit 1; fi
 
-# 安装sharp时设置多个npm镜像源
+# 安装sharp时设置多个npm镜像源（POSIX兼容写法）
 RUN set -e; \
-    registries=("https://registry.npmmirror.com/" "https://registry.npmjs.org/" "https://registry.yarnpkg.com/"); \
+    registries="https://registry.npmmirror.com/ https://registry.npmjs.org/ https://registry.yarnpkg.com/"; \
     success=0; \
-    for registry in "${registries[@]}"; do \
+    for registry in $registries; do \
         echo "尝试npm镜像源: $registry"; \
         npm config set registry "$registry"; \
         if npm install sharp; then \

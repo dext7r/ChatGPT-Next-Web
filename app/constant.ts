@@ -76,6 +76,23 @@ export const REQUEST_TIMEOUT_MS = 60000;
 
 export const EXPORT_MESSAGE_CLASS_NAME = "export-markdown";
 
+export enum ThinkingType {
+  Unknown = -1, // 未知状态
+  ReasoningType = 0, // 推理内容
+  ThinkType = 1, // <think> 类型
+  ReferenceType = 2, // > 引用类型
+  MaybeNotThink = 3, // 非思考模式或丢失<think>模式
+}
+export const ThinkingTypeMap = Object.entries(ThinkingType).reduce(
+  (acc, [key, value]) => {
+    if (!isNaN(Number(value))) {
+      acc[value as number] = key;
+    }
+    return acc;
+  },
+  {} as Record<number, string>,
+);
+
 export enum ServiceProvider {
   OpenAI = "OpenAI",
   Azure = "Azure",

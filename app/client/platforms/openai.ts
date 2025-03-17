@@ -462,10 +462,13 @@ export class ChatGPTApi implements LLMApi {
               const choices = json.choices as Array<{
                 delta: {
                   content: string | null;
-                  reasoning_content: string | null;
+                  reasoning_content: string | null; // 兼容 deepseek 字段
+                  reasoning: string | null; // 兼容 openRouter 字段
                 };
               }>;
-              const reasoning = choices[0]?.delta?.reasoning_content;
+              const reasoning =
+                choices[0]?.delta?.reasoning_content ||
+                choices[0]?.delta?.reasoning;
               const content = choices[0]?.delta?.content;
               const textmoderation = json?.prompt_filter_results;
               completionTokens =

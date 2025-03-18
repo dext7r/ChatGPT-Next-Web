@@ -210,7 +210,7 @@ export function uploadFileRemote(
     .then((res) => {
       console.log("File upload response:", res);
       if (res?.code == 0 && res?.data) {
-        return { type: "url", content: res?.data || "" };
+        return { type: "url" as const, content: res?.data || "" };
       }
       throw Error(`Upload Error: ${res?.msg}`);
     })

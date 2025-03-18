@@ -159,19 +159,40 @@ export function removeImage(imageUrl: string) {
 }
 
 /**
- * 上传文件到远程服务器
+ * 上传文件到远程服务器或在本地处理文件
  * @param file 要上传的文件对象
- * @returns 返回上传后的文件URL
+ * @returns 返回上传后的文件URL或文件内容
  */
-export function uploadFileRemote(file: File): Promise<string> {
+export function uploadFileRemote(
+  file: File,
+): Promise<{ type: "text" | "dataUrl" | "url"; content: string }> {
   if (!window._SW_ENABLED) {
-    return readFileAsDataURL(file)
-      .then((dataUrl) => {
-        return dataUrl;
-      })
-      .catch((error) => {
-        throw error;
-      });
+    // 先尝试以文本方式读取
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve({
+            type: "text",
+            content: event.target.result as string,
+          });
+        } else {
+          reject(new Error("Failed to read file as text"));
+        }
+      };
+
+      reader.onerror = () => {
+        console.log("Failed to read as text, falling back to DataURL");
+        // 文本读取失败，回退到 DataURL 模式
+        readFileAsDataURL(file)
+          .then((dataUrl) => resolve({ type: "dataUrl", content: dataUrl }))
+          .catch(reject);
+      };
+
+      // 尝试以文本方式读取
+      reader.readAsText(file);
+    });
   }
 
   const body = new FormData();
@@ -189,7 +210,7 @@ export function uploadFileRemote(file: File): Promise<string> {
     .then((res) => {
       console.log("File upload response:", res);
       if (res?.code == 0 && res?.data) {
-        return res?.data;
+        return { type: "url", content: res?.data || "" };
       }
       throw Error(`Upload Error: ${res?.msg}`);
     })
@@ -197,6 +218,29 @@ export function uploadFileRemote(file: File): Promise<string> {
       console.error("File upload error:", error);
       throw new Error("Network error or server unavailable during file upload");
     });
+}
+
+/**
+ * Reads a file as plain text without base64 encoding
+ * @param file - The file to read
+ * @returns Promise resolving to the file content as string
+ */
+export function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        resolve(event.target.result as string);
+      } else {
+        reject(new Error("Failed to read file"));
+      }
+    };
+    reader.onerror = (error) => {
+      reject(error);
+    };
+    // 使用 readAsText 而非 readAsDataURL
+    reader.readAsText(file);
+  });
 }
 
 /**
@@ -242,6 +286,8 @@ export async function preProcessFileContent(message: RequestMessage) {
           file_url: {
             url: part.file_url.url,
             name: part.file_url.name,
+            contentType: part.file_url.contentType,
+            size: part.file_url.size,
             tokenCount: part.file_url.tokenCount,
           },
         });

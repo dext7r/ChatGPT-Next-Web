@@ -79,6 +79,8 @@ const cn = {
       Clear: "清除聊天",
       Settings: "对话设置",
       UploadImage: "上传图片",
+      UnsupportedModelForUploadImage: "当前模型不支持上传图片",
+      RenameFile: "重命名文件",
       CloudBackup: "云备份",
       Translate: {
         Title: "中英互译",
@@ -122,10 +124,11 @@ const cn = {
       },
       UploadFile: {
         Title: "上传文本文件",
-        FileTooLarge: "暂不支持上传超过100k的文件",
+        FileTooLarge: "暂不支持上传超过1M的文件",
         TooManyFile: "超出可上传文件数量",
         UnsupportedFileType: "不支持的文件类型",
         FailToRead: "文件内容读取失败",
+        TooManyTokenToPasteAsFile: "粘贴文本数量过大，自动粘贴为附件文本",
         DuplicateFile: (filename: string) =>
           `文件 "${filename}" 已存在，请勿重复上传`,
       },

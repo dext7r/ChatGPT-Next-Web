@@ -24,6 +24,8 @@ export interface MultimodalContent {
   file_url?: {
     url: string;
     name: string;
+    contentType?: string;
+    size?: number;
     tokenCount?: number;
   };
 }
@@ -31,6 +33,8 @@ export interface MultimodalContent {
 export interface UploadFile {
   name: string;
   url: string;
+  contentType?: string;
+  size?: number;
   tokenCount?: number;
 }
 

@@ -114,6 +114,10 @@ import {
   REQUEST_TIMEOUT_MS,
   UNFINISHED_INPUT,
   ServiceProvider,
+  MAX_DOC_CNT,
+  textFileExtensions,
+  maxFileSizeInKB,
+  minTokensForPastingAsFile,
 } from "../constant";
 import { Avatar } from "./emoji";
 import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
@@ -1238,6 +1242,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const [attachImages, setAttachImages] = useState<string[]>([]);
   const [attachFiles, setAttachFiles] = useState<UploadFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [renameAttachFile, setRenameAttachFile] = useState<{
+    index: number;
+    name: string;
+  } | null>(null);
 
   // prompt hints
   const promptStore = usePromptStore();
@@ -1521,6 +1529,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           userAttachFiles.push({
             name: item.file_url.name,
             url: item.file_url.url,
+            contentType: item.file_url.contentType,
+            size: item.file_url.size,
             tokenCount: item.file_url.tokenCount,
           });
         }
@@ -1791,143 +1801,178 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const currentModel = chatStore.currentSession().mask.modelConfig.model;
-      if (!isVisionModel(currentModel)) {
+      const canUploadImage = isVisionModel(currentModel);
+      const items = (event.clipboardData || window.clipboardData).items;
+
+      // 检查是否有文本内容
+      const textContent = event.clipboardData.getData("text");
+      const tokenCount: number = countTokens(textContent);
+      if (textContent && tokenCount > minTokensForPastingAsFile) {
+        event.preventDefault(); // 阻止默认粘贴行为
+
+        // 将大量文本转换为文件对象
+        // 生成唯一的文件名以避免重复
+        const timestamp = new Date().getTime();
+        const fileName = `pasted_text_${timestamp}.txt`;
+        const file = new File([textContent], fileName, { type: "text/plain" });
+        setUploading(true);
+
+        try {
+          const data = await uploadFileRemote(file);
+          const fileData: UploadFile = {
+            name: fileName,
+            url: data.content,
+            contentType: data.type,
+            size: parseFloat((file.size / 1024).toFixed(2)),
+            tokenCount: tokenCount,
+          };
+
+          // 限制文件大小:1M
+          if (fileData?.size && fileData?.size > maxFileSizeInKB) {
+            showToast(Locale.Chat.InputActions.UploadFile.FileTooLarge);
+            setUploading(false);
+            return;
+          }
+
+          if (data.content && tokenCount > 0) {
+            const newFiles = [...attachFiles, fileData];
+            // 检查文件数量限制
+            const MAX_DOC_CNT = 6;
+            if (newFiles.length > MAX_DOC_CNT) {
+              showToast(Locale.Chat.InputActions.UploadFile.TooManyFile);
+              newFiles.splice(MAX_DOC_CNT, newFiles.length - MAX_DOC_CNT);
+            }
+            setAttachFiles(newFiles);
+            showToast(
+              Locale.Chat.InputActions.UploadFile.TooManyTokenToPasteAsFile,
+            );
+          }
+        } catch (e) {
+          console.error("Error uploading file:", e);
+          showToast(String(e));
+        } finally {
+          setUploading(false);
+        }
+
         return;
       }
-      const items = (event.clipboardData || window.clipboardData).items;
       for (const item of items) {
-        if (item.kind === "file" && item.type.startsWith("image/")) {
+        if (item.kind === "file") {
           event.preventDefault();
           const file = item.getAsFile();
-          if (file) {
-            const images: string[] = [];
-            images.push(...attachImages);
-            images.push(
-              ...(await new Promise<string[]>((res, rej) => {
-                setUploading(true);
-                const imagesData: string[] = [];
-                uploadImageRemote(file)
-                  .then((dataUrl) => {
-                    imagesData.push(dataUrl);
-                    setUploading(false);
-                    res(imagesData);
-                  })
-                  .catch((e) => {
-                    setUploading(false);
-                    rej(e);
-                  });
-              })),
-            );
-            const imagesLength = images.length;
 
-            if (imagesLength > 3) {
-              images.splice(3, imagesLength - 3);
+          if (file) {
+            // 处理图片文件
+            if (item.type.startsWith("image/")) {
+              if (!canUploadImage) {
+                showToast(
+                  Locale.Chat.InputActions.UnsupportedModelForUploadImage,
+                );
+                continue;
+              }
+              const images: string[] = [];
+              images.push(...attachImages);
+              images.push(
+                ...(await new Promise<string[]>((res, rej) => {
+                  setUploading(true);
+                  const imagesData: string[] = [];
+                  uploadImageRemote(file)
+                    .then((dataUrl) => {
+                      imagesData.push(dataUrl);
+                      setUploading(false);
+                      res(imagesData);
+                    })
+                    .catch((e) => {
+                      setUploading(false);
+                      rej(e);
+                    });
+                })),
+              );
+              const imagesLength = images.length;
+
+              if (imagesLength > 3) {
+                images.splice(3, imagesLength - 3);
+              }
+              setAttachImages(images);
             }
-            setAttachImages(images);
+            // 处理文本文件
+            else {
+              // 检查是否是支持的文件类型
+              if (supportFileType(file.name)) {
+                setUploading(true);
+                try {
+                  const data = await uploadFileRemote(file);
+                  const tokenCount: number = countTokens(data.content);
+                  const fileData: UploadFile = {
+                    name: file.name,
+                    url: data.content,
+                    contentType: data.type,
+                    size: parseFloat((file.size / 1024).toFixed(2)),
+                    tokenCount: tokenCount,
+                  };
+
+                  // 限制文件大小:1M
+                  if (fileData?.size && fileData?.size > maxFileSizeInKB) {
+                    showToast(Locale.Chat.InputActions.UploadFile.FileTooLarge);
+                    setUploading(false);
+                    return;
+                  }
+
+                  // 检查重复文件
+                  const isDuplicate = attachFiles.some(
+                    (existingFile) =>
+                      existingFile.name === fileData.name &&
+                      existingFile.url === fileData.url,
+                  );
+
+                  if (isDuplicate) {
+                    showToast(
+                      Locale.Chat.InputActions.UploadFile.DuplicateFile(
+                        file.name,
+                      ),
+                    );
+                    setUploading(false);
+                    return;
+                  }
+
+                  if (data.content && tokenCount > 0) {
+                    const newFiles = [...attachFiles, fileData];
+                    // 检查文件数量限制
+                    const MAX_DOC_CNT = 6;
+                    if (newFiles.length > MAX_DOC_CNT) {
+                      showToast(
+                        Locale.Chat.InputActions.UploadFile.TooManyFile,
+                      );
+                      newFiles.splice(
+                        MAX_DOC_CNT,
+                        newFiles.length - MAX_DOC_CNT,
+                      );
+                    }
+                    setAttachFiles(newFiles);
+                  }
+                } catch (e) {
+                  console.error("Error uploading file:", e);
+                  showToast(String(e));
+                } finally {
+                  setUploading(false);
+                }
+              }
+            }
           }
         }
       }
     },
-    [attachImages, chatStore],
+    [attachImages, attachFiles, chatStore],
   );
 
+  function supportFileType(filename: string) {
+    // 获取文件扩展名
+    const fileExtension = filename.split(".").pop()?.toLowerCase();
+    return fileExtension && textFileExtensions.includes(fileExtension);
+  }
   async function uploadDocument() {
     const files: UploadFile[] = [...attachFiles];
 
-    const MAX_DOC_CNT = 6;
-    const textFileExtensions = [
-      "txt",
-      "md",
-      "markdown",
-      "json",
-      "csv",
-      "tsv",
-      "xml",
-      "html",
-      "htm",
-      "css",
-      "js",
-      "ts",
-      "jsx",
-      "tsx",
-      "py",
-      "java",
-      "c",
-      "cpp",
-      "h",
-      "cs",
-      "php",
-      "rb",
-      "go",
-      "rs",
-      "swift",
-      "kt",
-      "sql",
-      "yaml",
-      "yml",
-      "toml",
-      "ini",
-      "cfg",
-      "conf",
-      "log",
-      "sh",
-      "bat",
-      "ps1",
-      "tex",
-      "rtf",
-      "scss",
-      "sass",
-      "less", // CSS预处理器
-      "vue",
-      "svelte", // 前端框架文件
-      "graphql",
-      "gql", // GraphQL
-      "r",
-      "pl",
-      "pm", // R语言、Perl
-      "lua",
-      "groovy",
-      "scala", // 其他编程语言
-      "dart",
-      "haskell",
-      "hs", // Dart、Haskell
-      "clj",
-      "erl",
-      "ex",
-      "exs", // Clojure、Erlang、Elixir
-      "jsp",
-      "asp",
-      "aspx", // 服务器页面
-      "pug",
-      "jade",
-      "ejs", // 模板引擎
-      "diff",
-      "patch", // 差异文件
-      "properties",
-      "env", // 配置文件
-      "plist",
-      "proto", // 特定格式配置
-      "gradle",
-      "rake", // 构建系统
-      "htaccess",
-      "htpasswd", // Apache配置
-      "dockerfile",
-      "dockerignore", // Docker相关
-      "gitignore",
-      "gitattributes", // Git相关
-      "eslintrc",
-      "prettierrc", // 代码规范配置
-      "babelrc",
-      "stylelintrc", // 工具配置
-      "cmake",
-      "makefile", // 构建配置
-      "vbs",
-      "vbe", // VBScript
-      "rst",
-      "adoc", // 其他标记语言
-      "srt",
-      "vtt", // 字幕文件
-    ];
     // 构建accept属性的值
     const acceptTypes = textFileExtensions.map((ext) => `.${ext}`).join(",");
 
@@ -1946,11 +1991,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             for (let i = 0; i < inputFiles.length; i++) {
               const file = inputFiles[i];
               // 检查文件类型是否在允许列表中
-              const fileExtension = file.name.split(".").pop()?.toLowerCase();
-              if (
-                !fileExtension ||
-                !textFileExtensions.includes(fileExtension)
-              ) {
+              if (!supportFileType(file.name)) {
                 setUploading(false);
                 showToast(
                   Locale.Chat.InputActions.UploadFile.UnsupportedFileType,
@@ -1958,16 +1999,18 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                 return;
               }
               try {
-                const dataUrl = await uploadFileRemote(file);
-                const tokenCount: number = countTokens(dataUrl);
+                const data = await uploadFileRemote(file);
+                const tokenCount: number = countTokens(data.content);
                 const fileData: UploadFile = {
                   name: file.name,
-                  url: dataUrl,
+                  url: data.content,
+                  contentType: data.type,
+                  size: parseFloat((file.size / 1024).toFixed(2)),
                   tokenCount: tokenCount,
                 };
 
                 // 限制文件大小
-                if (tokenCount > 100) {
+                if (fileData?.size && fileData?.size > maxFileSizeInKB) {
                   showToast(Locale.Chat.InputActions.UploadFile.FileTooLarge);
                   setUploading(false);
                 } else {
@@ -1985,7 +2028,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       ),
                     );
                     setUploading(false);
-                  } else if (dataUrl && tokenCount > 0) {
+                  } else if (data.content && tokenCount > 0) {
                     // 如果不是重复文件且有效，则添加到filesData
                     filesData.push(fileData);
                   }
@@ -2350,11 +2393,14 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                                     item.type === "file_url" &&
                                     item.file_url
                                   ) {
+                                    console.log("edit file_url", item);
                                     (newContent as MultimodalContent[]).push({
                                       type: "file_url",
                                       file_url: {
                                         url: item.file_url.url,
                                         name: item.file_url.name,
+                                        contentType: item.file_url.contentType,
+                                        size: item.file_url.size,
                                         tokenCount: item.file_url.tokenCount,
                                       },
                                     });
@@ -2517,7 +2563,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                                   styles["chat-message-item-file-name"]
                                 }
                               >
-                                {file.name} ({file.tokenCount}K)
+                                {file.name}{" "}
+                                {file?.size !== undefined
+                                  ? `(${file.size}K, ${file.tokenCount}Tokens)`
+                                  : `(${file.tokenCount}K)`}
                               </div>
                             </a>
                           );
@@ -2685,19 +2734,85 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       >
                         <FileIcon {...style} glyphColor="#303030" />
                       </div>
-                      <div
-                        className={getFileNameClassName(attachImages.length)}
-                      >
-                        {file.name} ({file.tokenCount}K)
-                      </div>
-                      <div className={styles["attach-image-mask"]}>
-                        <DeleteImageButton
-                          deleteImage={() => {
-                            setAttachFiles(
-                              attachFiles.filter((_, i) => i !== index),
-                            );
+                      {renameAttachFile && renameAttachFile.index === index ? (
+                        <input
+                          type="text"
+                          className={getFileNameClassName(attachImages.length)}
+                          value={renameAttachFile.name}
+                          onChange={(e) =>
+                            setRenameAttachFile({
+                              ...renameAttachFile,
+                              name: e.target.value,
+                            })
+                          }
+                          onBlur={() => {
+                            if (renameAttachFile.name.trim()) {
+                              // 保留原始扩展名
+                              const originalExt = file.name.split(".").pop();
+                              const newName = renameAttachFile.name.includes(
+                                ".",
+                              )
+                                ? renameAttachFile.name
+                                : `${renameAttachFile.name}.${originalExt}`;
+
+                              const newFiles = [...attachFiles];
+                              newFiles[index] = { ...file, name: newName };
+                              setAttachFiles(newFiles);
+                            }
+                            setRenameAttachFile(null);
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.currentTarget.blur();
+                            }
+                            if (e.key === "Escape") {
+                              setRenameAttachFile(null);
+                            }
+                          }}
+                          autoFocus
                         />
+                      ) : (
+                        <div
+                          className={getFileNameClassName(attachImages.length)}
+                          onDoubleClick={() => {
+                            setRenameAttachFile({
+                              index,
+                              name: file.name.split(".")[0], // 默认选中文件名部分，不包括扩展名
+                            });
+                          }}
+                        >
+                          {file.name} ({file.size}K, {file.tokenCount}Tokens)
+                        </div>
+                      )}
+                      <div className={styles["attach-image-mask"]}>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <IconButton
+                            icon={<RenameIcon />}
+                            onClick={() => {
+                              setRenameAttachFile({
+                                index,
+                                name: file.name.split(".")[0], // 默认选中文件名部分，不包括扩展名
+                              });
+                            }}
+                            title={Locale.Chat.InputActions.RenameFile}
+                            style={{
+                              width: "18px",
+                              height: "18px",
+                              borderRadius: "4px",
+                              marginRight: "4px",
+                              border: "1px solid #e0e0e0",
+                              backgroundColor: "#f9f9f9",
+                            }}
+                          />
+                          <DeleteImageButton
+                            deleteImage={() => {
+                              setAttachFiles(
+                                attachFiles.filter((_, i) => i !== index),
+                              );
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   );

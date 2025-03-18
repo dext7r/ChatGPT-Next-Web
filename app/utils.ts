@@ -4,31 +4,35 @@ import Locale from "./locales";
 import { RequestMessage, UploadFile } from "./client/api";
 import { useAccessStore } from "./store";
 import { VISION_MODEL_REGEXES, EXCLUDE_VISION_MODEL_REGEXES } from "./constant";
+import { estimateTokenLengthInLLM } from "./utils/token";
 
 export const readFileContent = async (
   file: UploadFile,
 ): Promise<string | null> => {
-  // 检查是否是 Data URL
-  if (file.url.startsWith("data:")) {
-    try {
+  try {
+    console.log("Reading file content for:", file.name);
+
+    // 如果有明确的内容类型标记，直接使用
+    if (file.contentType === "text") {
+      console.log("Direct text content available");
+      return file.url; // 直接返回文本内容
+    }
+
+    // 如果是 Data URL
+    if (file.contentType === "dataUrl" || file.url.startsWith("data:")) {
+      console.log("Processing as DataURL");
       // 从 Data URL 中提取内容类型
       const contentTypePart = file.url.split(",")[0];
       const contentType = contentTypePart.split(":")[1]?.split(";")[0];
 
-      // 处理文本内容
-      // console.log("contentType: ", contentType);
-      // if (contentType && !contentType.startsWith('text/')) {
-      //   showToast('Only text files are supported.');
-      //   return null;
-      // }
       // 解码 Base64 内容
       const base64Content = file.url.split(",")[1];
-      // 使用现代Web API直接解码
+
       try {
         // 方法1: 使用fetch API和Blob (最现代的方法)
         const response = await fetch(`data:text/plain;base64,${base64Content}`);
         const content = await response.text();
-        console.log("use fetch api to decode the file: ", file.name);
+        console.log("Used fetch API to decode the file");
         return content;
       } catch (e) {
         // 方法2: 如果fetch不支持data URL，回退到这个方法
@@ -38,63 +42,74 @@ export const readFileContent = async (
           bytes[i] = binary.charCodeAt(i);
         }
         const content = new TextDecoder("utf-8").decode(bytes);
-        console.log("use TextDecoder to decode the file: ", file.name);
+        console.log("Used TextDecoder to decode the file");
         return content;
       }
-    } catch (error) {
-      showToast(`${Locale.Chat.InputActions.UploadFile.FailToRead}: ${error}`);
-      return null;
     }
-  } else {
-    // 处理普通 URL
-    const host_url = new URL(window.location.href);
-    const file_url = new URL(file.url);
+    // 处理URL
+    else {
+      console.log("Processing as URL");
+      try {
+        // 处理普通 URL
+        const host_url = new URL(window.location.href);
+        const file_url = new URL(file.url);
 
-    // 允许同源URL或特定的可信域名
-    const allowedHosts = [
-      host_url.host,
-      // 添加其他可信的域名，例如您的API服务器
-      // 'api.yourservice.com',
-      // 'storage.yourservice.com'
-    ];
+        // 允许同源URL或特定的可信域名
+        const allowedHosts = [
+          host_url.host,
+          // 添加其他可信的域名
+        ];
 
-    if (!allowedHosts.includes(file_url.host)) {
-      console.warn(
-        `URL host mismatch: ${file_url.host} vs allowed: ${allowedHosts.join(
-          ", ",
-        )}`,
-      );
-      showToast(Locale.Chat.InputActions.UploadFile.FailToRead);
-      return null;
-    }
+        if (!allowedHosts.includes(file_url.host)) {
+          console.warn(
+            `URL host mismatch: ${
+              file_url.host
+            } vs allowed: ${allowedHosts.join(", ")}`,
+          );
+          showToast(Locale.Chat.InputActions.UploadFile.FailToRead);
+          return null;
+        }
 
-    try {
-      const response = await fetch(file.url);
-      if (!response.ok) {
-        showToast(Locale.Chat.InputActions.UploadFile.FailToRead);
+        const response = await fetch(file.url);
+        if (!response.ok) {
+          showToast(Locale.Chat.InputActions.UploadFile.FailToRead);
+          return null;
+        }
+
+        // 检查 Content-Type 头
+        const contentType = response.headers.get("Content-Type");
+        if (
+          contentType &&
+          !contentType.includes("text/") &&
+          !contentType.includes("application/json")
+        ) {
+          showToast(Locale.Chat.InputActions.UploadFile.UnsupportedFileType);
+          return null;
+        }
+
+        // 获取文本内容
+        const content = await response.text();
+        return content;
+      } catch (error) {
+        // 如果URL解析失败，可能是因为它实际上是文本内容，直接返回
+        if (
+          error instanceof TypeError &&
+          error.message.includes("URL constructor")
+        ) {
+          console.log("URL parsing failed, treating as direct text content");
+          return file.url;
+        }
+
+        console.error("Error reading file content:", error);
+        showToast(
+          `${Locale.Chat.InputActions.UploadFile.FailToRead}: ${error}`,
+        );
         return null;
       }
-
-      // 检查 Content-Type 头
-      const contentType = response.headers.get("Content-Type");
-      if (
-        contentType &&
-        !contentType.includes("text/") &&
-        !contentType.includes("application/json")
-      ) {
-        showToast(Locale.Chat.InputActions.UploadFile.UnsupportedFileType);
-        return null;
-      }
-
-      // 获取文本内容
-      const content = await response.text();
-
-      return content;
-    } catch (error) {
-      console.error("Error reading file content:", error);
-      showToast(`${Locale.Chat.InputActions.UploadFile.FailToRead}: ${error}`);
-      return null;
     }
+  } catch (error) {
+    showToast(`${Locale.Chat.InputActions.UploadFile.FailToRead}: ${error}`);
+    return null;
   }
 };
 
@@ -107,8 +122,26 @@ export const readFileContent = async (
 export const countTokens = (text: string | null) => {
   let totalTokens = 0;
   if (!text) return totalTokens;
-  const totalTokenCount: number = +(text.length / 1024).toFixed(2);
-  return totalTokenCount;
+  return estimateTokenLengthInLLM(text);
+};
+
+/**
+ * Gets the file size in a readable format
+ * @param file - The file object
+ * @returns File size in the most appropriate unit (B, KB, MB, GB)
+ */
+export const getFileSize = (file: File | null): string => {
+  if (!file) return "0 B";
+
+  const bytes = file.size;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+
+  if (bytes === 0) return "0 B";
+
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  if (i === 0) return `${bytes} B`;
+
+  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
 };
 
 export function trimTopic(topic: string) {

@@ -418,6 +418,8 @@ export const useChatStore = createPersistStore(
                 file_url: {
                   url: file.url,
                   name: file.name,
+                  contentType: file.contentType,
+                  size: file.size,
                   tokenCount: file.tokenCount,
                 },
               };

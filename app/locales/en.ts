@@ -79,6 +79,9 @@ const en: LocaleType = {
       Clear: "Clear Context",
       Settings: "Settings",
       UploadImage: "Upload Images",
+      UnsupportedModelForUploadImage:
+        "Current model does not support image uploads.",
+      RenameFile: "Rename this file",
       CloudBackup: "Backup by Cloud",
       Translate: {
         Title: "Translate between ZH-EN",
@@ -126,10 +129,12 @@ const en: LocaleType = {
       },
       UploadFile: {
         Title: "Upload Plain Text File",
-        FileTooLarge: "Only support to upload single file with 100k.",
+        FileTooLarge: "Only support to upload single file with 1M.",
         TooManyFile: "Exceeds the maximum number of files allowed for upload.",
         UnsupportedFileType: "Unsupported File Type.",
         FailToRead: "File content reading failed.",
+        TooManyTokenToPasteAsFile:
+          "The amount of text pasted is excessive; it has been automatically attached as a file.",
         DuplicateFile: (filename: string) =>
           `The file "${filename}" already exists. Please do not upload it again.`,
       },

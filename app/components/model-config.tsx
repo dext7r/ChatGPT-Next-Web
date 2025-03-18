@@ -85,9 +85,9 @@ export function ModelConfigList(props: {
           <input
             aria-label={Locale.Settings.Temperature.Title}
             type="number"
-            min={0}
-            max={1}
-            value={props.modelConfig.temperature.toFixed(1)}
+            // min={0}
+            // max={1}
+            value={props.modelConfig.temperature}
             disabled={!props.modelConfig.temperature_enabled}
             style={{
               width: "150px",
@@ -95,13 +95,13 @@ export function ModelConfigList(props: {
                 ? "inherit"
                 : "#e0e0e0",
             }}
-            onChange={(e) =>
+            onChange={(e) => {
               props.updateConfig((config) => {
                 config.temperature = ModalConfigValidator.temperature(
                   e.currentTarget.valueAsNumber,
                 );
-              })
-            }
+              });
+            }}
           />
           <input
             type="checkbox"
@@ -122,9 +122,9 @@ export function ModelConfigList(props: {
           <input
             aria-label={Locale.Settings.TopP.Title}
             type="number"
-            min={0}
-            max={1}
-            value={(props.modelConfig.top_p ?? 1).toFixed(1)}
+            // min={0}
+            // max={1}
+            value={props.modelConfig.top_p ?? 1}
             disabled={!props.modelConfig.top_p_enabled}
             style={{
               width: "150px",
@@ -132,13 +132,13 @@ export function ModelConfigList(props: {
                 ? "inherit"
                 : "#e0e0e0",
             }}
-            onChange={(e) =>
+            onChange={(e) => {
               props.updateConfig((config) => {
                 config.top_p = ModalConfigValidator.top_p(
                   e.currentTarget.valueAsNumber,
                 );
-              })
-            }
+              });
+            }}
           />
           <input
             type="checkbox"
@@ -201,7 +201,7 @@ export function ModelConfigList(props: {
                 type="number"
                 min={-2}
                 max={2}
-                value={props.modelConfig.presence_penalty?.toFixed(1)}
+                value={props.modelConfig.presence_penalty}
                 disabled={!props.modelConfig.presence_penalty_enabled}
                 style={{
                   width: "150px",
@@ -209,14 +209,14 @@ export function ModelConfigList(props: {
                     ? "inherit"
                     : "#e0e0e0",
                 }}
-                onChange={(e) =>
+                onChange={(e) => {
                   props.updateConfig((config) => {
                     config.presence_penalty =
                       ModalConfigValidator.presence_penalty(
                         e.currentTarget.valueAsNumber,
                       );
-                  })
-                }
+                  });
+                }}
               />
               <input
                 type="checkbox"
@@ -240,7 +240,7 @@ export function ModelConfigList(props: {
                 type="number"
                 min={-2}
                 max={2}
-                value={props.modelConfig.frequency_penalty?.toFixed(1)}
+                value={props.modelConfig.frequency_penalty}
                 disabled={!props.modelConfig.frequency_penalty_enabled}
                 style={{
                   width: "150px",
@@ -248,13 +248,14 @@ export function ModelConfigList(props: {
                     ? "inherit"
                     : "#e0e0e0",
                 }}
-                onChange={(e) =>
+                onChange={(e) => {
                   props.updateConfig((config) => {
-                    config.frequency_penalty = ModalConfigValidator.top_p(
-                      e.currentTarget.valueAsNumber,
-                    );
-                  })
-                }
+                    config.frequency_penalty =
+                      ModalConfigValidator.frequency_penalty(
+                        e.currentTarget.valueAsNumber,
+                      );
+                  });
+                }}
               />
               <input
                 type="checkbox"

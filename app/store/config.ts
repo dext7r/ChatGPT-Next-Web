@@ -144,10 +144,10 @@ export const ModalConfigValidator = {
     return limitNumber(x, -2, 2, 0);
   },
   temperature(x: number) {
-    return limitNumber(x, 0, 2, 1);
+    return limitNumber(x, 0, 2, 0.6);
   },
   top_p(x: number) {
-    return limitNumber(x, 0, 1, 1);
+    return limitNumber(x, 0, 2, 0.99);
   },
 };
 
@@ -239,7 +239,7 @@ export const useAppConfig = createPersistStore(
         state.modelConfig.template =
           state.modelConfig.template !== DEFAULT_INPUT_TEMPLATE
             ? state.modelConfig.template
-            : (config?.template ?? DEFAULT_INPUT_TEMPLATE);
+            : config?.template ?? DEFAULT_INPUT_TEMPLATE;
       }
 
       if (version < 4) {

@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import { ChatMessage, ModelType, useAppConfig, useChatStore } from "../store";
+import { ChatMessage, useAppConfig, useChatStore } from "../store";
 import Locale from "../locales";
 import styles from "./exporter.module.scss";
+import chatStyles from "./chat.module.scss";
 import {
   List,
   ListItem,
@@ -15,6 +16,7 @@ import { IconButton } from "./button";
 import {
   copyToClipboard,
   downloadAs,
+  getMessageFiles,
   getMessageImages,
   useMobileScreen,
 } from "../utils";
@@ -42,6 +44,9 @@ import { ClientApi } from "../client/api";
 import { getMessageTextContent } from "../utils";
 import { identifyDefaultClaudeModel } from "../utils/checkers";
 import { useAllModels } from "../utils/hooks";
+
+import { FileIcon, defaultStyles } from "react-file-icon";
+import type { DefaultExtensionType } from "react-file-icon";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
@@ -645,6 +650,8 @@ export function ImagePreviewer(props: {
                   content={getMessageTextContent(m)}
                   fontSize={config.fontSize}
                   defaultShow
+                  searchingTime={m.statistic?.searchingLatency}
+                  thinkingTime={m.statistic?.reasoningLatency}
                 />
                 {getMessageImages(m).length == 1 && (
                   <img
@@ -673,6 +680,44 @@ export function ImagePreviewer(props: {
                     ))}
                   </div>
                 )}
+                {getMessageFiles(m).length > 0 && (
+                  <div className={chatStyles["chat-message-item-files"]}>
+                    {getMessageFiles(m).map((file, index) => {
+                      const extension: DefaultExtensionType = file.name
+                        .split(".")
+                        .pop()
+                        ?.toLowerCase() as DefaultExtensionType;
+                      const style = defaultStyles[extension];
+                      return (
+                        <a
+                          // href={file.url}
+                          // target="_blank"
+                          key={index}
+                          className={chatStyles["chat-message-item-file"]}
+                        >
+                          <div
+                            className={
+                              chatStyles["chat-message-item-file-icon"] +
+                              " no-dark"
+                            }
+                          >
+                            <FileIcon {...style} glyphColor="#303030" />
+                          </div>
+                          <div
+                            className={
+                              chatStyles["chat-message-item-file-name"]
+                            }
+                          >
+                            {file.name}{" "}
+                            {file?.size !== undefined
+                              ? `(${file.size}K, ${file.tokenCount}Tokens)`
+                              : `(${file.tokenCount}K)`}
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -691,9 +736,37 @@ export function MarkdownPreviewer(props: {
     `# ${props.topic}\n\n` +
     props.messages
       .map((m) => {
-        return m.role === "user"
-          ? `## ${Locale.Export.MessageFromYou}:\n${getMessageTextContent(m)}`
-          : `## ${m.model}:\n${getMessageTextContent(m).trim()}`;
+        const textContent = getMessageTextContent(m);
+        const images = getMessageImages(m);
+        const files = getMessageFiles(m);
+        let messageContent = "";
+        // 添加角色和文本内容
+        messageContent +=
+          m.role === "user"
+            ? `## ${Locale.Export.MessageFromYou}:\n${textContent}`
+            : `## ${m.model}:\n${textContent.trim()}`;
+
+        // 添加图像内容
+        if (images && images.length > 0) {
+          messageContent += "\n\n### 图像附件:\n";
+          images.forEach((image, index) => {
+            messageContent += `\n![图像 ${index + 1}](${image})`;
+          });
+        }
+
+        // 添加文件内容
+        if (files && files.length > 0) {
+          messageContent += "\n\n### 文件附件:\n";
+          files.forEach((file, index) => {
+            const fileInfo =
+              file.size !== undefined
+                ? `(${file.size}K, ${file.tokenCount}Tokens)`
+                : `(${file.tokenCount}Tokens)`;
+            messageContent += `\n- [${file.name}](${file.url}) ${fileInfo}`;
+          });
+        }
+
+        return messageContent;
       })
       .join("\n\n");
 

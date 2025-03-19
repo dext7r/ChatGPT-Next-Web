@@ -2545,8 +2545,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                           const style = defaultStyles[extension];
                           return (
                             <a
-                              href={file.url}
-                              target="_blank"
+                              // href={file.url}
+                              // target="_blank"
+                              // download={file.name}
                               key={index}
                               className={styles["chat-message-item-file"]}
                             >
@@ -2822,7 +2823,13 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           </div>
           <div className={styles["chat-input-textarea"]}>
             <div className={styles["token-counter"]}>
-              ({estimateTokenLengthInLLM(userInput)})
+              (
+              {estimateTokenLengthInLLM(userInput) +
+                (attachFiles?.reduce(
+                  (total, file) => total + (file.tokenCount || 0),
+                  0,
+                ) || 0)}
+              )
             </div>
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               <IconButton

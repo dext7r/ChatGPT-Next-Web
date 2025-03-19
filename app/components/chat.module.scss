@@ -635,8 +635,10 @@
   display: flex;
   flex-direction: row;
   column-gap: 6px;
-
+  text-decoration: underline; /* 添加下划线 */
+  color: blue; /*  设置链接颜色，可选 */
 }
+
 .chat-message-item-file-icon {
   max-width: 16px;
 }

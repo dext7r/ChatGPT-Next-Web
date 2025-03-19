@@ -1,6 +1,9 @@
 import { CACHE_URL_PREFIX, UPLOAD_URL } from "@/app/constant";
 import { RequestMessage, UploadFile } from "@/app/client/api";
-import { getMessageTextContentWithoutThinkingFromContent } from "@/app/utils";
+import {
+  readFileContent,
+  getMessageTextContentWithoutThinkingFromContent,
+} from "@/app/utils";
 
 export function compressImage(file: Blob, maxSize: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -59,7 +62,62 @@ export function compressImage(file: Blob, maxSize: number): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+export async function preProcessMultimodalContent(
+  message: RequestMessage,
+  // content: RequestMessage["content"],
+) {
+  const content = message.content;
+  if (typeof content === "string") {
+    return message.role == "assistant"
+      ? getMessageTextContentWithoutThinkingFromContent(content)
+      : content;
+  }
+  let fileContent = "";
+  let textContent = "";
+  let hasOnlyTextAndFile = true;
+  const otherParts: any[] = [];
 
+  // 处理每个文件，按照模板格式构建内容
+  // 遵循deepseek-ai推荐模板：https://github.com/deepseek-ai/DeepSeek-R1?tab=readme-ov-file#official-prompts
+  for (const part of content) {
+    if (part?.type === "file_url" && part?.file_url?.url) {
+      let curFileContent = await readFileContent(part.file_url);
+      if (curFileContent) {
+        fileContent += `[file name]: ${part.file_url.name}\n`;
+        fileContent += `[file content begin]\n`;
+        fileContent += curFileContent;
+        fileContent += `\n[file content end]\n`;
+      }
+    } else if (part?.type === "image_url" && part?.image_url?.url) {
+      try {
+        const url = await cacheImageToBase64Image(part?.image_url?.url);
+        otherParts.push({ type: part.type, image_url: { url } });
+        hasOnlyTextAndFile = false;
+      } catch (error) {
+        console.error("Error processing image URL:", error);
+      }
+    } else if (part?.type === "text" && part?.text) {
+      textContent +=
+        message.role === "assistant"
+          ? getMessageTextContentWithoutThinkingFromContent(part.text)
+          : part.text;
+    } else {
+      hasOnlyTextAndFile = false;
+      otherParts.push({ ...part });
+    }
+  }
+  if (hasOnlyTextAndFile && (fileContent || textContent)) {
+    return fileContent + textContent;
+  }
+
+  const result: any[] = [...otherParts]; // Start with the other parts
+
+  if (fileContent || textContent) {
+    result.push({ type: "text" as const, text: fileContent + textContent });
+  }
+
+  return result;
+}
 export async function preProcessImageContent(
   message: RequestMessage,
   // content: RequestMessage["content"],

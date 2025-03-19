@@ -36,7 +36,10 @@ import {
   isThinkingModel,
   wrapThinkingPart,
 } from "@/app/utils";
-import { preProcessImageContent } from "@/app/utils/chat";
+import {
+  preProcessImageContent,
+  preProcessMultimodalContent,
+} from "@/app/utils/chat";
 import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
 export interface OpenAIListModelResponse {
@@ -161,6 +164,7 @@ export class ChatGPTApi implements LLMApi {
       model_name.startsWith("gpt-") || model_name.startsWith("chatgpt-");
     const isO1 = model_name.startsWith("o1") || model_name.startsWith("gpt-o1");
     const isO3 = model_name.startsWith("o3") || model_name.startsWith("gpt-o3");
+    const isO1orO3 = isO1 || isO3;
     const isGPT = isPureGPT || isO1 || isO3;
     const isClaude = model_name.startsWith("claude");
     const isGlm4v = model_name.startsWith("glm-4v");
@@ -176,12 +180,8 @@ export class ChatGPTApi implements LLMApi {
 
     const messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
-      const content = visionModel
-        ? await preProcessImageContent(v)
-        : v.role === "assistant" // 如果 role 是 assistant
-        ? getMessageTextContentWithoutThinking(v) // 调用 getMessageTextContentWithoutThinking
-        : getMessageTextContent(v); // 否则调用 getMessageTextContent
-      if (!(isO1 && v.role === "system"))
+      const content = await preProcessMultimodalContent(v);
+      if (!(isO1orO3 && v.role === "system"))
         messages.push({ role: v.role, content });
     }
 

@@ -497,7 +497,10 @@ export class ChatGPTApi implements LLMApi {
                   searchLatency;
               } else if (content && content.length > 0) {
                 // 先接收 content，再处理各种计时和状态标记
-                if (thinkingType === ThinkingType.ReasoningType) {
+                if (
+                  isInThinking &&
+                  thinkingType === ThinkingType.ReasoningType
+                ) {
                   remainText += "\n</think>\n\n" + content;
                   isInThinking = false;
                   totalThinkingLatency =

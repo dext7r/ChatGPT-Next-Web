@@ -74,6 +74,8 @@ const en: LocaleType = {
         light: "Light Theme",
         dark: "Dark Theme",
       },
+      MoveCursorToStart: "Double Click to Move Cursor to Start",
+      MoveCursorToEnd: "Double Click to Move Cursor to End",
       Prompt: "Prompts",
       Masks: "Masks",
       Clear: "Clear Context",

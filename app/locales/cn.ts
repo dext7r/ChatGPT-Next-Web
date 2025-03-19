@@ -74,6 +74,8 @@ const cn = {
         light: "亮色模式",
         dark: "深色模式",
       },
+      MoveCursorToStart: "双击跳转至段首",
+      MoveCursorToEnd: "双击跳转至段尾",
       Prompt: "快捷指令",
       Masks: "所有面具",
       Clear: "清除聊天",

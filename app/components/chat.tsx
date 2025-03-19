@@ -1798,6 +1798,25 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 双击处理函数
+  const [cursorAtStart, setCursorAtStart] = useState(false);
+  const handleDoubleClick = () => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    if (cursorAtStart) {
+      // 如果光标在起点，则移动到结尾
+      textarea.setSelectionRange(userInput.length, userInput.length);
+      setCursorAtStart(false);
+      showToast(Locale.Chat.InputActions.MoveCursorToEnd);
+    } else {
+      // 如果光标不在起点，则移动到起点
+      textarea.setSelectionRange(0, 0);
+      setCursorAtStart(true);
+      showToast(Locale.Chat.InputActions.MoveCursorToStart);
+    }
+    // 保持焦点
+    textarea.focus();
+  };
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const currentModel = chatStore.currentSession().mask.modelConfig.model;
@@ -2654,6 +2673,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             onKeyDown={onInputKeyDown}
             // onFocus={scrollToBottom}
             onClick={scrollToBottom}
+            onDoubleClick={handleDoubleClick}
             onPaste={handlePaste}
             rows={inputRows}
             autoFocus={autoFocus}

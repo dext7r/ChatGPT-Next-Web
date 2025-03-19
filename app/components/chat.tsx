@@ -378,17 +378,20 @@ export function PromptHints(props: {
   );
 }
 
-function ClearContextDivider() {
+// function ClearContextDivider() {
+function ClearContextDivider(props: { index: number }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   return (
     <div
       className={styles["clear-context"]}
       onClick={() =>
-        chatStore.updateTargetSession(
-          session,
-          (session) => (session.clearContextIndex = undefined),
-        )
+        chatStore.updateTargetSession(session, (session) => {
+          session.clearContextIndex = undefined;
+          if (props.index > 0) {
+            session.messages[props.index - 1].beClear = false;
+          }
+        })
       }
     >
       <div className={styles["clear-context-tips"]}>{Locale.Context.Clear}</div>
@@ -870,11 +873,17 @@ export function ChatActions(props: {
           icon={<BreakIcon />}
           onClick={() => {
             chatStore.updateTargetSession(session, (session) => {
-              if (session.clearContextIndex === session.messages.length) {
-                session.clearContextIndex = undefined;
-              } else {
-                session.clearContextIndex = session.messages.length;
-                session.memoryPrompt = ""; // will clear memory
+              // 找到最后一条消息
+              const lastMessage = session.messages[session.messages.length - 1];
+              if (lastMessage) {
+                if (lastMessage?.beClear) {
+                  session.clearContextIndex = undefined;
+                  lastMessage.beClear = false;
+                } else {
+                  session.clearContextIndex = session.messages.length;
+                  lastMessage.beClear = true;
+                  session.memoryPrompt = ""; // 清除记忆提示
+                }
               }
             });
           }}
@@ -1120,6 +1129,7 @@ function ChatInputActions(props: {
   onUserStop: (messageId: string) => void;
   onResend: (message: any) => void;
   onDelete: (msgId: string) => void;
+  onBreak: (msgId: string) => void;
   onPinMessage: (message: any) => void;
   copyToClipboard: (text: string) => void;
   openaiSpeech: (text: string) => void;
@@ -1133,6 +1143,7 @@ function ChatInputActions(props: {
     onUserStop,
     onResend,
     onDelete,
+    onBreak,
     onPinMessage,
     copyToClipboard,
     openaiSpeech,
@@ -1189,6 +1200,11 @@ function ChatInputActions(props: {
             text={Locale.Chat.Actions.EditToInput}
             icon={<EditToInputIcon />}
             onClick={() => setUserInput(getMessageTextContent(message))}
+          />
+          <ChatAction
+            text={Locale.Chat.InputActions.Clear}
+            icon={<BreakIcon />}
+            onClick={() => onBreak(message.id ?? i)}
           />
         </>
       )}
@@ -1331,10 +1347,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     },
     resend: () => onResend(session.messages[session.messages.length - 1]),
     clear: () =>
-      chatStore.updateTargetSession(
-        session,
-        (session) => (session.clearContextIndex = session.messages.length),
-      ),
+      chatStore.updateTargetSession(session, (session) => {
+        session.clearContextIndex = session.messages.length;
+        session.messages[session.messages.length - 1].beClear = true;
+      }),
     new: () => chatStore.newSession(),
     search: () => navigate(Path.SearchChat),
     newm: () => navigate(Path.NewChat),
@@ -1475,6 +1491,15 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
   const onDelete = (msgId: string) => {
     deleteMessage(msgId);
+  };
+
+  const onBreak = (msgId: string) => {
+    chatStore.updateTargetSession(session, (session) => {
+      const msg = session.messages.find((m) => m.id === msgId);
+      if (msg) {
+        msg.beClear = true;
+      }
+    });
   };
 
   const onResend = (message: ChatMessage) => {
@@ -2357,8 +2382,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             !isContext;
           const showTyping = message.preview || message.streaming;
 
-          const shouldShowClearContextDivider = i === clearContextIndex - 1;
-
+          const shouldShowClearContextDivider =
+            i === clearContextIndex - 1 || message?.beClear === true;
           return (
             <Fragment key={message.id}>
               <div
@@ -2477,6 +2502,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                             onUserStop={onUserStop}
                             onResend={onResend}
                             onDelete={onDelete}
+                            onBreak={onBreak}
                             onPinMessage={onPinMessage}
                             copyToClipboard={copyToClipboard}
                             openaiSpeech={openaiSpeech}
@@ -2606,6 +2632,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                           onUserStop={onUserStop}
                           onResend={onResend}
                           onDelete={onDelete}
+                          onBreak={onBreak}
                           onPinMessage={onPinMessage}
                           copyToClipboard={copyToClipboard}
                           openaiSpeech={openaiSpeech}
@@ -2619,7 +2646,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                   )}
                 </div>
               </div>
-              {shouldShowClearContextDivider && <ClearContextDivider />}
+              {shouldShowClearContextDivider && (
+                <ClearContextDivider index={i} />
+              )}
             </Fragment>
           );
         })}

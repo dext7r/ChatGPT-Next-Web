@@ -42,6 +42,7 @@ export type ChatMessage = RequestMessage & {
   model?: ModelType;
   displayName?: string;
   providerName?: string;
+  beClear?: boolean;
 
   statistic?: {
     completionTokens?: number;
@@ -377,7 +378,7 @@ export const useChatStore = createPersistStore(
         const modelConfig = session.mask.modelConfig;
 
         const userContent = fillTemplateWith(content, modelConfig);
-        console.log("[User Input] after template: ", userContent);
+        // console.log("[User Input] after template: ", userContent);
 
         let mContent: string | MultimodalContent[] = userContent;
         let displayContent: string | MultimodalContent[] = userContent;
@@ -596,9 +597,18 @@ export const useChatStore = createPersistStore(
       getMessagesWithMemory() {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
-        const clearContextIndex = session.clearContextIndex ?? 0;
         const messages = session.messages.slice();
         const totalMessageCount = session.messages.length;
+
+        let clearContextIndex = session.clearContextIndex ?? 0;
+        for (let i = totalMessageCount - 1; i >= 0; i--) {
+          if (messages[i].beClear === true) {
+            // 找到带有 beClear 标记的消息，更新 clearContextIndex
+            // +1 是因为我们需要从这条消息之后开始包含消息
+            clearContextIndex = i + 1;
+            break;
+          }
+        }
 
         // in-context prompts
         const contextPrompts = session.mask.context.slice();
@@ -723,6 +733,7 @@ export const useChatStore = createPersistStore(
 
         // remove error messages if any
         const messages = session.messages;
+        let clearContextIndex = session.clearContextIndex ?? 0;
 
         // should summarize topic after chating more than 50 words
         const SUMMARIZE_MIN_LEN = 50;
@@ -732,8 +743,16 @@ export const useChatStore = createPersistStore(
             countMessages(messages) >= SUMMARIZE_MIN_LEN) ||
           refreshTitle
         ) {
+          const totalMessageCount = session.messages.length;
+          for (let i = totalMessageCount - 1; i >= 0; i--) {
+            if (session.messages[i].beClear === true) {
+              clearContextIndex = i + 1;
+              break;
+            }
+          }
           const startIndex = Math.max(
             0,
+            clearContextIndex,
             messages.length - modelConfig.historyMessageCount,
           );
           const topicMessages = messages
@@ -782,7 +801,7 @@ export const useChatStore = createPersistStore(
         }
         const summarizeIndex = Math.max(
           session.lastSummarizeIndex,
-          session.clearContextIndex ?? 0,
+          clearContextIndex,
         );
         let toBeSummarizedMsgs = messages
           .filter((msg) => !msg.isError)
@@ -804,12 +823,12 @@ export const useChatStore = createPersistStore(
 
         const lastSummarizeIndex = session.messages.length;
 
-        console.log(
-          "[Chat History] ",
-          toBeSummarizedMsgs,
-          historyMsgLength,
-          modelConfig.compressMessageLengthThreshold,
-        );
+        // console.log(
+        //   "[Chat History] ",
+        //   toBeSummarizedMsgs,
+        //   historyMsgLength,
+        //   modelConfig.compressMessageLengthThreshold,
+        // );
 
         if (
           historyMsgLength > modelConfig.compressMessageLengthThreshold &&
@@ -922,7 +941,7 @@ export const useChatStore = createPersistStore(
   },
   {
     name: StoreKey.Chat,
-    version: 3.2,
+    version: 3.3,
     migrate(persistedState, version) {
       const state = persistedState as any;
       const newState = JSON.parse(
@@ -982,6 +1001,17 @@ export const useChatStore = createPersistStore(
           // s.mask.modelConfig.ocrModel = config.modelConfig.ocrModel;
           // s.mask.modelConfig.ocrProviderName =
           //   config.modelConfig.ocrProviderName;
+        });
+      }
+      if (version < 3.3) {
+        newState.sessions.forEach((s) => {
+          // 将旧的 clearContextIndex 转换为新的 beClear 标记
+          if (s.clearContextIndex !== undefined && s.clearContextIndex > 0) {
+            const index = s.clearContextIndex - 1; // 因为 divider 显示在 clearContextIndex-1 的位置
+            if (index >= 0 && index < s.messages.length) {
+              s.messages[index].beClear = true;
+            }
+          }
         });
       }
 

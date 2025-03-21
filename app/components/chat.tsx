@@ -2396,9 +2396,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           >
             {!session.topic ? DEFAULT_TOPIC : session.topic}
           </div>
-          <div className="window-header-sub-title">
+          {/* <div className="window-header-sub-title">
             {Locale.Chat.SubTitle(session.messages.length)}
-          </div>
+          </div> */}
         </div>
         <div className="window-actions">
           <div className="window-action-button">

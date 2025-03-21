@@ -1263,6 +1263,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     name: string;
   } | null>(null);
 
+  const [showModelAtSelector, setShowModelAtSelector] = useState(false); // 是否显示@
+  const [modelAtQuery, setModelAtQuery] = useState(""); // 模型选择器的搜索字符
+  const [modelAtSelectIndex, setModelAtSelectIndex] = useState(0); // 当前选中模型的索引
+
   // prompt hints
   const promptStore = usePromptStore();
   const [promptHints, setPromptHints] = useState<RenderPompt[]>([]);
@@ -1366,6 +1370,16 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     setUserInput(text);
     const n = text.trim().length;
 
+    // const atMatch = text.match(/^@([\w-]*)$/); // 完整匹配 @ 后面任意单词或短线
+    const atMatch = text.match(/^@(\S*)$/); // 完整匹配 @ 后面非空字符
+    if (atMatch) {
+      setModelAtQuery(atMatch[1]);
+      setShowModelAtSelector(true);
+      setModelAtSelectIndex(0);
+    } else {
+      setShowModelAtSelector(false);
+    }
+
     // clear search results
     if (n === 0) {
       setPromptHints([]);
@@ -1379,6 +1393,15 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       }
     }
   };
+
+  useEffect(() => {
+    if (selectedRef.current) {
+      selectedRef.current.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }
+  }, [modelAtSelectIndex, modelAtQuery, showModelAtSelector]);
 
   const doSubmit = (userInput: string) => {
     if (userInput.trim() === "" && isEmpty(attachImages)) return;
@@ -1453,8 +1476,79 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
+  const formatModelItem = (model: Model) => ({
+    title:
+      model?.provider?.providerName?.toLowerCase() === "openai"
+        ? `${model.displayName || model.name}`
+        : `${model.displayName || model.name} (${model?.provider
+            ?.providerName})`,
+    subTitle: model.description,
+    value: `${model.name}@${model?.provider?.providerName}`,
+    model: model, // 保存原始模型对象，方便后续使用
+  });
+  // 修改过滤逻辑
+  const getFilteredModels = () => {
+    const query = modelAtQuery.toLowerCase();
+    return modelTable
+      .filter((model) => {
+        // 使用与 SearchSelector 相同的过滤逻辑
+        const formattedItem = formatModelItem(model);
+        return (
+          formattedItem.title.toLowerCase().includes(query) ||
+          (formattedItem.subTitle &&
+            formattedItem.subTitle.toLowerCase().includes(query)) ||
+          model.name.toLowerCase().includes(query) ||
+          (model.provider?.providerName &&
+            model.provider.providerName.toLowerCase().includes(query))
+        );
+      })
+      .map(formatModelItem);
+  };
+  const selectedRef = useRef<HTMLDivElement>(null); //引用当前所选项
   // check if should send message
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showModelAtSelector) {
+      const filteredModels = getFilteredModels();
+
+      const changeIndex = (delta: number) => {
+        e.preventDefault();
+        setModelAtSelectIndex((prev) => {
+          const newIndex = Math.max(
+            0,
+            Math.min(prev + delta, filteredModels.length - 1),
+          );
+          return newIndex;
+        });
+      };
+
+      if (e.key === "ArrowUp") {
+        changeIndex(-1);
+      } else if (e.key === "ArrowDown") {
+        changeIndex(1);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const selectedItem = filteredModels[modelAtSelectIndex];
+        if (selectedItem) {
+          // 解析 value 字符串，获取模型名称和提供商
+          const [modelName, providerName] =
+            selectedItem.value.split(/@(?=[^@]*$)/);
+
+          chatStore.updateTargetSession(session, (session) => {
+            session.mask.modelConfig.model = modelName as ModelType;
+            session.mask.modelConfig.providerName =
+              providerName as ServiceProvider;
+            session.mask.syncGlobalConfig = false;
+          });
+          setUserInput("");
+          setShowModelAtSelector(false);
+          showToast(modelName);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setShowModelAtSelector(false);
+      }
+      return;
+    }
     // if ArrowUp and no userInput, fill with last input
     if (
       e.key === "ArrowUp" &&
@@ -2590,9 +2684,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                           const style = defaultStyles[extension];
                           return (
                             <a
-                              // href={file.url}
-                              // target="_blank"
-                              // download={file.name}
                               key={index}
                               className={styles["chat-message-item-file"]}
                             >
@@ -2657,6 +2748,68 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       <div className={styles["chat-input-panel"]}>
         <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
 
+        {showModelAtSelector && (
+          <div className={styles["model-selector"]}>
+            <div className={styles["model-selector-title"]}>
+              <span>
+                {Locale.Chat.InputActions.ModelAtSelector.SelectModel}
+              </span>
+              <span className={styles["model-selector-count"]}>
+                {Locale.Chat.InputActions.ModelAtSelector.AvailableModels(
+                  getFilteredModels().length,
+                )}
+              </span>
+            </div>
+
+            {getFilteredModels().length === 0 ? (
+              <div className={styles["model-selector-empty"]}>
+                {Locale.Chat.InputActions.ModelAtSelector.NoAvailableModels}
+              </div>
+            ) : (
+              getFilteredModels().map((item, index) => {
+                const selected = modelAtSelectIndex === index;
+                const [modelName, providerName] =
+                  item.value.split(/@(?=[^@]*$)/);
+
+                return (
+                  <div
+                    ref={selected ? selectedRef : null}
+                    key={item.value}
+                    className={`${styles["model-selector-item"]} ${
+                      selected ? styles["model-selector-item-selected"] : ""
+                    }`}
+                    onMouseEnter={() => setModelAtSelectIndex(index)}
+                    onClick={() => {
+                      chatStore.updateTargetSession(session, (session) => {
+                        session.mask.modelConfig.model = modelName as ModelType;
+                        session.mask.modelConfig.providerName =
+                          providerName as ServiceProvider;
+                        session.mask.syncGlobalConfig = false;
+                      });
+                      setUserInput("");
+                      setShowModelAtSelector(false);
+                      showToast(modelName);
+                    }}
+                  >
+                    <div className={styles["item-header"]}>
+                      <div className={styles["item-icon"]}>
+                        <Avatar model={item.title as string} />
+                      </div>
+                      <div className={styles["item-title"]}>
+                        {item.title.split(" (")[0]}
+                      </div>
+                    </div>
+                    {item.subTitle && (
+                      <div className={styles["item-description"]}>
+                        {item.subTitle}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
         <ChatActions
           uploadDocument={uploadDocument}
           uploadImage={uploadImage}
@@ -2710,29 +2863,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
               fontSize: config.fontSize,
             }}
           />
-          {/* {attachImages.length != 0 && (
-            <div className={styles["attach-images"]}>
-              {attachImages.map((image, index) => {
-                return (
-                  <div
-                    key={index}
-                    className={styles["attach-image"]}
-                    style={{ backgroundImage: `url("${image}")` }}
-                  >
-                    <div className={styles["attach-image-mask"]}>
-                      <DeleteImageButton
-                        deleteImage={() => {
-                          setAttachImages(
-                            attachImages.filter((_, i) => i !== index),
-                          );
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )} */}
           <div className={styles["attachments"]}>
             {attachImages.length != 0 && (
               <div className={styles["attach-images"]}>

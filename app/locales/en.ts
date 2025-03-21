@@ -74,6 +74,12 @@ const en: LocaleType = {
         light: "Light Theme",
         dark: "Dark Theme",
       },
+      ModelAtSelector: {
+        SelectModel: "Select Model",
+        AvailableModels: (count: number | undefined) =>
+          `${count ?? 0} Available Models`,
+        NoAvailableModels: "No Available Models For Matching",
+      },
       MoveCursorToStart: "Double Click to Move Cursor to Start",
       MoveCursorToEnd: "Double Click to Move Cursor to End",
       Prompt: "Prompts",
@@ -145,7 +151,7 @@ const en: LocaleType = {
     Typing: "Typing…",
     Input: (submitKey: string, isMobileScreen: boolean = false) => {
       if (isMobileScreen) {
-        return "/ to search prompts, : to use commands\nInput your question...";
+        return "@ to select models,/ to search prompts, : to use commands\nInput your question...";
       }
       var inputHints = `${submitKey} to send`;
       if (submitKey === String(SubmitKey.Enter)) {
@@ -153,7 +159,7 @@ const en: LocaleType = {
       }
       return (
         inputHints +
-        ", / to search prompts, : to use commands\nCtrl + Shift + ; to quickly copy the last code block\nCtrl + Shift + L to regenerate AI response"
+        "\n@ to select models,/ to search prompts, : to use commands\nCtrl + Shift + ; to quickly copy the last code block\nCtrl + Shift + L to regenerate AI response"
       );
     },
     Send: "Send",

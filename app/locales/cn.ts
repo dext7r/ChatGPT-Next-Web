@@ -74,6 +74,12 @@ const cn = {
         light: "亮色模式",
         dark: "深色模式",
       },
+      ModelAtSelector: {
+        SelectModel: "选择模型",
+        AvailableModels: (count: number | undefined) =>
+          `${count ?? 0} 个可用模型`,
+        NoAvailableModels: "没有找到匹配的模型",
+      },
       MoveCursorToStart: "双击跳转至段首",
       MoveCursorToEnd: "双击跳转至段尾",
       Prompt: "快捷指令",
@@ -139,7 +145,7 @@ const cn = {
     Typing: "正在输入…",
     Input: (submitKey: string, isMobileScreen: boolean = false) => {
       if (isMobileScreen) {
-        return "/ 触发预设，: 触发命令\n输入你的问题...";
+        return "@ 选择模型，/ 触发预设，: 触发命令\n输入你的问题...";
       }
       var inputHints = `${submitKey} 发送`;
       if (submitKey === String(SubmitKey.Enter)) {
@@ -147,7 +153,7 @@ const cn = {
       }
       return (
         inputHints +
-        "\n/ 触发预设，: 触发命令\nCtrl + Shift + ;  快速复制最后一个代码块\nCtrl + Shift + L 重新获取 AI 回复"
+        "\n@ 选择模型，/ 触发预设，: 触发命令\nCtrl + Shift + ;  快速复制最后一个代码块\nCtrl + Shift + L 重新获取 AI 回复"
       );
     },
     Send: "发送",

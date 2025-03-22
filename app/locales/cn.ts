@@ -1,6 +1,3 @@
-import Title from "antd/es/skeleton/Title";
-import { ShortcutKeyModal } from "../components/chat";
-import { SearchChatPage } from "../components/search-chat";
 import { getClientConfig } from "../config/client";
 import { SubmitKey } from "../store/config";
 

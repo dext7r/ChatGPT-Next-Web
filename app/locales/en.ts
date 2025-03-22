@@ -151,7 +151,7 @@ const en: LocaleType = {
     Typing: "Typing…",
     Input: (submitKey: string, isMobileScreen: boolean = false) => {
       if (isMobileScreen) {
-        return "@ to select models,/ to search prompts, : to use commands\nInput your question...";
+        return "/ to search prompts, : to use commands\nInput your question...";
       }
       var inputHints = `${submitKey} to send`;
       if (submitKey === String(SubmitKey.Enter)) {

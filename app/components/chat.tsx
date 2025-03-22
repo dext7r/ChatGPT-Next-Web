@@ -1372,7 +1372,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
     // const atMatch = text.match(/^@([\w-]*)$/); // 完整匹配 @ 后面任意单词或短线
     const atMatch = text.match(/^@(\S*)$/); // 完整匹配 @ 后面非空字符
-    if (atMatch) {
+    if (!isMobileScreen && atMatch) {
       setModelAtQuery(atMatch[1]);
       setShowModelAtSelector(true);
       setModelAtSelectIndex(0);

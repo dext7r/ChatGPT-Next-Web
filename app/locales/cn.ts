@@ -145,7 +145,7 @@ const cn = {
     Typing: "正在输入…",
     Input: (submitKey: string, isMobileScreen: boolean = false) => {
       if (isMobileScreen) {
-        return "@ 选择模型，/ 触发预设，: 触发命令\n输入你的问题...";
+        return "/ 触发预设，: 触发命令\n输入你的问题...";
       }
       var inputHints = `${submitKey} 发送`;
       if (submitKey === String(SubmitKey.Enter)) {

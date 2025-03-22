@@ -598,7 +598,7 @@ function formatSearchText(
     // 获取 <search> 后的所有内容
     const searchContent = text.slice("<search>".length);
     // 渲染为"搜索中"状态
-    const searchText = `<searchcollapse title="${Locale.NewChat.Searching}">\n${searchContent}\n</searchcollapse>\n`;
+    const searchText = `<searchcollapse title="${Locale.NewChat.Searching}">\n${searchContent}\n\n</searchcollapse>\n`;
     const remainText = ""; // 剩余文本为空
     return { searchText, remainText };
   }
@@ -609,13 +609,13 @@ function formatSearchText(
     const searchContent = match[1];
     let searchText = "";
     if (searchContent.trim() === "") {
-      searchText = `<searchcollapse title="${Locale.NewChat.NoSearch}">\n</searchcollapse>\n`;
+      searchText = `<searchcollapse title="${Locale.NewChat.NoSearch}">\n\n</searchcollapse>\n`;
     } else {
       searchText = `<searchcollapse title="${
         Locale.NewChat.Search
       }${Locale.NewChat.ThinkFormat(
         searchingTime,
-      )}">\n${searchContent}\n</searchcollapse>\n`;
+      )}">\n${searchContent}\n\n</searchcollapse>\n`;
     }
     const remainText = text.substring(match[0].length); // 提取剩余文本
     return { searchText, remainText };
@@ -638,7 +638,7 @@ function formatThinkText(
     // 获取 <think> 后的所有内容
     const thinkContent = text.slice("<think>".length);
     // 渲染为"思考中"状态
-    const thinkText = `<thinkcollapse title="${Locale.NewChat.Thinking}">\n${thinkContent}\n</thinkcollapse>\n`;
+    const thinkText = `<thinkcollapse title="${Locale.NewChat.Thinking}">\n${thinkContent}\n\n</thinkcollapse>\n`;
     const remainText = ""; // 剩余文本为空
     return { thinkText, remainText };
   }
@@ -650,13 +650,13 @@ function formatThinkText(
     const thinkContent = match[1];
     let thinkText = "";
     if (thinkContent.trim() === "") {
-      thinkText = `<thinkcollapse title="${Locale.NewChat.NoThink}">\n</thinkcollapse>\n`;
+      thinkText = `<thinkcollapse title="${Locale.NewChat.NoThink}">\n\n</thinkcollapse>\n`;
     } else {
       thinkText = `<thinkcollapse title="${
         Locale.NewChat.Think
       }${Locale.NewChat.ThinkFormat(
         thinkingTime,
-      )}">\n${thinkContent}\n</thinkcollapse>\n`;
+      )}">\n${thinkContent}\n\n</thinkcollapse>\n`;
     }
     const remainText = text.substring(match[0].length); // 提取剩余文本
     return { thinkText, remainText };

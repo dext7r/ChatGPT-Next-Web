@@ -925,6 +925,11 @@ export const useChatStore = createPersistStore(
         updater(sessions[index]);
         set(() => ({ sessions }));
       },
+      async clearAllChatData() {
+        await indexedDBStorage.removeItem(StoreKey.Chat);
+        localStorage.removeItem(StoreKey.Chat);
+        location.reload();
+      },
       async clearAllData() {
         await indexedDBStorage.clear();
         localStorage.clear();

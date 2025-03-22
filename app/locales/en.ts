@@ -248,9 +248,15 @@ const en: LocaleType = {
         Action: "Reset",
         Confirm: "Confirm to reset all settings to default?",
       },
-      Clear: {
+      ClearChat: {
+        Title: "Clear Chat History",
+        SubTitle: "Clear all chat history and keep settings",
+        Action: "Clear",
+        Confirm: "Confirm to clear all chat history?",
+      },
+      ClearALL: {
         Title: "Clear All Data",
-        SubTitle: "Clear all messages and settings",
+        SubTitle: "Clear all chat history and settings to empty state",
         Action: "Clear",
         Confirm: "Confirm to clear all messages and settings?",
       },

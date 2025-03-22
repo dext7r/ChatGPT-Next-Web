@@ -250,14 +250,29 @@ function DangerItems() {
         />
       </ListItem>
       <ListItem
-        title={Locale.Settings.Danger.Clear.Title}
-        subTitle={Locale.Settings.Danger.Clear.SubTitle}
+        title={Locale.Settings.Danger.ClearChat.Title}
+        subTitle={Locale.Settings.Danger.ClearChat.SubTitle}
       >
         <IconButton
-          aria={Locale.Settings.Danger.Clear.Title}
-          text={Locale.Settings.Danger.Clear.Action}
+          aria={Locale.Settings.Danger.ClearChat.Title}
+          text={Locale.Settings.Danger.ClearChat.Action}
           onClick={async () => {
-            if (await showConfirm(Locale.Settings.Danger.Clear.Confirm)) {
+            if (await showConfirm(Locale.Settings.Danger.ClearChat.Confirm)) {
+              chatStore.clearAllChatData();
+            }
+          }}
+          type="danger"
+        />
+      </ListItem>
+      <ListItem
+        title={Locale.Settings.Danger.ClearALL.Title}
+        subTitle={Locale.Settings.Danger.ClearALL.SubTitle}
+      >
+        <IconButton
+          aria={Locale.Settings.Danger.ClearALL.Title}
+          text={Locale.Settings.Danger.ClearALL.Action}
+          onClick={async () => {
+            if (await showConfirm(Locale.Settings.Danger.ClearALL.Confirm)) {
               chatStore.clearAllData();
             }
           }}

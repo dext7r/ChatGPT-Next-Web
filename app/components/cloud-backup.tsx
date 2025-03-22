@@ -475,10 +475,10 @@ export function CloudBackupPage() {
             }}
           />
           <IconButton
-            text={"清除本地所有对话和设置"}
+            text={"清除本地所有对话"}
             onClick={async () => {
-              if (await showConfirm(Locale.Settings.Danger.Clear.Confirm)) {
-                chatStore.clearAllData();
+              if (await showConfirm(Locale.Settings.Danger.ClearChat.Confirm)) {
+                chatStore.clearAllChatData();
               }
             }}
             type="danger"
@@ -489,9 +489,9 @@ export function CloudBackupPage() {
             }}
           />
           <IconButton
-            text={"清除云端所有对话记录"}
+            text={"清除云端所有对话"}
             onClick={async () => {
-              if (await showConfirm(Locale.Settings.Danger.Clear.Confirm)) {
+              if (await showConfirm(Locale.Settings.Danger.ClearChat.Confirm)) {
                 await handleALLFileDelete();
               }
             }}

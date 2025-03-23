@@ -71,6 +71,12 @@ const cn = {
         light: "亮色模式",
         dark: "深色模式",
       },
+      PrivateMode: {
+        On: "开启无痕模式",
+        OnToast: "已开启无痕模式，已创建新的无痕会话",
+        Off: "关闭无痕模式",
+        Info: "当前处于无痕模式\n对话阅后即焚",
+      },
       ModelAtSelector: {
         SelectModel: "选择模型",
         AvailableModels: (count: number | undefined) =>
@@ -541,6 +547,7 @@ const cn = {
   },
   Store: {
     DefaultTopic: "新的聊天",
+    PrivateTopic: "临时对话窗口，记录不保存",
     BotHello: "你好！有什么需要我帮忙的吗？😎",
     Error: "出错了，稍后重试吧",
     Prompt: {

@@ -80,6 +80,7 @@ export interface ChatSession {
   lastUpdate: number;
   lastSummarizeIndex: number;
   clearContextIndex?: number;
+  inPrivateMode?: boolean;
 
   mask: Mask;
 }
@@ -273,7 +274,7 @@ export const useChatStore = createPersistStore(
         });
       },
 
-      newSession(mask?: Mask) {
+      newSession(mask?: Mask, privateMode?: boolean) {
         const session = createEmptySession();
 
         if (mask) {
@@ -288,6 +289,10 @@ export const useChatStore = createPersistStore(
             },
           };
           session.topic = mask.name;
+        }
+        if (privateMode) {
+          session.inPrivateMode = privateMode;
+          session.topic = Locale.Store.PrivateTopic;
         }
 
         set((state) => ({

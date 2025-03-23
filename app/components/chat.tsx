@@ -49,6 +49,7 @@ import ReloadIcon from "../icons/reload.svg";
 import TranslateIcon from "../icons/translate.svg";
 import OcrIcon from "../icons/ocr.svg";
 import PrivacyIcon from "../icons/privacy.svg";
+import PrivacyModeIcon from "../icons/incognito.svg";
 import UploadDocIcon from "../icons/upload-doc.svg";
 
 import {
@@ -888,7 +889,22 @@ export function ChatActions(props: {
             });
           }}
         />
-
+        <ChatAction
+          text={
+            !session?.inPrivateMode
+              ? Locale.Chat.InputActions.PrivateMode.On
+              : Locale.Chat.InputActions.PrivateMode.Off
+          }
+          icon={<PrivacyModeIcon />}
+          onClick={() => {
+            if (!session?.inPrivateMode) {
+              chatStore.newSession(undefined, true);
+              showToast(Locale.Chat.InputActions.PrivateMode.OnToast);
+            } else {
+              chatStore.deleteSession(chatStore.currentSessionIndex);
+            }
+          }}
+        />
         <ChatAction
           onClick={() => setShowModelSelector(true)}
           alwaysShowText={true}

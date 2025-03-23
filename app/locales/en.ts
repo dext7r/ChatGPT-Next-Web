@@ -74,6 +74,13 @@ const en: LocaleType = {
         light: "Light Theme",
         dark: "Dark Theme",
       },
+      PrivateMode: {
+        On: "Open Private Mode",
+        OnToast:
+          "Private mode is now enabled, and a new private session has been created.",
+        Off: "Close Private Mode",
+        Info: "In Private Mode Currently",
+      },
       ModelAtSelector: {
         SelectModel: "Select Model",
         AvailableModels: (count: number | undefined) =>
@@ -556,6 +563,7 @@ const en: LocaleType = {
   },
   Store: {
     DefaultTopic: "New Conversation",
+    PrivateTopic: "Temporary Chat Window, Records Not Saved",
     BotHello: "Hello! How can I assist you today?",
     Error: "Something went wrong, please try again later.",
     Prompt: {

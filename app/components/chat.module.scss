@@ -162,6 +162,11 @@
   gap: 10px;
   position: relative;
   
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 2px;
+  }
+
   > div {
     display: flex;
     flex-wrap: nowrap;
@@ -179,6 +184,12 @@
     &:last-child {
       flex-shrink: 0;
       margin-left: auto;
+
+      @media (max-width: 600px) {
+        margin-left: 0;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
     }
   }
 

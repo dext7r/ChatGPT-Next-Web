@@ -178,6 +178,8 @@ const en: LocaleType = {
       copyLastCode: "Copy Last Code Block",
       resendLastMessage: "Resend Last Message",
       showShortcutKey: "Show Shortcuts",
+      moveCursorToStart: "Move Cursor to Start",
+      moveCursorToEnd: "Move Cursor to End",
       searchChat: "Search Chat History",
     },
   },

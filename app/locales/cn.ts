@@ -169,6 +169,8 @@ const cn = {
       copyLastCode: "复制最后一个代码块",
       resendLastMessage: "重试最后一个提问",
       showShortcutKey: "显示快捷方式",
+      moveCursorToStart: "Move Cursor to Start",
+      moveCursorToEnd: "Move Cursor to End",
       searchChat: "搜索聊天记录",
     },
   },

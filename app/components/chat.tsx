@@ -1080,6 +1080,14 @@ export function ShortcutKeyModal(props: { onClose: () => void }) {
       keys: isMac ? ["⌘", "/"] : ["Ctrl", "/"],
     },
     {
+      title: Locale.Chat.ShortcutKey.moveCursorToStart,
+      keys: isMac ? ["⌘", "Shift", "Left"] : ["Ctrl", "Shift", "Left"],
+    },
+    {
+      title: Locale.Chat.ShortcutKey.moveCursorToEnd,
+      keys: isMac ? ["⌘", "Shift", "Right"] : ["Ctrl", "Shift", "Right"],
+    },
+    {
       title: Locale.Chat.ShortcutKey.searchChat,
       keys: isMac ? ["⌘", "Alt", "F"] : ["Ctrl", "Alt", "F"],
     },
@@ -1549,6 +1557,30 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       }
       return;
     }
+    if (e.ctrlKey && e.shiftKey) {
+      const textarea = inputRef.current;
+      if (!textarea) return;
+
+      if (e.key === "ArrowLeft") {
+        // Ctrl+Shift+左箭头：跳转到段首
+        e.preventDefault();
+        textarea.setSelectionRange(0, 0);
+        textarea.focus();
+        textarea.scrollTop = 0;
+        showToast(Locale.Chat.InputActions.MoveCursorToStart);
+      } else if (e.key === "ArrowRight") {
+        // Ctrl+Shift+右箭头：跳转到段尾
+        e.preventDefault();
+        textarea.setSelectionRange(
+          textarea.value.length,
+          textarea.value.length,
+        );
+        textarea.focus();
+        textarea.scrollTop = textarea.scrollHeight;
+        showToast(Locale.Chat.InputActions.MoveCursorToEnd);
+      }
+      return;
+    }
     // if ArrowUp and no userInput, fill with last input
     if (
       e.key === "ArrowUp" &&
@@ -1917,25 +1949,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 双击处理函数
-  const [cursorAtStart, setCursorAtStart] = useState(false);
-  const handleDoubleClick = () => {
-    const textarea = inputRef.current;
-    if (!textarea) return;
-    if (cursorAtStart) {
-      // 如果光标在起点，则移动到结尾
-      textarea.setSelectionRange(userInput.length, userInput.length);
-      setCursorAtStart(false);
-      showToast(Locale.Chat.InputActions.MoveCursorToEnd);
-    } else {
-      // 如果光标不在起点，则移动到起点
-      textarea.setSelectionRange(0, 0);
-      setCursorAtStart(true);
-      showToast(Locale.Chat.InputActions.MoveCursorToStart);
-    }
-    // 保持焦点
-    textarea.focus();
-  };
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const currentModel = chatStore.currentSession().mask.modelConfig.model;
@@ -2855,7 +2868,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             onKeyDown={onInputKeyDown}
             // onFocus={scrollToBottom}
             onClick={scrollToBottom}
-            onDoubleClick={handleDoubleClick}
             onPaste={handlePaste}
             rows={inputRows}
             autoFocus={autoFocus}

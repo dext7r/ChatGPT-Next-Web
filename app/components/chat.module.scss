@@ -251,6 +251,71 @@
     }
   }
 }
+.message-actions-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  align-items: center;
+  justify-content: flex-start;
+  
+  .chat-input-action {
+    display: inline-flex;
+    border-radius: 20px;
+    font-size: 12px;
+    background-color: var(--white);
+    color: var(--black);
+    border: var(--border-in-light);
+    padding: 4px 10px;
+    animation: slide-in ease 0.3s;
+    box-shadow: var(--card-shadow);
+    transition: width ease 0.3s;
+    align-items: center;
+    height: 16px;
+    width: var(--icon-width);
+    overflow: hidden;
+    flex-shrink: 0;
+
+    &:hover {
+      --delay: 0.5s;
+      width: var(--full-width);
+      transition-delay: var(--delay);
+      z-index: 1;
+
+      .text {
+        transition-delay: var(--delay);
+        opacity: 1;
+        transform: translate(0);
+      }
+    }
+
+    .text {
+      white-space: nowrap;
+      padding-left: 5px;
+      opacity: 0;
+      transform: translateX(-5px);
+      transition: all ease 0.3s;
+      pointer-events: none;
+    }
+
+    .text,
+    .icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .chat-input-action.always-show-text {
+    width: var(--full-width) !important;
+    transition: none;
+    
+    .text {
+      opacity: 1;
+      transform: translate(0);
+      pointer-events: auto;
+    }
+  }
+}
 
 .prompt-toast {
   position: absolute;
@@ -635,7 +700,7 @@
     opacity: 0;
     pointer-events: none;
 
-    .chat-input-actions {
+    .chat-actions-row {
       display: flex;
       flex-wrap: nowrap;
     }

@@ -1178,7 +1178,7 @@ function ChatInputActions(props: {
   } = props;
 
   return (
-    <div className={styles["chat-input-actions"]}>
+    <div className={styles["message-actions-row"]}>
       {message.streaming ? (
         <ChatAction
           text={Locale.Chat.Actions.Stop}
@@ -1199,11 +1199,11 @@ function ChatInputActions(props: {
             onClick={() => onDelete(message.id ?? i)}
           />
 
-          <ChatAction
+          {/* <ChatAction
             text={Locale.Chat.Actions.Pin}
             icon={<PinIcon />}
             onClick={() => onPinMessage(message)}
-          />
+          /> */}
           <ChatAction
             text={Locale.Chat.Actions.Copy}
             icon={<CopyIcon />}
@@ -2627,7 +2627,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
                     {iconUpEnabled && showActions && (
                       <div className={styles["chat-message-actions"]}>
-                        <div className={styles["chat-input-actions"]}>
+                        <div className={styles["message-actions-row"]}>
                           <ChatInputActions
                             message={message}
                             onUserStop={onUserStop}
@@ -2754,7 +2754,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                   </div>
                   {iconDownEnabled && showActions && (
                     <div className={styles["chat-message-actions"]}>
-                      <div className={styles["chat-input-actions"]}>
+                      <div className={styles["message-actions-row"]}>
                         <ChatInputActions
                           message={message}
                           onUserStop={onUserStop}

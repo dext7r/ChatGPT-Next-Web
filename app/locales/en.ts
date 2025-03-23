@@ -65,6 +65,7 @@ const en: LocaleType = {
       search: "Search Chat",
       edit: "Edit Chat",
       resend: "Resend Chat",
+      private: "Switch Private Mode",
     },
     InputActions: {
       Stop: "Stop",

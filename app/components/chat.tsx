@@ -1386,6 +1386,14 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     next: () => chatStore.nextSession(1),
     fork: () => chatStore.forkSession(),
     del: () => chatStore.deleteSession(chatStore.currentSessionIndex),
+    private: () => {
+      if (!chatStore.sessions[chatStore.currentSessionIndex]?.inPrivateMode) {
+        chatStore.newSession(undefined, true);
+        showToast(Locale.Chat.InputActions.PrivateMode.OnToast);
+      } else {
+        chatStore.deleteSession(chatStore.currentSessionIndex);
+      }
+    },
   });
 
   // only search prompts when user input is short

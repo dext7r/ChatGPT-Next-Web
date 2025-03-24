@@ -83,6 +83,7 @@ const en: LocaleType = {
           "Private mode is now enabled, and a new private session has been created.",
         Off: "Close Private Mode",
         Info: "In Private Mode Currently",
+        Return: "↩ Back to Chat Page",
       },
       ModelAtSelector: {
         SelectModel: "Select Model",

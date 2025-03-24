@@ -144,6 +144,19 @@ export function SideBarContainer(props: {
   const { children, className, onDragStart, shouldNarrow, inPrivateMode } =
     props;
   const [showTooltip, setShowTooltip] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isMobileScreen && inPrivateMode) {
+      setShowTooltip(true);
+    }
+  }, [isMobileScreen, inPrivateMode]);
+
+  const handleTooltipClick = () => {
+    if (isMobileScreen) {
+      navigate(Path.Chat);
+    }
+  };
 
   return (
     <div
@@ -162,9 +175,16 @@ export function SideBarContainer(props: {
           onMouseLeave={() => setShowTooltip(false)}
         >
           {showTooltip && (
-            <div className={styles["sidebar-tooltip"]}>
+            <div
+              className={styles["sidebar-tooltip"]}
+              onClick={handleTooltipClick}
+              style={isMobileScreen ? { cursor: "pointer" } : undefined}
+            >
               <div className={styles["tooltip-content"]}>
                 {Locale.Chat.InputActions.PrivateMode.Info}
+                {isMobileScreen && (
+                  <div>{Locale.Chat.InputActions.PrivateMode.Return}</div>
+                )}
               </div>
             </div>
           )}

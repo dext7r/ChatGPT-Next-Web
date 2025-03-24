@@ -79,6 +79,7 @@ const cn = {
         OnToast: "已开启无痕模式，已创建新的无痕会话",
         Off: "关闭无痕模式",
         Info: "当前处于无痕模式\n对话阅后即焚",
+        Return: "↩ 点击返回聊天页面",
       },
       ModelAtSelector: {
         SelectModel: "选择模型",

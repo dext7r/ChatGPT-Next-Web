@@ -242,6 +242,27 @@
   animation: slide-in ease 0.3s;
 }
 
+.chat-item-pinned {
+  background-color: #C9DDFE;
+}
+
+.chat-item-pin {
+  position: absolute;
+  top: 0;
+  right: 50px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.chat-item:hover .chat-item-pin {
+  opacity: 0.7;
+}
+
+.chat-item-pin:hover {
+  opacity: 1;
+}
+
 .chat-item-delete {
   position: absolute;
   top: 0;

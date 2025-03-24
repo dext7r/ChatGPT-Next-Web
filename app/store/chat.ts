@@ -81,6 +81,7 @@ export interface ChatSession {
   lastSummarizeIndex: number;
   clearContextIndex?: number;
   inPrivateMode?: boolean;
+  pinned?: boolean;
 
   mask: Mask;
 }
@@ -349,6 +350,36 @@ export const useChatStore = createPersistStore(
           },
           5000,
         );
+      },
+
+      // 添加置顶会话的方法
+      pinSession(index: number) {
+        set((state) => {
+          const sessions = [...state.sessions];
+          const session = sessions[index];
+          if (session) {
+            session.pinned = true;
+            session.lastUpdate = Date.now(); // 更新时间戳以触发UI更新
+          }
+          return {
+            sessions,
+          };
+        });
+      },
+
+      // 取消置顶会话的方法
+      unpinSession(index: number) {
+        set((state) => {
+          const sessions = [...state.sessions];
+          const session = sessions[index];
+          if (session) {
+            session.pinned = false;
+            session.lastUpdate = Date.now(); // 更新时间戳以触发UI更新
+          }
+          return {
+            sessions,
+          };
+        });
       },
 
       currentSession() {
@@ -951,7 +982,7 @@ export const useChatStore = createPersistStore(
   },
   {
     name: StoreKey.Chat,
-    version: 3.3,
+    version: 3.4,
     migrate(persistedState, version) {
       const state = persistedState as any;
       const newState = JSON.parse(
@@ -1022,6 +1053,13 @@ export const useChatStore = createPersistStore(
               s.messages[index].beClear = true;
             }
           }
+        });
+      }
+      // 处理会话置顶功能（pinSession)新增字段的数据迁移
+      if (version < 3.4) {
+        newState.sessions.forEach((s) => {
+          // 为旧数据添加置顶相关字段的默认值
+          s.pinned = s.pinned || false;
         });
       }
 

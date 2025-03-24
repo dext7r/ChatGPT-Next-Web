@@ -51,6 +51,8 @@ import OcrIcon from "../icons/ocr.svg";
 import PrivacyIcon from "../icons/privacy.svg";
 import PrivacyModeIcon from "../icons/incognito.svg";
 import UploadDocIcon from "../icons/upload-doc.svg";
+import CollapseIcon from "../icons/collapse.svg";
+import ExpandIcon from "../icons/expand.svg";
 
 import {
   ChatMessage,
@@ -768,6 +770,8 @@ export function ChatActions(props: {
 
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showUploadImage, setShowUploadImage] = useState(false);
+  const [showMobileActions, setShowMobileActions] = useState(false);
+  const toggleMobileActions = () => setShowMobileActions(!showMobileActions);
 
   const isMobileScreen = useMobileScreen();
   const { setAttachImages, setUploading } = props;
@@ -798,7 +802,7 @@ export function ChatActions(props: {
 
   return (
     <div className={styles["chat-input-actions"]}>
-      <div>
+      <div className={styles["primary-actions"]}>
         {couldStop && (
           <ChatAction
             onClick={stopAll}
@@ -937,8 +941,23 @@ export function ChatActions(props: {
             }}
           />
         )}
+        {isMobileScreen && (
+          <ChatAction
+            onClick={toggleMobileActions}
+            text={
+              showMobileActions
+                ? Locale.Chat.InputActions.Collapse
+                : Locale.Chat.InputActions.Expand
+            }
+            icon={showMobileActions ? <CollapseIcon /> : <ExpandIcon />}
+          />
+        )}
       </div>
-      <div>
+      <div
+        className={`${styles["secondary-actions"]} ${
+          isMobileScreen && !showMobileActions ? styles["mobile-collapsed"] : ""
+        }`}
+      >
         {!isMobileScreen && (
           <ChatAction
             onClick={() => props.setShowShortcutKeyModal(true)}

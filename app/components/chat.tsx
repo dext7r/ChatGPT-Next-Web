@@ -33,7 +33,7 @@ import EditIcon from "../icons/rename.svg";
 import EditToInputIcon from "../icons/edit_input.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
-import ImageIcon from "../icons/image.svg";
+// import ImageIcon from "../icons/image.svg";
 
 // import LightIcon from "../icons/light.svg";
 // import DarkIcon from "../icons/dark.svg";
@@ -50,9 +50,10 @@ import TranslateIcon from "../icons/translate.svg";
 import OcrIcon from "../icons/ocr.svg";
 import PrivacyIcon from "../icons/privacy.svg";
 import PrivacyModeIcon from "../icons/incognito.svg";
-import UploadDocIcon from "../icons/upload-doc.svg";
+// import UploadDocIcon from "../icons/upload-doc.svg";
 import CollapseIcon from "../icons/collapse.svg";
 import ExpandIcon from "../icons/expand.svg";
+import AttachmentIcon from "../icons/paperclip.svg";
 
 import {
   ChatMessage,
@@ -509,6 +510,7 @@ export function ChatActions(props: {
   uploadImage: () => Promise<string[]>;
   attachImages: string[];
   setAttachImages: (images: string[]) => void;
+  attachFiles: UploadFile[];
   setAttachFiles: (files: UploadFile[]) => void;
   setUploading: (uploading: boolean) => void;
   showPromptModal: () => void;
@@ -589,7 +591,7 @@ export function ChatActions(props: {
     let uploadedImages: string[] = props.attachImages || [];
     if (isEmpty(props.attachImages)) {
       uploadedImages = await props.uploadImage();
-      console.log("uploadedImages", uploadedImages);
+      // console.log("uploadedImages", uploadedImages);
       // 如果上传后仍然没有图片，则退出
       if (isEmpty(uploadedImages)) {
         showToast(Locale.Chat.InputActions.OCR.BlankToast);
@@ -742,7 +744,135 @@ export function ChatActions(props: {
     }
     return true;
   }
+  // 统一的文件上传处理函数
+  const handleFileUpload = () => {
+    if (props.uploading) return;
 
+    // 创建文件输入元素
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+
+    // 设置接受的文件类型
+    if (canUploadImage) {
+      // 支持图片和文本文件
+      const imageTypes =
+        "image/png, image/jpeg, image/webp, image/heic, image/heif";
+      const textTypes = textFileExtensions.map((ext) => `.${ext}`).join(",");
+      fileInput.accept = `${imageTypes}, ${textTypes}`;
+    } else {
+      // 只支持文本文件
+      fileInput.accept = textFileExtensions.map((ext) => `.${ext}`).join(",");
+    }
+
+    fileInput.multiple = true;
+
+    fileInput.onchange = async (event: any) => {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      setUploading(true);
+
+      const imageFiles: File[] = [];
+      const textFiles: File[] = [];
+
+      // 分类文件
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith("image/")) {
+          if (canUploadImage) {
+            imageFiles.push(file);
+          } else {
+            showToast(
+              Locale.Chat.InputActions.UploadFile.UnsupportToUploadImage,
+            );
+            continue;
+          }
+        } else {
+          textFiles.push(file);
+        }
+      }
+
+      // 处理图片文件
+      if (imageFiles.length > 0) {
+        const images = [...props.attachImages];
+
+        for (const file of imageFiles) {
+          try {
+            const dataUrl = await uploadImageRemote(file);
+            images.push(dataUrl);
+          } catch (e) {
+            console.error("Error uploading image:", e);
+            showToast(String(e));
+          }
+        }
+
+        // 限制图片数量
+        if (images.length > 3) {
+          images.splice(3, images.length - 3);
+        }
+
+        props.setAttachImages(images);
+      }
+
+      // 处理文本文件
+      if (textFiles.length > 0) {
+        const files = [...props.attachFiles];
+
+        for (const file of textFiles) {
+          try {
+            const data = await uploadFileRemote(file);
+            const tokenCount: number = countTokens(data.content);
+            const fileData: UploadFile = {
+              name: file.name,
+              url: data.content,
+              contentType: data.type,
+              size: parseFloat((file.size / 1024).toFixed(2)),
+              tokenCount: tokenCount,
+            };
+
+            // 限制文件大小
+            if (fileData?.size && fileData?.size > maxFileSizeInKB) {
+              showToast(Locale.Chat.InputActions.UploadFile.FileTooLarge);
+              continue;
+            }
+
+            // 检查是否有同名且内容相同的文件
+            const isDuplicate = files.some(
+              (existingFile) =>
+                existingFile.name === fileData.name &&
+                existingFile.url === fileData.url,
+            );
+
+            if (isDuplicate) {
+              showToast(
+                Locale.Chat.InputActions.UploadFile.DuplicateFile(file.name),
+              );
+              continue;
+            }
+
+            if (data.content && tokenCount > 0) {
+              files.push(fileData);
+            }
+          } catch (e) {
+            console.error("Error uploading file:", e);
+            showToast(String(e));
+          }
+        }
+
+        // 限制文件数量
+        if (files.length > MAX_DOC_CNT) {
+          files.splice(MAX_DOC_CNT, files.length - MAX_DOC_CNT);
+          showToast(Locale.Chat.InputActions.UploadFile.TooManyFile);
+        }
+
+        props.setAttachFiles(files);
+      }
+
+      setUploading(false);
+    };
+
+    fileInput.click();
+  };
   // switch themes
   const theme = config.theme;
   function nextTheme() {
@@ -767,6 +897,7 @@ export function ChatActions(props: {
       m.name === currentModel &&
       m.provider?.providerName === currentProviderName,
   )?.displayName;
+  const canUploadImage = isVisionModel(currentModel);
 
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showUploadImage, setShowUploadImage] = useState(false);
@@ -824,8 +955,13 @@ export function ChatActions(props: {
             icon={<SettingsIcon />}
           />
         )}
-
-        {showUploadImage && (
+        {/* 统一的上传按钮，使用回形针图标 */}
+        <ChatAction
+          onClick={handleFileUpload}
+          text={Locale.Chat.InputActions.UploadFile.Title(canUploadImage)}
+          icon={props.uploading ? <LoadingButtonIcon /> : <AttachmentIcon />}
+        />
+        {/* {showUploadImage && (
           <ChatAction
             onClick={props.uploadImage}
             text={Locale.Chat.InputActions.UploadImage}
@@ -836,7 +972,7 @@ export function ChatActions(props: {
           onClick={props.uploadDocument}
           text={Locale.Chat.InputActions.UploadFile.Title}
           icon={props.uploading ? <LoadingButtonIcon /> : <UploadDocIcon />}
-        />
+        /> */}
         {/* {!isMobileScreen && (
           <ChatAction
             onClick={nextTheme}
@@ -2871,6 +3007,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           uploadImage={uploadImage}
           attachImages={attachImages}
           setAttachImages={setAttachImages}
+          attachFiles={attachFiles}
           setAttachFiles={setAttachFiles}
           setUploading={setUploading}
           showPromptModal={() => setShowPromptModal(true)}

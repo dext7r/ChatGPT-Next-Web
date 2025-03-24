@@ -166,7 +166,45 @@
     flex-direction: column;
     gap: 2px;
   }
+  .primary-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 5px;
+    flex-shrink: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+  
+  .secondary-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 5px;
+    flex-shrink: 0;
+    margin-left: auto;
 
+    @media (max-width: 600px) {
+      margin-left: 0;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+      max-height: 200px; /* 足够高以容纳内容 */
+      opacity: 1;
+      overflow: hidden;
+    }
+  }
+  
+  .mobile-collapsed {
+    @media (max-width: 600px) {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      padding: 0;
+    }
+  }
+  
   > div {
     display: flex;
     flex-wrap: nowrap;

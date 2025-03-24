@@ -65,6 +65,8 @@ const cn = {
       private: "切换无痕状态（新建/退出）",
     },
     InputActions: {
+      Collapse: "折叠功能区",
+      Expand: "展开功能区",
       Stop: "停止响应",
       ToBottom: "滚到最新",
       Theme: {
@@ -135,10 +137,12 @@ const cn = {
         SuccessPrivacyToast: "本次打码已结束并替换输入内容",
       },
       UploadFile: {
-        Title: "上传文本文件",
+        Title: (canUploadImage: boolean = false) =>
+          canUploadImage ? "上传图片或文本文件" : "上传文本文件",
         FileTooLarge: "暂不支持上传超过1M的文件",
         TooManyFile: "超出可上传文件数量",
         UnsupportedFileType: "不支持的文件类型",
+        UnsupportToUploadImage: "当前模型未配置视觉功能，不支持上传图片",
         FailToRead: "文件内容读取失败",
         TooManyTokenToPasteAsFile: "粘贴文本数量过大，自动粘贴为附件文本",
         DuplicateFile: (filename: string) =>

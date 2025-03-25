@@ -583,8 +583,10 @@ const en: LocaleType = {
     Prompt: {
       History: (content: string) =>
         "This is a summary of the chat history as a recap: " + content,
-      Topic:
+      old_Topic:
         "Please generate a four to five word title summarizing our conversation without any lead-in, punctuation, quotation marks, periods, symbols, bold text, or additional text. Remove enclosing quotation marks.",
+      Topic:
+        "Create a concise, 3-8 words title with an emoji as a title for the prompt in the given language. Suitable Emojis for the summary can be used to enhance understanding but avoid quotation marks or special formatting. RESPOND ONLY WITH THE TITLE TEXT.\nExamples of titles:\n📉 Stock Market Trends\n🍪 Perfect Chocolate Chip Recipe\n🎵 Evolution of Music Streaming\n🎮 Video Game Development Insights",
       Summarize:
         "Summarize the discussion briefly in 200 words or less to use as a prompt for future context.",
     },

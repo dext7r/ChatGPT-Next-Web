@@ -98,6 +98,12 @@ const cn = {
       UnsupportedModelForUploadImage: "当前模型不支持上传图片",
       RenameFile: "重命名文件",
       CloudBackup: "云备份",
+      Continue: {
+        Title: "继续补全",
+        isContinueToast: "正在补全中...",
+        ContinuePrompt:
+          "请继续补充完整上文未完成的内容，保持思路和风格的连贯性，直接接续输出。不要重复已有内容，不要添加总结或开场白。根据内容类型（写作、解题、代码等）自动判断合理的结束点。",
+      },
       Translate: {
         Title: "中英互译",
         BlankToast: "输入内容为空，不执行本次翻译",
@@ -229,6 +235,7 @@ const cn = {
     All: "选取全部",
     Latest: "最近几条",
     Clear: "清除选中",
+    HideUserContinueMsg: "过滤“继续补全”消息",
   },
   Memory: {
     Title: "历史摘要",
@@ -383,6 +390,15 @@ const cn = {
       EditModal: {
         Title: "编辑提示词",
       },
+      CustomUserContinuePrompt: {
+        Title: "自定义 “继续补全” 提示词",
+        SubTitle: "自定义补全会话的提示词，用于引导模型补全会话",
+        Enable: "显示“继续补全”对话框",
+        Edit: "编辑",
+        Modal: {
+          Title: "“继续补全”提示词",
+        },
+      },
     },
     HistoryCount: {
       Title: "附带历史消息数",
@@ -516,22 +532,27 @@ const cn = {
       SubTitle: "用于识别输入图片中的文本的模型",
     },
     Temperature: {
+      Param: "temperature",
       Title: "随机性 (temperature)",
       SubTitle: "值越大，回复越随机",
     },
     TopP: {
+      Param: "top_p",
       Title: "核采样 (top_p)",
       SubTitle: "与随机性类似，但不要和随机性一起更改",
     },
     MaxTokens: {
+      Param: "max_tokens",
       Title: "单次回复限制 (max_tokens)",
       SubTitle: "单次交互所用的最大 Token 数",
     },
     PresencePenalty: {
+      Param: "presence_penalty",
       Title: "话题新鲜度 (presence_penalty)",
       SubTitle: "值越大，越有可能扩展到新话题",
     },
     FrequencyPenalty: {
+      Param: "frequency_penalty",
       Title: "频率惩罚度 (frequency_penalty)",
       SubTitle: "值越大，越有可能降低重复字词",
     },

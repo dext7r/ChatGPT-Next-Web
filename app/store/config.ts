@@ -53,6 +53,8 @@ export const DEFAULT_CONFIG = {
   enableCodeFold: false, // code fold config
 
   disablePromptHint: false,
+  enableShowUserContinuePrompt: false,
+  customUserContinuePrompt: "",
 
   dontShowMaskSplashScreen: true, // dont show splash screen when create chat
   hideBuiltinMasks: false, // dont add builtin masks

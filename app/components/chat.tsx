@@ -33,6 +33,7 @@ import EditIcon from "../icons/rename.svg";
 import EditToInputIcon from "../icons/edit_input.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
+import ContinueIcon from "../icons/continue.svg";
 // import ImageIcon from "../icons/image.svg";
 
 // import LightIcon from "../icons/light.svg";
@@ -544,6 +545,8 @@ export function ChatActions(props: {
   const [privacyProcessedText, setPrivacyProcessedText] = useState<
     string | null
   >(null);
+  // continue chat
+  const [isContinue, setIsContinue] = useState(false);
   // model
   const { translateModel, ocrModel } = useAccessStore();
 
@@ -552,7 +555,7 @@ export function ChatActions(props: {
     // 当用户输入变化时，检查是否需要重置撤销状态
     if (
       originalTextForTranslate !== null &&
-      props.userInput.trim() !== translatedText
+      props.userInput.trim() !== translatedText?.trim()
     ) {
       // 如果当前输入与原始输入不同，则重置翻译的撤销状态
       setOriginalTextForTranslate(null);
@@ -622,7 +625,7 @@ export function ChatActions(props: {
           } else {
             translatedContent = message.content;
           }
-          translatedContent = translatedContent || ";"; // 避免空翻译无法撤销
+          translatedContent = translatedContent || props.userInput; // 避免空翻译无法撤销
 
           // 保存原始文本和翻译结果以便撤销
           setOriginalTextForTranslate(props.userInput);
@@ -784,6 +787,20 @@ export function ChatActions(props: {
 
     return maskedText;
   }
+  const handleContinueChat = async () => {
+    setIsContinue(true);
+    showToast(Locale.Chat.InputActions.Continue.isContinueToast);
+
+    const continuePrompt = config.customUserContinuePrompt
+      ? config.customUserContinuePrompt
+      : Locale.Chat.InputActions.Continue.ContinuePrompt;
+    chatStore
+      .onUserInput(continuePrompt, [], [], true)
+      .then(() => setIsContinue(false));
+    chatStore.setLastInput(continuePrompt);
+    setIsContinue(false);
+  };
+
   function isValidMessage(message: any): boolean {
     if (typeof message !== "string") {
       return false;
@@ -1093,11 +1110,17 @@ export function ChatActions(props: {
           }}
         />
         <ChatAction
+          text={Locale.Chat.InputActions.Continue.Title}
+          icon={<ContinueIcon />}
+          onClick={handleContinueChat}
+        />
+        <ChatAction
           text={
             !session?.inPrivateMode
               ? Locale.Chat.InputActions.PrivateMode.On
               : Locale.Chat.InputActions.PrivateMode.Off
           }
+          alwaysShowText={session?.inPrivateMode}
           icon={<PrivacyModeIcon />}
           onClick={() => {
             if (!session?.inPrivateMode) {
@@ -2731,13 +2754,17 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       >
         {messages.map((message, i) => {
           const isUser = message.role === "user";
+          const shouldHideUserMessage =
+            isUser && message.isContinuePrompt === true;
+          if (!config.enableShowUserContinuePrompt && shouldHideUserMessage) {
+            return null;
+          }
           const isContext = i < context.length;
           const showActions =
             i > 0 &&
             !(message.preview || message.content.length === 0) &&
             !isContext;
           const showTyping = message.preview || message.streaming;
-
           const shouldShowClearContextDivider =
             i === clearContextIndex - 1 || message?.beClear === true;
           return (

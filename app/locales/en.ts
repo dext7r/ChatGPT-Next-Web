@@ -103,6 +103,12 @@ const en: LocaleType = {
         "Current model does not support image uploads.",
       RenameFile: "Rename this file",
       CloudBackup: "Backup by Cloud",
+      Continue: {
+        Title: "Complete Chat",
+        isContinueToast: "Currently completing chat...",
+        ContinuePrompt:
+          "Please continue to elaborate on the incomplete content above, maintaining a consistent train of thought and style. Proceed directly with the output without repeating existing information or adding summaries or introductions. Automatically determine a reasonable ending point based on the content type (writing, problem-solving, code, etc.).",
+      },
       Translate: {
         Title: "Translate between ZH-EN",
         BlankToast: "Input content is empty, no translation will be performed",
@@ -242,6 +248,7 @@ const en: LocaleType = {
     All: "Select All",
     Latest: "Select Latest",
     Clear: "Clear",
+    HideUserContinueMsg: "Hide User Continue Msg",
   },
   Memory: {
     Title: "Memory Prompt",
@@ -397,6 +404,16 @@ const en: LocaleType = {
       EditModal: {
         Title: "Edit Prompt",
       },
+      CustomUserContinuePrompt: {
+        Title: "Prompt for AI Conversation Completion",
+        SubTitle:
+          "Custom prompt for conversation completion, used to guide the model in completing conversations",
+        Enable: "Show Continue Completion Message",
+        Edit: "Edit Prompt",
+        Modal: {
+          Title: "Continue Completion Prompt",
+        },
+      },
     },
     HistoryCount: {
       Title: "Attached Messages Count",
@@ -532,23 +549,28 @@ const en: LocaleType = {
       SubTitle: "Model used to extract text from input image",
     },
     Temperature: {
+      Param: "temperture",
       Title: "Temperature",
       SubTitle: "A larger value makes the more random output",
     },
     TopP: {
+      Param: "top_p",
       Title: "Top P",
       SubTitle: "Do not alter this value together with temperature",
     },
     MaxTokens: {
+      Param: "max_tokens",
       Title: "Max Tokens",
       SubTitle: "Maximum length of input tokens and generated tokens",
     },
     PresencePenalty: {
+      Param: "presence_penalty",
       Title: "Presence Penalty",
       SubTitle:
         "A larger value increases the likelihood to talk about new topics",
     },
     FrequencyPenalty: {
+      Param: "frequency_penalty",
       Title: "Frequency Penalty",
       SubTitle:
         "A larger value decreasing the likelihood to repeat the same line",

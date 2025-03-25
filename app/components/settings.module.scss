@@ -20,6 +20,12 @@
   }
   .edit-prompt-content {
     max-width: unset;
+
+    &:focus-within {
+      border: 2px solid var(--primary);
+      outline: none;
+      border-radius: 6px;
+    }
   }
 }
 

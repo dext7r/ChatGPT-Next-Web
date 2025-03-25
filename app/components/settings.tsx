@@ -122,7 +122,43 @@ function EditPromptModal(props: { id: string; onClose: () => void }) {
     </div>
   ) : null;
 }
+function CustomUserContinuePromptModal(props: { onClose?: () => void }) {
+  const config = useAppConfig();
+  const updateConfig = config.update;
 
+  return (
+    <div className="modal-mask">
+      <Modal
+        title={Locale.Settings.Prompt.CustomUserContinuePrompt.Title}
+        onClose={() => props.onClose?.()}
+        actions={[
+          <IconButton
+            key="primary"
+            onClick={props.onClose}
+            icon={<ConfirmIcon />}
+            bordered
+            text={Locale.UI.Confirm}
+          />,
+        ]}
+      >
+        <div className={styles["edit-prompt-modal"]}>
+          <Input
+            value={config.customUserContinuePrompt || ""}
+            placeholder={Locale.Chat.InputActions.Continue.ContinuePrompt}
+            className={styles["edit-prompt-content"]}
+            rows={10}
+            onInput={(e) =>
+              updateConfig(
+                (config) =>
+                  (config.customUserContinuePrompt = e.currentTarget.value),
+              )
+            }
+          ></Input>
+        </div>
+      </Modal>
+    </div>
+  );
+}
 function UserPromptModal(props: { onClose?: () => void }) {
   const promptStore = usePromptStore();
   const userPrompts = promptStore.getUserPrompts();
@@ -646,6 +682,10 @@ export function Settings() {
   const [shouldShowPromptModal, setShowPromptModal] = useState(false);
   const [shouldShowPersonalization, setShowPersonalization] = useState(false);
   const [shouldShowModelSettings, setshouldShowModelSettings] = useState(false);
+  const [
+    shouldShowCustomContinuePromptModal,
+    setShowCustomContinuePromptModal,
+  ] = useState(false);
 
   const showUsage = accessStore.isAuthorized();
   useEffect(() => {
@@ -979,6 +1019,31 @@ export function Settings() {
               icon={<EditIcon />}
               text={Locale.Settings.Prompt.Edit}
               onClick={() => setShowPromptModal(true)}
+            />
+          </ListItem>
+          <ListItem
+            title={Locale.Settings.Prompt.CustomUserContinuePrompt.Enable}
+          >
+            <input
+              type="checkbox"
+              checked={config.enableShowUserContinuePrompt}
+              onChange={(e) =>
+                updateConfig(
+                  (config) =>
+                    (config.enableShowUserContinuePrompt =
+                      e.currentTarget.checked),
+                )
+              }
+            ></input>
+          </ListItem>
+          <ListItem
+            title={Locale.Settings.Prompt.CustomUserContinuePrompt.Title}
+            subTitle={Locale.Settings.Prompt.CustomUserContinuePrompt.SubTitle}
+          >
+            <IconButton
+              icon={<EditIcon />}
+              text={Locale.Settings.Prompt.CustomUserContinuePrompt.Edit}
+              onClick={() => setShowCustomContinuePromptModal(true)}
             />
           </ListItem>
         </List>
@@ -1419,6 +1484,11 @@ export function Settings() {
 
         {shouldShowPromptModal && (
           <UserPromptModal onClose={() => setShowPromptModal(false)} />
+        )}
+        {shouldShowCustomContinuePromptModal && (
+          <CustomUserContinuePromptModal
+            onClose={() => setShowCustomContinuePromptModal(false)}
+          />
         )}
 
         <List>

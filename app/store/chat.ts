@@ -43,6 +43,7 @@ export type ChatMessage = RequestMessage & {
   displayName?: string;
   providerName?: string;
   beClear?: boolean;
+  isContinuePrompt?: boolean;
 
   statistic?: {
     completionTokens?: number;
@@ -409,6 +410,7 @@ export const useChatStore = createPersistStore(
         content: string,
         attachImages?: string[],
         attachFiles?: UploadFile[],
+        isContinuePrompt?: boolean,
       ) {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
@@ -519,6 +521,7 @@ export const useChatStore = createPersistStore(
         let userMessage: ChatMessage = createMessage({
           role: "user",
           content: mContent,
+          isContinuePrompt: isContinuePrompt,
         });
 
         const botMessage: ChatMessage = createMessage({

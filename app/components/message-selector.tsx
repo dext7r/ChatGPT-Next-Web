@@ -128,7 +128,16 @@ export function MessageSelector(props: {
       messages.forEach((m) => selection.add(m.id!)),
     );
   };
-
+  const HideUserContinueMsg = () => {
+    props.updateSelection((selection) => {
+      messages.forEach((m) => {
+        const shouldHideMsg = m.role === "user" && m.isContinuePrompt === true;
+        if (shouldHideMsg) {
+          selection.delete(m.id!);
+        }
+      });
+    });
+  };
   useEffect(() => {
     if (props.defaultSelectAll) {
       selectAll();
@@ -192,6 +201,12 @@ export function MessageSelector(props: {
             onClick={() =>
               props.updateSelection((selection) => selection.clear())
             }
+          />
+          <IconButton
+            text={Locale.Select.HideUserContinueMsg}
+            bordered
+            className={styles["filter-item"]}
+            onClick={HideUserContinueMsg}
           />
         </div>
       </div>

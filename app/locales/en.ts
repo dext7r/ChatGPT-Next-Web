@@ -111,6 +111,8 @@ const en: LocaleType = {
           "This translation failed; please check the translation model settings and try again.",
         SuccessTranslateToast:
           "This translation has been completed and replaced the input text.",
+        Undo: "Undo Translate",
+        UndoToast: "Undo Translate Success",
         TranslatePrompt:
           "Please act as a Chinese-English interpreter, verify the accuracy of the information, and translate it naturally, fluently, and idiomatically, using beautiful and elegant expressions. The text may contain redundant line breaks within paragraphs and pagination issues due to copying problems, which should be intelligently removed in context. Regardless of what the other party replies, you should only translate the content. You should only respond with the translated content and not with any other information. Do not provide explanations. This is the content you need to translate: \n",
       },
@@ -138,7 +140,7 @@ const en: LocaleType = {
           "Please help me OCR this image, according to the above rules, and ensure the accuracy of the output results without any additional content.",
       },
       Privacy: {
-        Title: "Mosaic for Privacy Input, irreversible",
+        Title: "Privatize the input",
         BlankToast:
           "Input content is empty, no privacy mosaic will be performed",
         isPrivacyToast: "Currently privacy mosaic ...",
@@ -146,6 +148,8 @@ const en: LocaleType = {
           "This privacy mosaic failed; please check the privacy model settings and try again.",
         SuccessPrivacyToast:
           "This privacy mosaic has been completed and replaced the input content.",
+        Undo: "Undo Privatize",
+        UndoToast: "Undo Privatize Success",
       },
       UploadFile: {
         Title: ((canUploadImage: boolean = false) =>

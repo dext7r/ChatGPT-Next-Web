@@ -104,6 +104,8 @@ const cn = {
         isTranslatingToast: "正在翻译中...",
         FailTranslateToast: "本次翻译失败，无权限或请检查模型设置后再次尝试",
         SuccessTranslateToast: "本次翻译已结束并替换输入文本",
+        Undo: "撤销翻译",
+        UndoToast: "已撤销翻译",
         TranslatePrompt:
           "请担任中英文翻译官，请检查信息是否准确，请翻译得自然、流畅和地道，使用优美和高雅的表达方式。\
 文本可能由于复制问题导致冗余的段内换行和页码问题，请根据上下文智能去除。\
@@ -132,11 +134,13 @@ const cn = {
           "请帮我识别这张图片中的文字内容,按照上述规则输出结果，确保输出结果的准确性且没有多余内容。",
       },
       Privacy: {
-        Title: "隐私打码(不可撤销)",
+        Title: "隐私打码",
         BlankToast: "输入内容为空，不执行本次打码",
         isPrivacyToast: "正在打码中...",
         FailPrivacyToast: "本次打码失败，无权限或请检查模型设置后再次尝试",
         SuccessPrivacyToast: "本次打码已结束并替换输入内容",
+        Undo: "撤销隐私处理",
+        UndoToast: "已撤销隐私处理",
       },
       UploadFile: {
         Title: (canUploadImage: boolean = false) =>

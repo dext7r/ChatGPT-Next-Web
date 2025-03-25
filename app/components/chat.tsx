@@ -530,13 +530,54 @@ export function ChatActions(props: {
 
   // translate
   const [isTranslating, setIsTranslating] = useState(false);
+  const [originalTextForTranslate, setOriginalTextForTranslate] = useState<
+    string | null
+  >(null);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
   // ocr
   const [isOCRing, setIsOCRing] = useState(false);
   // privacy
   const [isPrivacying, setIsPrivacying] = useState(false);
+  const [originalTextForPrivacy, setOriginalTextForPrivacy] = useState<
+    string | null
+  >(null);
+  const [privacyProcessedText, setPrivacyProcessedText] = useState<
+    string | null
+  >(null);
+  // model
   const { translateModel, ocrModel } = useAccessStore();
 
+  // 监听用户输入变化，如果输入改变则重置撤销状态
+  useEffect(() => {
+    // 当用户输入变化时，检查是否需要重置撤销状态
+    if (
+      originalTextForTranslate !== null &&
+      props.userInput.trim() !== translatedText
+    ) {
+      // 如果当前输入与原始输入不同，则重置翻译的撤销状态
+      setOriginalTextForTranslate(null);
+      setTranslatedText(null);
+    }
+
+    if (
+      originalTextForPrivacy !== null &&
+      props.userInput.trim() !== privacyProcessedText
+    ) {
+      // 如果当前输入与经过隐私处理的原始输入不同，则重置隐私处理的撤销状态
+      setOriginalTextForPrivacy(null);
+      setPrivacyProcessedText(null);
+    }
+  }, [props.userInput]);
+
   const handleTranslate = async () => {
+    if (originalTextForTranslate !== null) {
+      // 执行撤销操作
+      props.setUserInput(originalTextForTranslate);
+      setOriginalTextForTranslate(null);
+      setTranslatedText(null);
+      showToast(Locale.Chat.InputActions.Translate.UndoToast);
+      return;
+    }
     if (props.userInput.trim() === "") {
       showToast(Locale.Chat.InputActions.Translate.BlankToast);
       return;
@@ -574,11 +615,20 @@ export function ChatActions(props: {
             showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
             return;
           }
+
+          let translatedContent: string;
           if (typeof message === "string") {
-            props.setUserInput(message);
+            translatedContent = message;
           } else {
-            props.setUserInput(message.content);
+            translatedContent = message.content;
           }
+          translatedContent = translatedContent || ";"; // 避免空翻译无法撤销
+
+          // 保存原始文本和翻译结果以便撤销
+          setOriginalTextForTranslate(props.userInput);
+          setTranslatedText(translatedContent);
+          props.setUserInput(translatedContent);
+
           showToast(Locale.Chat.InputActions.Translate.SuccessTranslateToast);
         } else {
           showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
@@ -659,6 +709,15 @@ export function ChatActions(props: {
     });
   };
   const handlePrivacy = async () => {
+    if (originalTextForPrivacy !== null) {
+      // 执行撤销操作
+      props.setUserInput(originalTextForPrivacy);
+      setOriginalTextForPrivacy(null);
+      setPrivacyProcessedText(null);
+      showToast(Locale.Chat.InputActions.Privacy.UndoToast);
+      return;
+    }
+
     if (props.userInput.trim() === "") {
       showToast(Locale.Chat.InputActions.Privacy.BlankToast);
       return;
@@ -666,7 +725,11 @@ export function ChatActions(props: {
     setIsPrivacying(true);
     showToast(Locale.Chat.InputActions.Privacy.isPrivacyToast);
     const markedText = maskSensitiveInfo(props.userInput);
+    // 保存原始文本以便撤销
+    setOriginalTextForPrivacy(props.userInput);
+    setPrivacyProcessedText(markedText);
     props.setUserInput(markedText);
+
     showToast(Locale.Chat.InputActions.Privacy.SuccessPrivacyToast);
     setIsPrivacying(false);
   };
@@ -1120,11 +1183,13 @@ export function ChatActions(props: {
         <ChatAction
           onClick={handleTranslate}
           text={
-            isTranslating
+            originalTextForTranslate !== null
+              ? Locale.Chat.InputActions.Translate.Undo
+              : isTranslating
               ? Locale.Chat.InputActions.Translate.isTranslatingToast
               : Locale.Chat.InputActions.Translate.Title
           }
-          alwaysShowText={isTranslating}
+          alwaysShowText={isTranslating || originalTextForTranslate !== null}
           icon={<TranslateIcon />}
         />
         {!isMobileScreen && (
@@ -1142,11 +1207,13 @@ export function ChatActions(props: {
         <ChatAction
           onClick={handlePrivacy}
           text={
-            isPrivacying
+            originalTextForPrivacy !== null
+              ? Locale.Chat.InputActions.Privacy.Undo
+              : isPrivacying
               ? Locale.Chat.InputActions.Privacy.isPrivacyToast
               : Locale.Chat.InputActions.Privacy.Title
           }
-          alwaysShowText={isPrivacying}
+          alwaysShowText={isPrivacying || originalTextForPrivacy !== null}
           icon={<PrivacyIcon />}
         />
       </div>

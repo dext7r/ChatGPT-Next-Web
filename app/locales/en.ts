@@ -66,6 +66,7 @@ const en: LocaleType = {
       edit: "Edit Chat",
       resend: "Resend Chat",
       private: "Switch Private Mode",
+      pin: "Pin Current Session",
     },
     InputActions: {
       Collapse: "Fold Ribbon",

@@ -63,6 +63,7 @@ const cn = {
       edit: "编辑最后一条用户聊天",
       resend: "重新获取 AI 回复",
       private: "切换无痕状态（新建/退出）",
+      pin: "置顶当前对话",
     },
     InputActions: {
       Collapse: "折叠功能区",

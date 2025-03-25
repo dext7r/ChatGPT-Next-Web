@@ -44,6 +44,7 @@ interface ChatCommands {
   edit?: Command;
   resend?: Command;
   private?: Command;
+  pin?: Command;
 }
 
 export const ChatCommandPrefix = /^[:：]/;

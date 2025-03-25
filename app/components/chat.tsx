@@ -1532,7 +1532,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     clear: () =>
       chatStore.updateTargetSession(session, (session) => {
         session.clearContextIndex = session.messages.length;
-        session.messages[session.messages.length - 1].beClear = true;
+        if (session.clearContextIndex > 1) {
+          session.messages[session.messages.length - 1].beClear = true;
+        }
       }),
     new: () => chatStore.newSession(),
     search: () => navigate(Path.SearchChat),
@@ -1541,6 +1543,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     next: () => chatStore.nextSession(1),
     fork: () => chatStore.forkSession(),
     del: () => chatStore.deleteSession(chatStore.currentSessionIndex),
+    pin: () => chatStore.pinSession(chatStore.currentSessionIndex),
     private: () => {
       if (!chatStore.sessions[chatStore.currentSessionIndex]?.inPrivateMode) {
         chatStore.newSession(undefined, true);

@@ -57,13 +57,6 @@ const NewChat = dynamic(async () => (await import("./new-chat")).NewChat, {
   loading: () => <Loading noLogo />,
 });
 
-const CustomProvider = dynamic(
-  async () => (await import("./custom-provider")).CustomProvider,
-  {
-    loading: () => <Loading noLogo />,
-  },
-);
-
 const CloudBackup = dynamic(
   async () => (await import("./cloud-backup")).CloudBackupPage,
   {
@@ -196,7 +189,6 @@ function Screen() {
               <Route path={Path.CloudBackup} element={<CloudBackup />} />
               <Route path={Path.Chat} element={<Chat />} />
               <Route path={Path.Settings} element={<Settings />} />
-              <Route path={Path.CustomProvider} element={<CustomProvider />} />
             </Routes>
           </div>
         </>

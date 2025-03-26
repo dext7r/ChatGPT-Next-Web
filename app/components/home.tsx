@@ -30,6 +30,7 @@ import { getClientConfig } from "../config/client";
 import { ClientApi } from "../client/api";
 import { useAccessStore } from "../store";
 import { identifyDefaultClaudeModel } from "../utils/checkers";
+import { FloatingButton } from "./floating-button";
 
 export function Loading(props: { noLogo?: boolean }) {
   return (
@@ -55,6 +56,13 @@ const Chat = dynamic(async () => (await import("./chat")).Chat, {
 const NewChat = dynamic(async () => (await import("./new-chat")).NewChat, {
   loading: () => <Loading noLogo />,
 });
+
+const CustomProvider = dynamic(
+  async () => (await import("./custom-provider")).CustomProvider,
+  {
+    loading: () => <Loading noLogo />,
+  },
+);
 
 const CloudBackup = dynamic(
   async () => (await import("./cloud-backup")).CloudBackupPage,
@@ -188,6 +196,7 @@ function Screen() {
               <Route path={Path.CloudBackup} element={<CloudBackup />} />
               <Route path={Path.Chat} element={<Chat />} />
               <Route path={Path.Settings} element={<Settings />} />
+              <Route path={Path.CustomProvider} element={<CustomProvider />} />
             </Routes>
           </div>
         </>
@@ -234,6 +243,7 @@ export function Home() {
     <ErrorBoundary>
       <Router>
         <Screen />
+        <FloatingButton />
       </Router>
     </ErrorBoundary>
   );

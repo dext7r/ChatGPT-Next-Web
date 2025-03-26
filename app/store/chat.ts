@@ -46,6 +46,7 @@ export type ChatMessage = RequestMessage & {
   isContinuePrompt?: boolean;
 
   statistic?: {
+    singlePromptTokens?: number;
     completionTokens?: number;
     reasoningTokens?: number;
     firstReplyLatency?: number;
@@ -426,6 +427,8 @@ export const useChatStore = createPersistStore(
             text: userContent,
           },
         ];
+        // 创建一个变量来存储总的token数量
+        let totalTokens = 0;
 
         if (attachFiles && attachFiles.length > 0) {
           let fileContent = "";
@@ -443,6 +446,7 @@ export const useChatStore = createPersistStore(
           }
           // 添加用户问题
           fileContent += userContent;
+          totalTokens += estimateTokenLengthInLLM(fileContent);
 
           mContent = [
             {
@@ -517,11 +521,15 @@ export const useChatStore = createPersistStore(
         } else {
           mContent = userContent;
           displayContent = userContent;
+          totalTokens = estimateTokenLengthInLLM(userContent);
         }
         let userMessage: ChatMessage = createMessage({
           role: "user",
           content: mContent,
           isContinuePrompt: isContinuePrompt,
+          statistic: {
+            singlePromptTokens: totalTokens,
+          },
         });
 
         const botMessage: ChatMessage = createMessage({
@@ -737,7 +745,29 @@ export const useChatStore = createPersistStore(
         const sessions = get().sessions;
         const session = sessions.at(sessionIndex);
         const messages = session?.messages;
-        updater(messages?.at(messageIndex));
+        const message = messages?.at(messageIndex);
+
+        // 保存更新前的消息内容
+        const oldContent = message ? getMessageTextContent(message) : "";
+
+        // 应用更新
+        updater(message);
+
+        const newContent = message ? getMessageTextContent(message) : "";
+
+        // 如果是消息内容已更改，更新token计数
+        if (message && newContent !== oldContent) {
+          if (!message.statistic) {
+            message.statistic = {};
+          }
+          if (message.role === "assistant") {
+            message.statistic.completionTokens =
+              estimateTokenLengthInLLM(newContent);
+          } else {
+            message.statistic.singlePromptTokens =
+              estimateTokenLengthInLLM(newContent);
+          }
+        }
         set(() => ({ sessions }));
       },
 

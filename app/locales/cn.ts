@@ -531,28 +531,32 @@ const cn = {
       Title: "OCR模型",
       SubTitle: "用于识别输入图片中的文本的模型",
     },
+    Params: {
+      SessionInfo: "会话信息",
+      temperature: "随机温度",
+      top_p: "采样概率",
+      max_tokens: "最大回复",
+      presence_penalty: "话题创意",
+      frequency_penalty: "重复抑制",
+      current_history: "当前上下文",
+    },
     Temperature: {
-      Param: "temperature",
       Title: "随机性 (temperature)",
       SubTitle: "值越大，回复越随机",
     },
     TopP: {
-      Param: "top_p",
       Title: "核采样 (top_p)",
       SubTitle: "与随机性类似，但不要和随机性一起更改",
     },
     MaxTokens: {
-      Param: "max_tokens",
       Title: "单次回复限制 (max_tokens)",
       SubTitle: "单次交互所用的最大 Token 数",
     },
     PresencePenalty: {
-      Param: "presence_penalty",
       Title: "话题新鲜度 (presence_penalty)",
       SubTitle: "值越大，越有可能扩展到新话题",
     },
     FrequencyPenalty: {
-      Param: "frequency_penalty",
       Title: "频率惩罚度 (frequency_penalty)",
       SubTitle: "值越大，越有可能降低重复字词",
     },
@@ -669,6 +673,10 @@ const cn = {
       CodeFold: {
         Title: "启用代码折叠",
         SubTitle: "启用之后可以自动折叠/展开过长的代码块",
+      },
+      FloatingButton: {
+        Title: "启用悬浮球",
+        SubTitle: "启用之后可以从悬浮球查看当前的会话信息和快捷功能跳转",
       },
       Share: {
         Title: "分享此面具",

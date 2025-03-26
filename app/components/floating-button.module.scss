@@ -1,0 +1,351 @@
+.floatingContainer {
+  position: fixed;
+  z-index: 1000;
+  user-select: none;
+  transition: top 0.1s ease-out; /* Faster transition for drag */
+  right: 0;
+  /* --- ADDED: Cursor change during drag --- */
+  &.dragging {
+    cursor: grabbing;
+    transition: none; /* Disable transition during active drag */
+  }
+  /* --- ADDED: Default cursor --- */
+  cursor: grab;
+}
+
+.floatingButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px 0 0 20px;
+  background-color: #3b82f6; /* 淡蓝色调 */
+  color: white;
+  border: 1px solid #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.floatingButton:hover {
+  background-color: #2563eb;
+}
+
+.floatingButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.buttonContent {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.menuContainer {
+  position: absolute;
+  /* --- MODIFIED: Increased transparency (e.g., from 0.9 to 0.85) --- */
+  background-color: rgba(240, 249, 255, 0.55); /* 淡蓝色背景, 更透明 */
+  border-radius: 10px;
+  padding: 12px;
+  width: 240px;
+  /* --- MODIFIED: Slightly softer shadow for transparency --- */
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(191, 219, 254, 0.7); /* Optional: Slightly transparent border */
+  animation: menuAppear 0.2s forwards;
+  /* --- ADDED: Reset cursor for menu content --- */
+  cursor: default;
+}
+
+/* 暗黑模式下样式调整 */
+:global(.dark) .menuContainer {
+  /* --- MODIFIED: Increased transparency (e.g., from 0.9 to 0.85) --- */
+  background-color: rgba(15, 23, 42, 0.55); /* 暗色背景, 更透明 */
+  border-color: rgba(30, 64, 175, 0.7); /* Optional: Slightly transparent border */
+  /* --- MODIFIED: Slightly softer shadow for transparency --- */
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.2);
+}
+
+/* 菜单在右侧时向左展开 */
+.menuLeft {
+  right: 100%;
+  top: 0;
+  transform-origin: top right;
+  margin-right: 12px;
+}
+
+.menuRight {
+  display: none;
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.menuOpen {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.closeButton:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: #bfdbfe;
+}
+
+:global(.dark) .closeButton:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+  border-color: #1e40af;
+}
+
+.sessionInfoSection {
+  margin-bottom: 8px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--text-color);
+  font-size: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #bfdbfe; /* 淡蓝色边框 */
+}
+
+:global(.dark) .sectionHeader {
+  border-color: #1e40af; /* 深蓝色边框 */
+}
+
+.headerTitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerTitle {
+  font-weight: 500;
+}
+
+.collapseIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.collapsibleHeader {
+  cursor: pointer;
+  user-select: none;
+}
+
+.collapsibleHeader:hover {
+  background-color: rgba(219, 234, 254, 0.1);
+  border-radius: 6px;
+}
+
+.collapseIndicator {
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.collapsibleContent {
+  max-height: 500px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+.collapsibleContent.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+/* 参数网格布局 */
+.paramGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.paramItem {
+  background-color: rgba(219, 234, 254, 0.3); /* 淡蓝色背景 */
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid #bfdbfe; /* 淡蓝色边框 */
+  cursor: pointer; /* 添加鼠标指针样式表明可点击 */
+  transition: transform 0.1s ease;
+}
+.paramItem:active {
+  transform: scale(0.98); /* 点击时的微小缩放效果 */
+}
+
+.paramItem:hover {
+  border-color: #93c5fd;
+  background-color: rgba(219, 234, 254, 0.5);
+}
+
+:global(.dark) .paramItem {
+  background-color: rgba(30, 58, 138, 0.3); /* 深蓝色背景 */
+  border-color: #1e40af; /* 深蓝色边框 */
+}
+
+:global(.dark) .paramItem:hover {
+  border-color: #3b82f6;
+  background-color: rgba(30, 58, 138, 0.5);
+}
+
+.paramItemDisabled {
+  background-color: rgba(226, 232, 240, 0.3) !important; /* 灰色背景 */
+  border-color: #cbd5e1 !important; /* 灰色边框 */
+}
+
+.paramItemDisabled .paramLabel,
+.paramItemDisabled .paramValue {
+  color: #94a3b8 !important; /* 灰色文本 */
+}
+
+:global(.dark) .paramItemDisabled {
+  background-color: rgba(51, 65, 85, 0.3) !important; /* 暗模式灰色背景 */
+  border-color: #475569 !important; /* 暗模式灰色边框 */
+}
+
+:global(.dark) .paramItemDisabled .paramLabel,
+:global(.dark) .paramItemDisabled .paramValue {
+  color: #64748b !important; /* 暗模式灰色文本 */
+}
+
+.paramLabel {
+  font-size: 12px;
+  color: #64748b; /* 标签颜色 */
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.enableIndicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #94a3b8; /* 默认为灰色 */
+  margin-left: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.enableIndicator.enabled {
+  background-color: #22c55e; /* 启用时为绿色 */
+}
+
+:global(.dark) .paramLabel {
+  color: #94a3b8; /* 暗模式下标签颜色 */
+}
+
+.paramValue {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155; /* 值颜色 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global(.dark) .paramValue {
+  color: #e2e8f0; /* 暗模式下值颜色 */
+}
+
+.divider {
+  height: 1px;
+  background-color: #bfdbfe; /* 淡蓝色分隔线 */
+  margin: 8px 0;
+}
+
+:global(.dark) .divider {
+  background-color: #1e40af; /* 深蓝色分隔线 */
+}
+
+/* 动作按钮水平布局 */
+.actionButtonsContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: rgba(219, 234, 254, 0.3); /* 淡蓝色背景 */
+  border: 1px solid #bfdbfe; /* 淡蓝色边框 */
+  cursor: pointer;
+  color: #3b82f6; /* 淡蓝色图标 */
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 42px;
+}
+
+.actionButton:hover {
+  background-color: rgba(219, 234, 254, 0.5);
+  border-color: #93c5fd;
+}
+
+:global(.dark) .actionButton {
+  background-color: rgba(30, 58, 138, 0.3); /* 深蓝色背景 */
+  border-color: #1e40af; /* 深蓝色边框 */
+  color: #60a5fa; /* 暗模式下图标颜色 */
+}
+
+:global(.dark) .actionButton:hover {
+  background-color: rgba(30, 58, 138, 0.5);
+  border-color: #3b82f6;
+}
+
+/* 响应式调整 */
+@media (max-width: 640px) {
+  .menuContainer {
+    width: 200px;
+  }
+  
+  .paramGrid {
+    grid-template-columns: 1fr;
+  }
+}

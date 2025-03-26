@@ -949,6 +949,23 @@ export function Settings() {
                     }
                   ></input>
                 </ListItem>
+                <ListItem
+                  title={Locale.Mask.Config.FloatingButton.Title}
+                  subTitle={Locale.Mask.Config.FloatingButton.SubTitle}
+                >
+                  <input
+                    aria-label={Locale.Mask.Config.FloatingButton.Title}
+                    type="checkbox"
+                    checked={config.enableFloatingButton}
+                    onChange={(e) =>
+                      updateConfig(
+                        (config) =>
+                          (config.enableFloatingButton =
+                            e.currentTarget.checked),
+                      )
+                    }
+                  ></input>
+                </ListItem>
               </>
             )}
           </>

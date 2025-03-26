@@ -51,6 +51,7 @@ export const DEFAULT_CONFIG = {
   enableArtifacts: true, // show artifacts config
 
   enableCodeFold: false, // code fold config
+  enableFloatingButton: false,
 
   disablePromptHint: false,
   enableShowUserContinuePrompt: false,

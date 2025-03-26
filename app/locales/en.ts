@@ -548,29 +548,33 @@ const en: LocaleType = {
       Title: "ocr model",
       SubTitle: "Model used to extract text from input image",
     },
+    Params: {
+      SessionInfo: "Session Info",
+      temperature: "temperature",
+      top_p: "top_p",
+      max_tokens: "max_tokens",
+      presence_penalty: "presence_penalty",
+      frequency_penalty: "frequency_penalty",
+      current_history: "current_history",
+    },
     Temperature: {
-      Param: "temperture",
       Title: "Temperature",
       SubTitle: "A larger value makes the more random output",
     },
     TopP: {
-      Param: "top_p",
       Title: "Top P",
       SubTitle: "Do not alter this value together with temperature",
     },
     MaxTokens: {
-      Param: "max_tokens",
       Title: "Max Tokens",
       SubTitle: "Maximum length of input tokens and generated tokens",
     },
     PresencePenalty: {
-      Param: "presence_penalty",
       Title: "Presence Penalty",
       SubTitle:
         "A larger value increases the likelihood to talk about new topics",
     },
     FrequencyPenalty: {
-      Param: "frequency_penalty",
       Title: "Frequency Penalty",
       SubTitle:
         "A larger value decreasing the likelihood to repeat the same line",
@@ -691,6 +695,11 @@ const en: LocaleType = {
         Title: "Enable CodeFold",
         SubTitle:
           "Automatically collapse/expand overly long code blocks when CodeFold is enabled",
+      },
+      FloatingButton: {
+        Title: "Enable Floating Button",
+        SubTitle:
+          "View current session information and access shortcut functions from the floating ball when enabled.",
       },
       Share: {
         Title: "Share This Mask",

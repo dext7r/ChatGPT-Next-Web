@@ -124,6 +124,8 @@ const en: LocaleType = {
       },
       OCR: {
         Title: "OCR",
+        Screenshot: "Screenshot OCR",
+        ImportImage: "ImportImage OCR",
         BlankToast: "No image input detected, no OCR will be performed",
         isDetectingToast: "Currently OCR ...",
         FailDetectToast:
@@ -548,14 +550,38 @@ const en: LocaleType = {
       Title: "ocr model",
       SubTitle: "Model used to extract text from input image",
     },
+    // Params: {
+    //   SessionInfo: "Session Info",
+    //   temperature: "temperature",
+    //   top_p: "top_p",
+    //   max_tokens: "max_tokens",
+    //   presence_penalty: "presence_penalty",
+    //   frequency_penalty: "frequency_penalty",
+    //   current_history: "current_history",
+    // },
     Params: {
-      SessionInfo: "Session Info",
-      temperature: "temperature",
-      top_p: "top_p",
-      max_tokens: "max_tokens",
-      presence_penalty: "presence_penalty",
-      frequency_penalty: "frequency_penalty",
-      current_history: "current_history",
+      SessionInfo: "会话信息",
+      temperature: {
+        name: "随机温度",
+        tip: "控制生成文本的随机性 (0-2), 值越大创造性越高, 低温抑制知识幻觉",
+      },
+      top_p: {
+        name: "采样概率",
+        tip: "控制生成文本的多样性 (0-1), 值越小内容越单调, 通常与温度二选一使用",
+      },
+      max_tokens: {
+        name: "最大回复",
+        tip: "生成文本的最大长度, 思考模型、视觉对话、代码生成建议设置高回复限制",
+      },
+      presence_penalty: {
+        name: "话题创意",
+        tip: "鼓励模型谈论新话题 (-2 到 2), 值越大越容易扩展到新话题, 降低主题一致性",
+      },
+      frequency_penalty: {
+        name: "重复抑制",
+        tip: "降低重复词汇的可能性 (-2 到 2), 值越大越能避免AI使用重复词汇",
+      },
+      current_history: "当前上下文",
     },
     Temperature: {
       Title: "Temperature",

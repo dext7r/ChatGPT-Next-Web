@@ -183,7 +183,7 @@
 
 .show {
   opacity: 1;
-  transition: all ease 0.3s;
+  transition: all ease 0.1s;
   transform: translateY(0);
   position: fixed;
   left: 0;
@@ -194,7 +194,7 @@
 
 .hide {
   opacity: 0;
-  transition: all ease 0.3s;
+  transition: all ease 0.1s;
   transform: translateY(20px);
 }
 

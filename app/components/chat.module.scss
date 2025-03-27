@@ -239,9 +239,9 @@
     color: var(--black);
     border: var(--border-in-light);
     padding: 4px 10px;
-    animation: slide-in ease 0.3s;
+    animation: slide-in ease 0.1s;
     box-shadow: var(--card-shadow);
-    transition: width ease 0.3s;
+    transition: width ease 0.1s;
     align-items: center;
     height: 16px;
     width: var(--icon-width);
@@ -249,7 +249,7 @@
     flex-shrink: 0;
 
     &:hover {
-      --delay: 0.5s;
+      --delay: 0.1s;
       width: var(--full-width);
       transition-delay: var(--delay);
       z-index: 1;
@@ -266,7 +266,7 @@
       padding-left: 5px;
       opacity: 0;
       transform: translateX(-5px);
-      transition: all ease 0.3s;
+      transition: all ease 0.1s;
       pointer-events: none;
     }
 
@@ -304,9 +304,9 @@
     color: var(--black);
     border: var(--border-in-light);
     padding: 4px 10px;
-    animation: slide-in ease 0.3s;
+    animation: slide-in ease 0.1s;
     box-shadow: var(--card-shadow);
-    transition: width ease 0.3s;
+    transition: width ease 0.1s;
     align-items: center;
     height: 16px;
     width: var(--icon-width);
@@ -314,7 +314,7 @@
     flex-shrink: 0;
 
     &:hover {
-      --delay: 0.5s;
+      --delay: 0.1s;
       width: var(--full-width);
       transition-delay: var(--delay);
       z-index: 1;

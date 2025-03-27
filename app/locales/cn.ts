@@ -120,6 +120,8 @@ const cn = {
       },
       OCR: {
         Title: "图片文字识别",
+        Screenshot: "截图 OCR",
+        ImportImage: "图片文件 OCR",
         BlankToast: "未检测到图片输入，不执行本次图文识别。",
         isDetectingToast: "正在 OCR 中...",
         FailDetectToast: "本次识别失败，无权限或请检查模型设置后再次尝试",
@@ -533,11 +535,26 @@ const cn = {
     },
     Params: {
       SessionInfo: "会话信息",
-      temperature: "随机温度",
-      top_p: "采样概率",
-      max_tokens: "最大回复",
-      presence_penalty: "话题创意",
-      frequency_penalty: "重复抑制",
+      temperature: {
+        name: "随机温度",
+        tip: "控制生成文本的随机性 (0-2), 值越大创造性越高, 低温抑制知识幻觉",
+      },
+      top_p: {
+        name: "采样概率",
+        tip: "控制生成文本的多样性 (0-1), 值越小内容越单调, 通常与温度二选一使用",
+      },
+      max_tokens: {
+        name: "最大回复",
+        tip: "生成文本的最大长度, 思考模型、视觉对话、代码生成建议设置高回复限制",
+      },
+      presence_penalty: {
+        name: "话题创意",
+        tip: "鼓励模型谈论新话题 (-2 到 2), 值越大越容易扩展到新话题, 降低主题一致性",
+      },
+      frequency_penalty: {
+        name: "重复抑制",
+        tip: "降低重复词汇的可能性 (-2 到 2), 值越大越能避免AI使用重复词汇",
+      },
       current_history: "当前上下文",
     },
     Temperature: {

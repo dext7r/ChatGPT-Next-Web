@@ -991,7 +991,42 @@ export const useChatStore = createPersistStore(
         const sessions = get().sessions;
         const index = sessions.findIndex((s) => s.id === targetSession.id);
         if (index < 0) return;
+        // Save message content before updates to compare later
+        const messagesBeforeUpdate = JSON.stringify(
+          sessions[index].messages.map((m) =>
+            typeof m.content === "string"
+              ? m.content
+              : getMessageTextContent(m),
+          ),
+        );
         updater(sessions[index]);
+        // Check if any message content has changed and update token stats
+        const updatedSession = sessions[index];
+        const messagesAfterUpdate = updatedSession.messages.map((m) =>
+          typeof m.content === "string" ? m.content : getMessageTextContent(m),
+        );
+        // Update token counts for any changed messages
+        const beforeMessages = JSON.parse(messagesBeforeUpdate);
+        updatedSession.messages.forEach((message, i) => {
+          if (
+            i < beforeMessages.length &&
+            messagesAfterUpdate[i] !== beforeMessages[i]
+          ) {
+            // Content changed, update token count
+            const newContent = messagesAfterUpdate[i];
+            if (!message.statistic) {
+              message.statistic = {};
+            }
+
+            if (message.role === "assistant") {
+              message.statistic.completionTokens =
+                estimateTokenLengthInLLM(newContent);
+            } else {
+              message.statistic.singlePromptTokens =
+                estimateTokenLengthInLLM(newContent);
+            }
+          }
+        });
         set(() => ({ sessions }));
       },
       async clearAllChatData() {

@@ -2624,29 +2624,51 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     const { statistic } = message;
     if (!statistic) return mainInfo;
 
-    const { completionTokens, firstReplyLatency, totalReplyLatency } =
-      statistic;
+    const {
+      singlePromptTokens,
+      completionTokens,
+      firstReplyLatency,
+      totalReplyLatency,
+    } = statistic;
 
-    if (
-      completionTokens === undefined ||
-      !firstReplyLatency ||
-      !totalReplyLatency
-    ) {
-      return (
-        message.date.toLocaleString() +
-        (message.model ? ` - ${message.displayName || message.model}` : "")
-      );
+    // 根据角色动态处理统计信息
+    if (message.role === "assistant") {
+      // Assistant 需要检查所有相关字段
+      if (
+        completionTokens === undefined ||
+        !firstReplyLatency ||
+        !totalReplyLatency
+      ) {
+        return mainInfo;
+      }
+    } else {
+      // 其他角色只需要检查 prompt tokens
+      if (singlePromptTokens === undefined) return mainInfo;
     }
 
-    const tokenString = `${completionTokens}`;
-    const ttft = (firstReplyLatency / 1000).toFixed(2);
-    const latency = (totalReplyLatency / 1000).toFixed(2);
-    const speed = (
-      (1000 * completionTokens) /
-      (totalReplyLatency - firstReplyLatency)
-    ).toFixed(2);
+    // 动态生成统计信息
+    const tokenString =
+      message.role === "assistant"
+        ? `${completionTokens} Tokens`
+        : `${singlePromptTokens} Tokens`;
 
-    const statInfo = `📊${tokenString} Tokens ⚡ ${speed} T/s ⏱️ FT:${ttft}s | TT:${latency}s`;
+    // 仅 assistant 显示性能指标
+    const performanceInfo =
+      message.role === "assistant"
+        ? (() => {
+            const ttft = (firstReplyLatency! / 1000).toFixed(2);
+            const latency = (totalReplyLatency! / 1000).toFixed(2);
+            const speed = (
+              (1000 * completionTokens!) /
+              (totalReplyLatency! - firstReplyLatency!)
+            ).toFixed(2);
+            return `⚡ ${speed} T/s ⏱️ FT:${ttft}s | TT:${latency}s`;
+          })()
+        : "";
+
+    const statInfo = performanceInfo
+      ? `${tokenString} ${performanceInfo}`
+      : tokenString;
 
     return isMobileScreen ? (
       <>

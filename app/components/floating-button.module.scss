@@ -258,6 +258,100 @@
   justify-content: space-between;
   align-items: center;
 }
+
+// 状态指示器容器
+.statusContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.enableIndicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #94a3b8; /* 默认为灰色 */
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+.enableIndicator.enabled {
+  background-color: #22c55e; /* 启用时为绿色 */
+}
+.editIcon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  display: none; /* 默认隐藏 */
+  color: #64748b;
+  flex-shrink: 0;
+}
+.editIcon:hover {
+  opacity: 1;
+}
+.paramItem:hover .editIcon {
+  display: block; /* 悬停时显示 */
+  align-items: center;
+  justify-content: center;
+}
+// 参数输入框样式 - 增加宽度
+.paramInput {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(147, 197, 253, 0.5);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: calc(100% - 8px); /* 确保宽度足够 */
+  box-sizing: border-box;
+}
+// 参数值容器，确保编辑模式有足够空间
+.paramValueContainer {
+  width: 100%;
+  position: relative;
+}
+.paramInput:focus {
+  border-color: #3b82f6;
+}
+:global(.dark) .paramInput {
+  background-color: rgba(30, 58, 138, 0.3);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+:global(.dark) .paramInput:focus {
+  border-color: #60a5fa;
+}
+// Tooltip 样式
+.tooltip {
+  position: absolute;
+  background-color: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1100;
+  pointer-events: none;
+  white-space: normal;
+  max-width: 200px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.paramItem:hover .tooltip {
+  opacity: 1;
+}
+:global(.dark) .tooltip {
+  background-color: rgba(241, 245, 249, 0.85);
+  color: #0f172a;
+}
+
 .enableIndicator {
   width: 10px;
   height: 10px;

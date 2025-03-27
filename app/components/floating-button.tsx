@@ -4,7 +4,7 @@ import type React from "react";
 
 import { useState, useRef, useEffect } from "react";
 import styles from "./floating-button.module.scss";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Path } from "../constant";
 import { useAppConfig, useChatStore } from "../store";
 import { Theme } from "../store";
@@ -21,6 +21,7 @@ import SunIcon from "../icons/sun.svg";
 import HomeIcon from "../icons/home.svg";
 import CollapseIcon from "../icons/collapse.svg";
 import ExpandIcon from "../icons/expand.svg";
+import EditIcon from "../icons/edit_input.svg";
 
 import {
   getMessageTextContent,
@@ -68,11 +69,132 @@ export function FloatingButton() {
     setIsParamsCollapsed(!isParamsCollapsed);
   };
 
+  const [editingParam, setEditingParam] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
+
+  // 处理参数编辑
+  const startEditing = (param: string, value: number) => {
+    // 防止冒泡触发paramItem的点击事件
+    event?.stopPropagation();
+    setEditingParam(param);
+    setEditValue(value.toString());
+  };
+  const saveParamValue = () => {
+    if (!editingParam) return;
+
+    const numValue = parseFloat(editValue);
+    if (isNaN(numValue)) {
+      setEditingParam(null);
+      return;
+    }
+
+    const modelConfig = { ...mask.modelConfig };
+
+    switch (editingParam) {
+      case "temperature":
+        modelConfig.temperature = Math.max(0, Math.min(2, numValue));
+        break;
+      case "topP":
+        modelConfig.top_p = Math.max(0, Math.min(1, numValue));
+        break;
+      case "frequencyPenalty":
+        modelConfig.frequency_penalty = Math.max(-2, Math.min(2, numValue));
+        break;
+      case "presencePenalty":
+        modelConfig.presence_penalty = Math.max(-2, Math.min(2, numValue));
+        break;
+      case "maxTokens":
+        modelConfig.max_tokens = Math.max(1, Math.floor(numValue));
+        break;
+    }
+
+    // 更新会话配置
+    chatStore.updateCurrentSession((session) => {
+      session.mask.modelConfig = modelConfig;
+    });
+
+    setEditingParam(null);
+  };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditValue(e.target.value);
+  };
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      saveParamValue();
+    } else if (e.key === "Escape") {
+      setEditingParam(null);
+    }
+  };
+  const handleInputBlur = () => {
+    saveParamValue();
+  };
+  // 渲染参数项
+  const renderParamItem = (
+    param: string,
+    label: string,
+    value: number,
+    isEnabled: boolean,
+    digits: number = 1,
+    tooltip: string = "",
+  ) => {
+    const isEditing = editingParam === param;
+
+    return (
+      <div
+        className={getParamItemClass(isEnabled)}
+        onClick={() => toggleParamEnabled(param)}
+      >
+        {tooltip && <div className={styles.tooltip}>{tooltip}</div>}
+        <div className={styles.paramLabel}>
+          <span>{label}</span>
+          <div className={styles.statusContainer}>
+            {/* 将编辑图标放在状态灯的左侧 */}
+            {isEnabled && (
+              <span
+                className={styles.editIcon}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startEditing(param, value);
+                }}
+              >
+                <EditIcon width={12} height={12} />
+              </span>
+            )}
+            <span
+              className={`${styles.enableIndicator} ${
+                isEnabled ? styles.enabled : ""
+              }`}
+            ></span>
+          </div>
+        </div>
+        <div className={styles.paramValueContainer}>
+          {isEditing ? (
+            <input
+              type="text"
+              className={styles.paramInput}
+              value={editValue}
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
+              onBlur={handleInputBlur}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+            />
+          ) : (
+            <div className={styles.paramValue}>
+              {formatValue(value, digits)}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const containerRef = useRef<HTMLDivElement>(null);
   const config = useAppConfig();
   const chatStore = useChatStore();
   const mask = chatStore.currentSession().mask;
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 从配置中获取会话信息
   const [sessionInfo, setSessionInfo] = useState<SessionInfo>({
@@ -442,92 +564,46 @@ export function FloatingButton() {
               }`}
             >
               <div className={styles.paramGrid}>
-                <div
-                  className={getParamItemClass(sessionInfo.temperatureEnabled)}
-                  onClick={() => toggleParamEnabled("temperature")}
-                >
-                  <div className={styles.paramLabel}>
-                    {Locale.Settings.Params.temperature}
-                    <span
-                      className={`${styles.enableIndicator} ${
-                        sessionInfo.temperatureEnabled ? styles.enabled : ""
-                      }`}
-                    ></span>
-                  </div>
-                  <div className={styles.paramValue}>
-                    {formatValue(sessionInfo.temperature)}
-                  </div>
-                </div>
-                <div
-                  className={getParamItemClass(sessionInfo.topPEnabled)}
-                  onClick={() => toggleParamEnabled("topP")}
-                >
-                  <div className={styles.paramLabel}>
-                    {Locale.Settings.Params.top_p}
-                    <span
-                      className={`${styles.enableIndicator} ${
-                        sessionInfo.topPEnabled ? styles.enabled : ""
-                      }`}
-                    ></span>
-                  </div>
-                  <div className={styles.paramValue}>
-                    {formatValue(sessionInfo.topP, 2)}
-                  </div>
-                </div>
-                <div
-                  className={getParamItemClass(
-                    sessionInfo.frequencyPenaltyEnabled,
-                  )}
-                  onClick={() => toggleParamEnabled("frequencyPenalty")}
-                >
-                  <div className={styles.paramLabel}>
-                    {Locale.Settings.Params.frequency_penalty}
-                    <span
-                      className={`${styles.enableIndicator} ${
-                        sessionInfo.frequencyPenaltyEnabled
-                          ? styles.enabled
-                          : ""
-                      }`}
-                    ></span>
-                  </div>
-                  <div className={styles.paramValue}>
-                    {formatValue(sessionInfo.frequencyPenalty, 1)}
-                  </div>
-                </div>
-                <div
-                  className={getParamItemClass(
-                    sessionInfo.presencePenaltyEnabled,
-                  )}
-                  onClick={() => toggleParamEnabled("presencePenalty")}
-                >
-                  <div className={styles.paramLabel}>
-                    {Locale.Settings.Params.presence_penalty}
-                    <span
-                      className={`${styles.enableIndicator} ${
-                        sessionInfo.presencePenaltyEnabled ? styles.enabled : ""
-                      }`}
-                    ></span>
-                  </div>
-                  <div className={styles.paramValue}>
-                    {formatValue(sessionInfo.presencePenalty, 1)}
-                  </div>
-                </div>
-                <div
-                  className={getParamItemClass(sessionInfo.maxTokensEnabled)}
-                  onClick={() => toggleParamEnabled("maxTokens")}
-                >
-                  <div className={styles.paramLabel}>
-                    {Locale.Settings.Params.max_tokens}
-                    <span
-                      className={`${styles.enableIndicator} ${
-                        sessionInfo.maxTokensEnabled ? styles.enabled : ""
-                      }`}
-                    ></span>
-                  </div>
-                  <div className={styles.paramValue}>
-                    {sessionInfo.maxTokens}
-                  </div>
-                </div>
+                {renderParamItem(
+                  "temperature",
+                  Locale.Settings.Params.temperature.name,
+                  sessionInfo.temperature,
+                  sessionInfo.temperatureEnabled,
+                  1,
+                  Locale.Settings.Params.temperature.tip,
+                )}
+                {renderParamItem(
+                  "topP",
+                  Locale.Settings.Params.top_p.name,
+                  sessionInfo.topP,
+                  sessionInfo.topPEnabled,
+                  2,
+                  Locale.Settings.Params.top_p.tip,
+                )}
+                {renderParamItem(
+                  "frequencyPenalty",
+                  Locale.Settings.Params.frequency_penalty.name,
+                  sessionInfo.frequencyPenalty,
+                  sessionInfo.frequencyPenaltyEnabled,
+                  1,
+                  Locale.Settings.Params.frequency_penalty.tip,
+                )}
+                {renderParamItem(
+                  "presencePenalty",
+                  Locale.Settings.Params.presence_penalty.name,
+                  sessionInfo.presencePenalty,
+                  sessionInfo.presencePenaltyEnabled,
+                  1,
+                  Locale.Settings.Params.presence_penalty.tip,
+                )}
+                {renderParamItem(
+                  "maxTokens",
+                  Locale.Settings.Params.max_tokens.name,
+                  sessionInfo.maxTokens,
+                  sessionInfo.maxTokensEnabled,
+                  0,
+                  Locale.Settings.Params.max_tokens.tip,
+                )}
                 <div className={styles.paramItem}>
                   <div className={styles.paramLabel}>
                     {Locale.Settings.Params.current_history}
@@ -543,18 +619,10 @@ export function FloatingButton() {
           <div className={styles.actionButtonsContainer}>
             <button
               className={styles.actionButton}
-              onClick={() => navigate(Path.NewChat)}
+              onClick={() => chatStore.newSession()}
               title={Locale.Home.NewChat}
             >
               <MessageSquareIcon width={16} height={16} />
-            </button>
-
-            <button
-              className={styles.actionButton}
-              onClick={() => navigate(Path.Settings)}
-              title={Locale.Settings.Title}
-            >
-              <SettingsIcon width={16} height={16} />
             </button>
 
             <button
@@ -569,13 +637,30 @@ export function FloatingButton() {
               )}
             </button>
 
-            <button
+            {/* <button
               className={styles.actionButton}
               onClick={() => navigate(Path.Home)}
               title={Locale.NewChat.Return}
             >
               <HomeIcon width={16} height={16} />
-            </button>
+            </button> */}
+            {location.pathname === Path.Settings ? (
+              <button
+                className={styles.actionButton}
+                onClick={() => navigate(Path.Home)}
+                title={Locale.NewChat.Return}
+              >
+                <HomeIcon width={16} height={16} />
+              </button>
+            ) : (
+              <button
+                className={styles.actionButton}
+                onClick={() => navigate(Path.Settings)}
+                title={Locale.Settings.Title}
+              >
+                <SettingsIcon width={16} height={16} />
+              </button>
+            )}
           </div>
         </div>
       ) : (

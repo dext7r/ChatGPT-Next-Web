@@ -51,6 +51,7 @@ import { useAllModels } from "../utils/hooks";
 
 import { FileIcon, defaultStyles } from "react-file-icon";
 import type { DefaultExtensionType } from "react-file-icon";
+import { estimateMessageTokenInLLM } from "../store/chat";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
@@ -579,6 +580,24 @@ export function ImagePreviewer(props: {
       return mask.modelConfig.model;
     }
   }, [allModels, mask.modelConfig.model, mask.modelConfig.providerName]);
+
+  const estimateMessagesToken = (messages: ChatMessage[]): number => {
+    let total = 0;
+
+    for (const message of messages) {
+      if (message.role === "assistant") {
+        // 处理 assistant 消息的 completionTokens
+        total +=
+          message.statistic?.completionTokens ??
+          estimateMessageTokenInLLM(message);
+      } else {
+        total +=
+          message.statistic?.singlePromptTokens ??
+          estimateMessageTokenInLLM(message);
+      }
+    }
+    return total;
+  };
   return (
     <div className={styles["image-previewer"]}>
       <PreviewActions
@@ -615,7 +634,8 @@ export function ImagePreviewer(props: {
               {Locale.Exporter.Model}: {currentModelName}
             </div>
             <div className={styles["chat-info-item"]}>
-              {Locale.Exporter.Messages}: {props.messages.length}
+              {Locale.Exporter.Messages}: {props.messages.length} (
+              {estimateMessagesToken(props.messages)} Tokens)
             </div>
             <div className={styles["chat-info-item"]}>
               {Locale.Exporter.Topic}: {session.topic}
@@ -625,6 +645,28 @@ export function ImagePreviewer(props: {
               {new Date(
                 props.messages.at(-1)?.date ?? Date.now(),
               ).toLocaleString()}
+            </div>
+            <div className={styles["chat-info-item"]}>
+              {[
+                `temp=${
+                  mask.modelConfig.temperature_enabled
+                    ? mask.modelConfig.temperature
+                    : "X"
+                }`,
+                `top_p=${
+                  mask.modelConfig.top_p_enabled ? mask.modelConfig.top_p : "X"
+                }`,
+                `P.P=${
+                  mask.modelConfig.presence_penalty_enabled
+                    ? mask.modelConfig.presence_penalty
+                    : "X"
+                }`,
+                `F.P=${
+                  mask.modelConfig.frequency_penalty_enabled
+                    ? mask.modelConfig.frequency_penalty
+                    : "X"
+                }`,
+              ].join(", ")}
             </div>
           </div>
         </div>

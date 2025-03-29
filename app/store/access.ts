@@ -211,6 +211,14 @@ export const useAccessStore = createPersistStore(
         })
         .then((res) => {
           const models = res.data || [];
+
+          // 新增去重逻辑
+          const uniqueModels = models.filter(
+            (model: any, index: number, self: any[]) =>
+              self.findIndex(
+                (m) => m.id.toLowerCase() === model.id.toLowerCase(),
+              ) === index,
+          );
           // 根据关键字，去除非chat格式模型
           const excludedKeywords = [
             "text-",
@@ -223,7 +231,7 @@ export const useAccessStore = createPersistStore(
             "whisper",
             "tts",
           ];
-          const availableModels = models
+          const availableModels = uniqueModels
             .filter(
               (model: any) =>
                 !excludedKeywords.some((keyword) =>

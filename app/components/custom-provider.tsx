@@ -503,40 +503,7 @@ export function CustomProvider() {
           setProviders([]);
         }
       } else {
-        // 初始化示例数据
-        const mockProviders: Provider[] = [
-          {
-            id: "1",
-            name: "OpenAI",
-            apiKey: "sk-kfc-vme50",
-            baseUrl: "https://api.openai.com/v1",
-            type: "openai",
-            status: "active",
-            models: [
-              { id: "gpt-4", name: "GPT-4", type: "Chat", selected: true },
-              {
-                id: "gpt-3.5-turbo",
-                name: "GPT-3.5 Turbo",
-                type: "Chat",
-                selected: true,
-              },
-              {
-                id: "dall-e-3",
-                name: "DALL-E 3",
-                type: "Image",
-                selected: true,
-              },
-            ],
-          },
-          // ... existing code ...
-        ];
-
-        setProviders(mockProviders);
-        // 保存到本地存储
-        safeLocalStorage().setItem(
-          StoreKey.CustomProvider,
-          JSON.stringify(mockProviders),
-        );
+        setProviders([]);
       }
 
       setIsLoading(false);

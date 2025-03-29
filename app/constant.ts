@@ -30,6 +30,7 @@ export enum Path {
   SearchChat = "/search-chat",
   CloudBackup = "/cloud-backup",
   Artifacts = "/artifacts",
+  CustomProvider = "/custom-provider",
 }
 
 export enum ApiPath {
@@ -58,6 +59,7 @@ export enum StoreKey {
   Prompt = "prompt-store",
   Update = "chat-update",
   Sync = "sync",
+  CustomProvider = "custom-providers-store",
 }
 
 export const DEFAULT_SIDEBAR_WIDTH = 300;

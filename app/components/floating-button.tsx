@@ -22,6 +22,7 @@ import HomeIcon from "../icons/home.svg";
 import CollapseIcon from "../icons/collapse.svg";
 import ExpandIcon from "../icons/expand.svg";
 import EditIcon from "../icons/edit_input.svg";
+import CustomProviderIcon from "../icons/custom-models.svg";
 
 import {
   getMessageTextContent,
@@ -195,6 +196,7 @@ export function FloatingButton() {
   const mask = chatStore.currentSession().mask;
   const navigate = useNavigate();
   const location = useLocation();
+  const iconSize = 16;
 
   // 从配置中获取会话信息
   const [sessionInfo, setSessionInfo] = useState<SessionInfo>({
@@ -540,7 +542,7 @@ export function FloatingButton() {
             className={styles.closeButton}
             onClick={() => setIsOpen(false)}
           >
-            <CloseIcon width={16} height={16} />
+            <CloseIcon width={iconSize} height={iconSize} />
           </button>
 
           <div className={styles.sessionInfoSection}>
@@ -622,7 +624,7 @@ export function FloatingButton() {
               onClick={() => chatStore.newSession()}
               title={Locale.Home.NewChat}
             >
-              <MessageSquareIcon width={16} height={16} />
+              <MessageSquareIcon width={iconSize} height={iconSize} />
             </button>
 
             <button
@@ -631,26 +633,19 @@ export function FloatingButton() {
               title={config.theme}
             >
               {config.theme === Theme.Dark ? (
-                <SunIcon width={16} height={16} />
+                <SunIcon width={iconSize} height={iconSize} />
               ) : (
-                <MoonIcon width={16} height={16} />
+                <MoonIcon width={iconSize} height={iconSize} />
               )}
             </button>
 
-            {/* <button
-              className={styles.actionButton}
-              onClick={() => navigate(Path.Home)}
-              title={Locale.NewChat.Return}
-            >
-              <HomeIcon width={16} height={16} />
-            </button> */}
             {location.pathname === Path.Settings ? (
               <button
                 className={styles.actionButton}
                 onClick={() => navigate(Path.Home)}
                 title={Locale.NewChat.Return}
               >
-                <HomeIcon width={16} height={16} />
+                <HomeIcon width={iconSize} height={iconSize} />
               </button>
             ) : (
               <button
@@ -658,9 +653,16 @@ export function FloatingButton() {
                 onClick={() => navigate(Path.Settings)}
                 title={Locale.Settings.Title}
               >
-                <SettingsIcon width={16} height={16} />
+                <SettingsIcon width={iconSize} height={iconSize} />
               </button>
             )}
+            <button
+              className={styles.actionButton}
+              onClick={() => navigate(Path.CustomProvider)}
+              title={Locale.CustomProvider.Title}
+            >
+              <CustomProviderIcon width={iconSize} height={iconSize} />
+            </button>
           </div>
         </div>
       ) : (
@@ -669,7 +671,7 @@ export function FloatingButton() {
           onClick={() => setIsOpen(true)}
         >
           <div className={styles.buttonContent}>
-            <PlusIcon width={16} height={16} />
+            <PlusIcon width={iconSize} height={iconSize} />
           </div>
         </button>
       )}

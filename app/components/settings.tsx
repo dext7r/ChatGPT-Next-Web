@@ -1159,6 +1159,7 @@ export function Settings() {
                         subTitle={Locale.Settings.Access.OpenAI.ApiKey.SubTitle}
                       >
                         <PasswordInput
+                          style={{ width: "300px" }}
                           aria={Locale.Settings.ShowPassword}
                           aria-label={
                             Locale.Settings.Access.OpenAI.ApiKey.Title

@@ -144,7 +144,8 @@ export interface userCustomModel {
   name: string;
   id?: string;
   type?: string;
-  selected?: boolean;
+  available?: boolean;
+  isDefault?: boolean;
 }
 export class ClientApi {
   public llm: LLMApi;

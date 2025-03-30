@@ -133,7 +133,7 @@ function ProviderModal(props: {
 
   const handleSubmit = () => {
     // 准备保存的数据，包括选中的模型
-    const selectedModels = models.filter((model) => model.selected);
+    const selectedModels = models.filter((model) => model.available);
 
     const saveData: userCustomProvider = {
       ...formData,
@@ -203,7 +203,8 @@ function ProviderModal(props: {
             id: id,
             name: id,
             type: "Chat",
-            selected: false,
+            available: false,
+            isDefault: false,
           };
         });
       }
@@ -215,13 +216,13 @@ function ProviderModal(props: {
 
       // 保留已选状态
       const selectedModelIds = (formData.models || [])
-        .filter((m) => m.selected)
+        .filter((m) => m.available)
         .map((m) => m.id);
 
       setModels(
         fetchedModels.map((model) => ({
           ...model,
-          selected: selectedModelIds.includes(model.id),
+          available: selectedModelIds.includes(model.id),
         })),
       );
     } catch (error) {
@@ -253,7 +254,8 @@ function ProviderModal(props: {
       id: `model-${Date.now()}`,
       name: modelSearchTerm.trim(),
       type: "custom",
-      selected: true,
+      available: true,
+      isDefault: false,
     };
 
     // 更新模型列表并清空搜索
@@ -268,7 +270,8 @@ function ProviderModal(props: {
         model.id === modelId
           ? {
               ...model,
-              selected: model.selected === undefined ? true : !model.selected,
+              available:
+                model.available === undefined ? true : !model.available,
             }
           : model,
       ),
@@ -433,7 +436,7 @@ function ProviderModal(props: {
                       setModels(
                         models.map((model) => ({
                           ...model,
-                          selected: filteredModels.some(
+                          available: filteredModels.some(
                             (m) => m.id === model.id,
                           ),
                         })),
@@ -441,7 +444,7 @@ function ProviderModal(props: {
                     } else {
                       // 没有搜索关键词时选择所有模型
                       setModels(
-                        models.map((model) => ({ ...model, selected: true })),
+                        models.map((model) => ({ ...model, available: true })),
                       );
                     }
                   }}
@@ -451,7 +454,7 @@ function ProviderModal(props: {
                   bordered
                   onClick={() =>
                     setModels(
-                      models.map((model) => ({ ...model, selected: false })),
+                      models.map((model) => ({ ...model, available: false })),
                     )
                   }
                 />
@@ -483,7 +486,7 @@ function ProviderModal(props: {
                     <div
                       key={model.id}
                       className={`${styles.modelItem} ${
-                        model.selected ? styles.selected : ""
+                        model.available ? styles.selected : ""
                       }`}
                       onClick={() => toggleModelSelection(model.id as string)}
                     >
@@ -640,7 +643,7 @@ export function CustomProvider() {
 
   // 获取模型数量展示文本
   const getModelCountText = (provider: userCustomProvider) => {
-    const count = provider.models?.filter((m) => m.selected).length || 0;
+    const count = provider.models?.filter((m) => m.available).length || 0;
     return `${count} 个模型`;
   };
 
@@ -650,7 +653,7 @@ export function CustomProvider() {
       return Locale.CustomProvider.NoModels;
     }
 
-    const selectedModels = models.filter((m) => m.selected);
+    const selectedModels = models.filter((m) => m.available);
     if (selectedModels.length === 0) {
       return Locale.CustomProvider.NoSelectedModels;
     }

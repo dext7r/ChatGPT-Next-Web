@@ -42,7 +42,7 @@ export function useAllModelsWithCustomProviders() {
         // Extract selected models from each provider
         const models = activeProviders.flatMap((provider) => {
           return (provider.models || [])
-            .filter((model) => model.selected)
+            .filter((model) => model.available)
             .map((model) => ({
               name: model.name,
               available: true,

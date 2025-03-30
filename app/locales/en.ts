@@ -825,13 +825,16 @@ const en: LocaleType = {
     ApiUrlRequired: "API URL is required",
     ApiKeyRequired: "API key is required",
     ApiConfigRequired: "Please fill in API Key and API URL first",
+    ModelNameRequired: "Please fill in Model Name first",
     SearchModel: "Search models...",
     Select: {
       All: "Select All",
       Clear: "Clear",
     },
+    AddModels: "Add Models",
     RefreshModels: "Refresh Models",
     LoadingModels: "Loading model list...",
+    ModelExists: "Duplicate model exists",
     NoModelsFound: "No models found",
     NoModelsFoundHint:
       "Verify API information and try refreshing the model list",

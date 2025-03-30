@@ -128,6 +128,24 @@ interface ChatProvider {
   usage: () => void;
 }
 
+export interface userCustomProvider {
+  id: string;
+  name: string;
+  apiKey: string;
+  baseUrl: string;
+  type: string;
+  status: "active" | "inactive";
+  models?: userCustomModel[];
+  description?: string;
+}
+
+// 定义模型类型
+export interface userCustomModel {
+  name: string;
+  id?: string;
+  type?: string;
+  selected?: boolean;
+}
 export class ClientApi {
   public llm: LLMApi;
 

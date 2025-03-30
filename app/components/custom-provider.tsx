@@ -14,7 +14,7 @@ import {
   showToast,
 } from "./ui-lib";
 import { useAccessStore } from "../store";
-
+import { userCustomModel, userCustomProvider } from "../client/api";
 // 导入图标
 import PlusIcon from "../icons/add.svg";
 import EditIcon from "../icons/edit.svg";
@@ -22,38 +22,18 @@ import TrashIcon from "../icons/delete.svg";
 import CloseIcon from "../icons/close.svg";
 import LoadingIcon from "../icons/loading.svg";
 
-// 定义提供商类型
-interface Provider {
-  id: string;
-  name: string;
-  apiKey: string;
-  baseUrl: string;
-  type: string;
-  status: "active" | "inactive";
-  models?: Model[];
-  description?: string;
-}
-
-// 定义模型类型
-interface Model {
-  id: string;
-  name: string;
-  type: string;
-  selected?: boolean;
-}
-
 // 提供商编辑模态框
 function ProviderModal(props: {
-  provider: Provider | null;
-  onSave: (provider: Provider) => void;
+  provider: userCustomProvider | null;
+  onSave: (provider: userCustomProvider) => void;
   onClose: () => void;
-  providers: Provider[]; // 添加providers参数
-  setProviders: React.Dispatch<React.SetStateAction<Provider[]>>; // 添加setProviders
-  saveProvidersToStorage: (providers: Provider[]) => void; // 添加保存函数
+  providers: userCustomProvider[]; // 添加providers参数
+  setProviders: React.Dispatch<React.SetStateAction<userCustomProvider[]>>; // 添加setProviders
+  saveProvidersToStorage: (providers: userCustomProvider[]) => void; // 添加保存函数
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<
-    Omit<Provider, "id"> & { id?: string }
+    Omit<userCustomProvider, "id"> & { id?: string }
   >({
     name: "",
     apiKey: "",
@@ -61,13 +41,11 @@ function ProviderModal(props: {
     type: "openai",
     models: [],
     status: "inactive",
-    description: "",
   });
 
   // 模型相关状态
-  const [models, setModels] = useState<Model[]>([]);
+  const [models, setModels] = useState<userCustomModel[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
-  const [customModelName, setCustomModelName] = useState("");
   const [modelSearchTerm, setModelSearchTerm] = useState("");
 
   // 当编辑现有提供商时，加载数据
@@ -81,7 +59,6 @@ function ProviderModal(props: {
         type: props.provider.type,
         models: props.provider.models || [],
         status: props.provider.status || "active",
-        description: props.provider.description || "",
       });
 
       if (props.provider.models) {
@@ -96,7 +73,6 @@ function ProviderModal(props: {
         type: "openai",
         models: [],
         status: "active",
-        description: "",
       });
       setModels([]);
     }
@@ -132,11 +108,34 @@ function ProviderModal(props: {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const saveFirstStep = () => {
+    if (!formData.name.trim()) {
+      showToast(Locale.CustomProvider.ApiNameRequired);
+      return;
+    }
+    if (!formData.baseUrl.trim()) {
+      showToast(Locale.CustomProvider.ApiUrlRequired);
+      return;
+    }
+    if (!formData.apiKey.trim()) {
+      showToast(Locale.CustomProvider.ApiKeyRequired);
+      return;
+    }
+    // 保留当前存在的models数据
+    const saveData: userCustomProvider = {
+      ...formData,
+      id: formData.id || `provider-${Date.now()}`, // 确保有ID
+      models: props.provider?.models || [], // 保留现有模型
+      status: (formData.status as "active" | "inactive") || "active",
+    };
+    props.onSave(saveData);
+  };
+
   const handleSubmit = () => {
     // 准备保存的数据，包括选中的模型
     const selectedModels = models.filter((model) => model.selected);
 
-    const saveData: Provider = {
+    const saveData: userCustomProvider = {
       ...formData,
       id: formData.id || `provider-${Date.now()}`, // 确保有ID
       models: selectedModels,
@@ -190,44 +189,76 @@ function ProviderModal(props: {
         formData.apiKey,
       );
 
-      // 解析返回的字符串，格式为 `-all,model1@OpenAI,model2@OpenAI,...`
-      const modelNames = modelsStr
-        .replace("-all,", "")
-        .split(",")
-        .filter(Boolean);
+      // 解析API返回的模型数据
+      let fetchedModels: userCustomModel[] = [];
+      if (modelsStr) {
+        const modelNames = modelsStr
+          .replace("-all,", "")
+          .split(",")
+          .filter(Boolean);
 
-      // 将字符串转换为模型对象
-      let fetchedModels: Model[] = modelNames.map((modelName) => {
-        // 分割模型名称和提供商
-        const [id, provider] = modelName.split("@");
-        return {
-          id: id,
-          name: id, // 使用ID作为显示名称
-          type: "Chat", // 默认为Chat类型
-          selected: false,
-        };
-      });
+        fetchedModels = modelNames.map((modelName) => {
+          const [id, provider] = modelName.split("@");
+          return {
+            id: id,
+            name: id,
+            type: "Chat",
+            selected: false,
+          };
+        });
+      }
+
+      // 优先使用API返回的数据，如果为空则尝试本地存储
+      if (fetchedModels.length === 0 && formData.models?.length) {
+        fetchedModels = formData.models; // 使用本地存储的模型数据
+      }
 
       // 保留已选状态
       const selectedModelIds = (formData.models || [])
         .filter((m) => m.selected)
         .map((m) => m.id);
 
-      fetchedModels = fetchedModels.map((model) => ({
-        ...model,
-        selected: selectedModelIds.includes(model.id),
-      }));
-
-      setModels(fetchedModels);
+      setModels(
+        fetchedModels.map((model) => ({
+          ...model,
+          selected: selectedModelIds.includes(model.id),
+        })),
+      );
     } catch (error) {
       console.error("获取模型列表失败:", error);
-      showToast(`获取模型列表失败: ${error}`);
-
-      // 如果API调用失败，回退到模拟数据
-      setModels([]);
+      if (formData.models?.length) {
+        setModels(formData.models);
+      } else {
+        showToast(`获取模型列表失败: ${error}`);
+      }
     } finally {
       setIsLoadingModels(false);
     }
+  };
+  // 添加模型
+  const AddModels = async () => {
+    if (!modelSearchTerm.trim()) {
+      showToast(Locale.CustomProvider.ModelNameRequired);
+      return;
+    }
+
+    // 检查是否已存在同名模型
+    if (models.some((m) => m.name === modelSearchTerm.trim())) {
+      showToast(Locale.CustomProvider.ModelExists);
+      return;
+    }
+
+    // 创建新模型
+    const newModel: userCustomModel = {
+      id: `model-${Date.now()}`,
+      name: modelSearchTerm.trim(),
+      type: "custom",
+      selected: true,
+    };
+
+    // 更新模型列表并清空搜索
+    setModels([...models, newModel]);
+    setModelSearchTerm("");
   };
 
   // 切换模型选中状态
@@ -246,10 +277,8 @@ function ProviderModal(props: {
 
   // 过滤模型列表
   const filteredModels = modelSearchTerm
-    ? models.filter(
-        (model) =>
-          model.name.toLowerCase().includes(modelSearchTerm.toLowerCase()) ||
-          model.type.toLowerCase().includes(modelSearchTerm.toLowerCase()),
+    ? models.filter((model) =>
+        model.name.toLowerCase().includes(modelSearchTerm.toLowerCase()),
       )
     : models;
 
@@ -275,21 +304,20 @@ function ProviderModal(props: {
             <IconButton
               key="next"
               text={Locale.CustomProvider.Next}
-              type="primary"
               onClick={nextStep}
+              bordered
             />
-          ) : (
-            <IconButton
-              key="save"
-              text={
-                props.provider
-                  ? Locale.CustomProvider.SaveChanges
-                  : Locale.CustomProvider.AddProvider
-              }
-              type="primary"
-              onClick={handleSubmit}
-            />
-          ),
+          ) : null,
+          <IconButton
+            key="save"
+            text={
+              props.provider
+                ? Locale.CustomProvider.SaveChanges
+                : Locale.CustomProvider.AddProvider
+            }
+            type="primary"
+            onClick={handleSubmit}
+          />,
         ]}
       >
         <div className={styles.stepsContainer}>
@@ -432,6 +460,11 @@ function ProviderModal(props: {
                   bordered
                   onClick={fetchModels}
                 />
+                <IconButton
+                  text={Locale.CustomProvider.AddModels}
+                  bordered
+                  onClick={AddModels}
+                />
               </div>
             </div>
 
@@ -452,7 +485,7 @@ function ProviderModal(props: {
                       className={`${styles.modelItem} ${
                         model.selected ? styles.selected : ""
                       }`}
-                      onClick={() => toggleModelSelection(model.id)}
+                      onClick={() => toggleModelSelection(model.id as string)}
                     >
                       <div
                         className={styles.modelName}
@@ -478,10 +511,11 @@ function ProviderModal(props: {
 }
 
 export function CustomProvider() {
-  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providers, setProviders] = useState<userCustomProvider[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentProvider, setCurrentProvider] = useState<Provider | null>(null);
+  const [currentProvider, setCurrentProvider] =
+    useState<userCustomProvider | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
@@ -512,7 +546,7 @@ export function CustomProvider() {
     loadProviders();
   }, []);
   // 保存提供商到本地存储
-  const saveProvidersToStorage = (updatedProviders: Provider[]) => {
+  const saveProvidersToStorage = (updatedProviders: userCustomProvider[]) => {
     try {
       const jsonString = JSON.stringify(updatedProviders);
       safeLocalStorage().setItem(StoreKey.CustomProvider, jsonString);
@@ -535,7 +569,7 @@ export function CustomProvider() {
   };
 
   // 打开编辑提供商模态框
-  const handleEditProvider = (provider: Provider) => {
+  const handleEditProvider = (provider: userCustomProvider) => {
     setCurrentProvider(provider);
     setIsModalOpen(true);
   };
@@ -553,7 +587,7 @@ export function CustomProvider() {
   };
 
   // 更新保存提供商函数
-  const handleSaveProvider = (provider: Provider) => {
+  const handleSaveProvider = (provider: userCustomProvider) => {
     let updatedProviders;
 
     if (currentProvider) {
@@ -605,13 +639,13 @@ export function CustomProvider() {
   };
 
   // 获取模型数量展示文本
-  const getModelCountText = (provider: Provider) => {
+  const getModelCountText = (provider: userCustomProvider) => {
     const count = provider.models?.filter((m) => m.selected).length || 0;
     return `${count} 个模型`;
   };
 
   // 在 CustomProvider 组件中添加一个新函数来格式化模型列表显示
-  const formatModelList = (models?: Model[]) => {
+  const formatModelList = (models?: userCustomModel[]) => {
     if (!models || models.length === 0) {
       return Locale.CustomProvider.NoModels;
     }
@@ -622,12 +656,12 @@ export function CustomProvider() {
     }
 
     // 按类型分组模型
-    const modelsByType: Record<string, Model[]> = {};
+    const modelsByType: Record<string, userCustomModel[]> = {};
     selectedModels.forEach((model) => {
-      if (!modelsByType[model.type]) {
-        modelsByType[model.type] = [];
+      if (!modelsByType[model.type || ""]) {
+        modelsByType[model.type || ""] = [];
       }
-      modelsByType[model.type].push(model);
+      modelsByType[model.type || ""].push(model);
     });
 
     // 创建分组显示

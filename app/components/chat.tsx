@@ -136,7 +136,7 @@ import {
 import { prettyObject } from "../utils/format";
 import { ExportMessageModal } from "./exporter";
 import { getClientConfig } from "../config/client";
-import { useAllModels } from "../utils/hooks";
+import { useAllModelsWithCustomProviders } from "../utils/hooks";
 import {
   LLMModelProvider,
   MultimodalContent,
@@ -1143,7 +1143,8 @@ export function ChatActions(props: {
             defaultSelectedValue={`${currentModel}@${currentProviderName}`}
             items={models.map((m) => ({
               title:
-                m?.provider?.providerName?.toLowerCase() === "openai"
+                m?.provider?.providerName?.toLowerCase() === "openai" ||
+                m?.provider?.providerName === m.name
                   ? `${m.displayName}`
                   : `${m.displayName} (${m?.provider?.providerName})`,
               subTitle: m.description,
@@ -1758,7 +1759,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
   const formatModelItem = (model: Model) => ({
     title:
-      model?.provider?.providerName?.toLowerCase() === "openai"
+      model?.provider?.providerName?.toLowerCase() === "openai" ||
+      model?.provider?.providerName === model.name
         ? `${model.displayName || model.name}`
         : `${model.displayName || model.name} (${model?.provider
             ?.providerName})`,
@@ -3106,9 +3108,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       <div className={styles["item-icon"]}>
                         <Avatar model={item.title as string} />
                       </div>
-                      <div className={styles["item-title"]}>
-                        {item.title.split(" (")[0]}
-                      </div>
+                      <div className={styles["item-title"]}>{item.title}</div>
                     </div>
                     {item.subTitle && (
                       <div className={styles["item-description"]}>
@@ -3362,7 +3362,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 export function Chat() {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
-  const allModels = useAllModels();
+  const allModels = useAllModelsWithCustomProviders();
   const hasUpdatedDisplayName = useRef(false);
 
   const modelTable = useMemo(() => {

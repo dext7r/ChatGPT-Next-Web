@@ -67,6 +67,13 @@ docker 镜像：
 
    <img src="./docs/images/completions-stat.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
 
+- 悬浮球信息栏：直观查看请求负载并支持快速编辑，需要在“个性化设置”里开启
+   <img src="./docs/images/floating-button.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
+
+- 自定义 AI 提供商（暂时只支持 openai 类型）
+   <img src="./docs/images/customProvider_1.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
+   <img src="./docs/images/customProvider_2.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
+   <img src="./docs/images/customProvider_3.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
 
 
 ## 环境变量

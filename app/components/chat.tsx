@@ -123,6 +123,7 @@ import {
   textFileExtensions,
   maxFileSizeInKB,
   minTokensForPastingAsFile,
+  StoreKey,
 } from "../constant";
 import { Avatar } from "./emoji";
 import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
@@ -137,11 +138,7 @@ import { prettyObject } from "../utils/format";
 import { ExportMessageModal } from "./exporter";
 import { getClientConfig } from "../config/client";
 import { useAllModelsWithCustomProviders } from "../utils/hooks";
-import {
-  LLMModelProvider,
-  MultimodalContent,
-  getClientApi,
-} from "../client/api";
+import { Model, MultimodalContent, getClientApi } from "../client/api";
 
 import { ClientApi } from "../client/api";
 import { createTTSPlayer } from "../utils/audio";
@@ -157,14 +154,6 @@ const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
 });
 
-interface Model {
-  available: boolean;
-  name: string;
-  displayName?: string;
-  description?: string;
-  provider?: LLMModelProvider;
-  isDefault?: boolean;
-}
 export function SessionConfigModel(props: { onClose: () => void }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
@@ -528,6 +517,7 @@ export function ChatActions(props: {
   const navigate = useNavigate();
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
+  const access = useAccessStore();
 
   // translate
   const [isTranslating, setIsTranslating] = useState(false);
@@ -977,6 +967,35 @@ export function ChatActions(props: {
       m.name === currentModel &&
       m.provider?.providerName === currentProviderName,
   )?.displayName;
+  let storedProviders = safeLocalStorage().getItem(StoreKey.CustomProvider);
+  let current_apiKey = null;
+  let current_baseUrl = null;
+  if (storedProviders) {
+    try {
+      storedProviders = JSON.parse(storedProviders);
+
+      // 确保 storedProviders 是数组
+      if (Array.isArray(storedProviders)) {
+        const provider = storedProviders.find(
+          (prov) => prov.name === currentProviderName,
+        );
+
+        if (provider) {
+          current_apiKey = provider.apiKey;
+          current_baseUrl = provider.baseUrl;
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing stored providers:", error);
+    }
+  }
+  if (current_baseUrl && current_apiKey) {
+    access.useCustomProvider = true;
+    access.customProvider_apiKey = current_apiKey;
+    access.customProvider_baseUrl = current_baseUrl;
+  } else {
+    access.useCustomProvider = false;
+  }
   const canUploadImage = isVisionModel(currentModel);
 
   const [showModelSelector, setShowModelSelector] = useState(false);

@@ -14,7 +14,7 @@ import {
   showToast,
 } from "./ui-lib";
 import { useAccessStore } from "../store";
-import { userCustomModel, userCustomProvider } from "../client/api";
+import { Model, userCustomProvider } from "../client/api";
 // 导入图标
 import PlusIcon from "../icons/add.svg";
 import EditIcon from "../icons/edit.svg";
@@ -44,7 +44,7 @@ function ProviderModal(props: {
   });
 
   // 模型相关状态
-  const [models, setModels] = useState<userCustomModel[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelSearchTerm, setModelSearchTerm] = useState("");
 
@@ -190,7 +190,7 @@ function ProviderModal(props: {
       );
 
       // 解析API返回的模型数据
-      let fetchedModels: userCustomModel[] = [];
+      let fetchedModels: Model[] = [];
       if (modelsStr) {
         const modelNames = modelsStr
           .replace("-all,", "")
@@ -200,11 +200,14 @@ function ProviderModal(props: {
         fetchedModels = modelNames.map((modelName) => {
           const [id, provider] = modelName.split("@");
           return {
-            id: id,
             name: id,
-            type: "Chat",
             available: false,
             isDefault: false,
+            provider: {
+              id: provider || id,
+              providerName: provider || id,
+              providerType: provider || id,
+            },
           };
         });
       }
@@ -215,14 +218,14 @@ function ProviderModal(props: {
       }
 
       // 保留已选状态
-      const selectedModelIds = (formData.models || [])
+      const selectedModelNames = (formData.models || [])
         .filter((m) => m.available)
-        .map((m) => m.id);
+        .map((m) => m.name);
 
       setModels(
         fetchedModels.map((model) => ({
           ...model,
-          available: selectedModelIds.includes(model.id),
+          available: selectedModelNames.includes(model.name),
         })),
       );
     } catch (error) {
@@ -238,24 +241,28 @@ function ProviderModal(props: {
   };
   // 添加模型
   const AddModels = async () => {
-    if (!modelSearchTerm.trim()) {
+    const searchModel = modelSearchTerm.trim();
+    if (!searchModel) {
       showToast(Locale.CustomProvider.ModelNameRequired);
       return;
     }
 
     // 检查是否已存在同名模型
-    if (models.some((m) => m.name === modelSearchTerm.trim())) {
+    if (models.some((m) => m.name === searchModel)) {
       showToast(Locale.CustomProvider.ModelExists);
       return;
     }
 
     // 创建新模型
-    const newModel: userCustomModel = {
-      id: `model-${Date.now()}`,
-      name: modelSearchTerm.trim(),
-      type: "custom",
+    const newModel: Model = {
+      name: searchModel,
       available: true,
       isDefault: false,
+      provider: {
+        id: searchModel,
+        providerName: searchModel,
+        providerType: searchModel,
+      },
     };
 
     // 更新模型列表并清空搜索
@@ -264,10 +271,10 @@ function ProviderModal(props: {
   };
 
   // 切换模型选中状态
-  const toggleModelSelection = (modelId: string) => {
+  const toggleModelSelection = (modelName: string) => {
     setModels(
       models.map((model) =>
-        model.id === modelId
+        model.name === modelName
           ? {
               ...model,
               available:
@@ -437,7 +444,7 @@ function ProviderModal(props: {
                         models.map((model) => ({
                           ...model,
                           available: filteredModels.some(
-                            (m) => m.id === model.id,
+                            (m) => m.name === model.name,
                           ),
                         })),
                       );
@@ -484,11 +491,11 @@ function ProviderModal(props: {
                 <div className={styles.modelGrid}>
                   {filteredModels.map((model) => (
                     <div
-                      key={model.id}
+                      key={model.name}
                       className={`${styles.modelItem} ${
                         model.available ? styles.selected : ""
                       }`}
-                      onClick={() => toggleModelSelection(model.id as string)}
+                      onClick={() => toggleModelSelection(model.name)}
                     >
                       <div
                         className={styles.modelName}
@@ -648,7 +655,7 @@ export function CustomProvider() {
   };
 
   // 在 CustomProvider 组件中添加一个新函数来格式化模型列表显示
-  const formatModelList = (models?: userCustomModel[]) => {
+  const formatModelList = (models?: Model[]) => {
     if (!models || models.length === 0) {
       return Locale.CustomProvider.NoModels;
     }
@@ -658,30 +665,16 @@ export function CustomProvider() {
       return Locale.CustomProvider.NoSelectedModels;
     }
 
-    // 按类型分组模型
-    const modelsByType: Record<string, userCustomModel[]> = {};
-    selectedModels.forEach((model) => {
-      if (!modelsByType[model.type || ""]) {
-        modelsByType[model.type || ""] = [];
-      }
-      modelsByType[model.type || ""].push(model);
-    });
-
-    // 创建分组显示
+    // 创建模型列表显示
     return (
       <div className={styles.modelPopoverContent}>
-        {Object.entries(modelsByType).map(([type, models]) => (
-          <div key={type} className={styles.modelTypeGroup}>
-            <div className={styles.modelTypeTitle}>{type}</div>
-            <div className={styles.modelList}>
-              {models.map((model) => (
-                <div key={model.id} className={styles.modelPill}>
-                  {model.name}
-                </div>
-              ))}
+        <div className={styles.modelList}>
+          {selectedModels.map((model) => (
+            <div key={model.name} className={styles.modelPill}>
+              {model.name}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };

@@ -2,7 +2,6 @@ import path from "path";
 
 export const OWNER = "QAbot-zh";
 export const REPO = "ChatGPT-Next-Web";
-export const FAKE_OPENAI_URL = "https://new.oaifree.com";
 export const REPO_URL = `https://github.com/${OWNER}/${REPO}`;
 export const ISSUE_URL = `https://github.com/${OWNER}/${REPO}/issues`;
 export const UPDATE_URL = `${REPO_URL}#keep-updated`;

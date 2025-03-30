@@ -3,7 +3,7 @@ import { useAccessStore, useAppConfig } from "../store";
 import { collectModelsWithDefaultModel } from "./model";
 import { safeLocalStorage } from "../utils";
 import { StoreKey } from "../constant";
-import { userCustomModel, userCustomProvider } from "../client/api";
+import { Model, userCustomProvider } from "../client/api";
 
 export function useAllModels() {
   const accessStore = useAccessStore();
@@ -27,9 +27,7 @@ export function useAllModels() {
 // New hook that combines built-in models with custom provider models
 export function useAllModelsWithCustomProviders() {
   const builtInModels = useAllModels();
-  const [customProviderModels, setCustomProviderModels] = useState<
-    userCustomModel[]
-  >([]);
+  const [customProviderModels, setCustomProviderModels] = useState<Model[]>([]);
 
   // Load custom provider models from localStorage
   useEffect(() => {
@@ -48,11 +46,11 @@ export function useAllModelsWithCustomProviders() {
               available: true,
               displayName: `${model.name}`,
               provider: {
+                id: model.name,
                 providerName: provider.name,
+                providerType: "custom",
                 baseUrl: provider.baseUrl,
                 apiKey: provider.apiKey,
-                type: provider.type,
-                id: model.name,
               },
               isCustom: true as const,
             }));

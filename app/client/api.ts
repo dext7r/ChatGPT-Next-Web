@@ -3,6 +3,7 @@ import {
   ACCESS_CODE_PREFIX,
   ModelProvider,
   ServiceProvider,
+  REPO_URL,
 } from "../constant";
 import { ChatMessage, ModelType, useAccessStore, useChatStore } from "../store";
 import { ChatGPTApi } from "./platforms/openai";
@@ -109,10 +110,19 @@ export abstract class LLMApi {
 
 type ProviderName = "openai" | "azure" | "claude" | "palm";
 
-interface Model {
+// interface Model {
+//   name: string;
+//   provider: ProviderName;
+//   ctxlen: number;
+// }
+
+export interface Model {
+  available: boolean;
   name: string;
-  provider: ProviderName;
-  ctxlen: number;
+  displayName?: string;
+  description?: string;
+  provider?: LLMModelProvider;
+  isDefault?: boolean;
 }
 
 interface ChatProvider {
@@ -135,18 +145,10 @@ export interface userCustomProvider {
   baseUrl: string;
   type: string;
   status: "active" | "inactive";
-  models?: userCustomModel[];
+  models?: Model[];
   description?: string;
 }
 
-// 定义模型类型
-export interface userCustomModel {
-  name: string;
-  id?: string;
-  type?: string;
-  available?: boolean;
-  isDefault?: boolean;
-}
 export class ClientApi {
   public llm: LLMApi;
 
@@ -179,8 +181,7 @@ export class ClientApi {
       .concat([
         {
           from: "human",
-          value:
-            "Share from [NextChat]: https://github.com/QAbot-zh/ChatGPT-Next-Web",
+          value: `Share from [NextChat]: ${REPO_URL}`,
         },
       ]);
     // 敬告二开开发者们，为了开源大模型的发展，请不要修改上述消息，此消息用于后续数据清洗使用
@@ -229,6 +230,8 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     ? accessStore.googleApiKey
     : isAzure
     ? accessStore.azureApiKey
+    : accessStore.useCustomProvider
+    ? accessStore.customProvider_apiKey
     : accessStore.openaiApiKey;
   const clientConfig = getClientConfig();
   const makeBearer = (s: string) => `${isAzure ? "" : "Bearer "}${s.trim()}`;

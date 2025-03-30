@@ -467,7 +467,7 @@
   // 步骤导航
   .steps {
     display: flex;
-    margin: 0 0 24px 0;
+    margin: 0 0 20px 0;
     padding: 8px 0;
     border-bottom: 1px solid var(--border-in-light);
     gap: 12px;
@@ -477,7 +477,7 @@
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 8px 16px;
+    padding: 8px 8px;
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s ease;

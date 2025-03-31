@@ -1163,6 +1163,7 @@ export function ChatActions(props: {
             items={models.map((m) => ({
               title:
                 m?.provider?.providerName?.toLowerCase() === "openai" ||
+                m?.provider?.providerType === "custom-provider" ||
                 m?.provider?.providerName === m.name
                   ? `${m.displayName}`
                   : `${m.displayName} (${m?.provider?.providerName})`,
@@ -1779,6 +1780,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const formatModelItem = (model: Model) => ({
     title:
       model?.provider?.providerName?.toLowerCase() === "openai" ||
+      model?.provider?.providerType === "custom-provider" ||
       model?.provider?.providerName === model.name
         ? `${model.displayName || model.name}`
         : `${model.displayName || model.name} (${model?.provider

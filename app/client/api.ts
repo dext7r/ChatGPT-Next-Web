@@ -211,6 +211,19 @@ export class ClientApi {
   }
 }
 
+function selectApiKey(apiKeyString: string): string {
+  if (!apiKeyString) return "";
+  // Split the string into an array of keys, removing empty strings
+  const keys = apiKeyString
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+  // If only one key, return it directly
+  if (keys.length <= 1) return apiKeyString.trim();
+  // Random selection
+  const randomIndex = Math.floor(Math.random() * keys.length);
+  return keys[randomIndex];
+}
 export function getHeaders(ignoreHeaders: boolean = false) {
   const accessStore = useAccessStore.getState();
   const chatStore = useChatStore.getState();
@@ -231,7 +244,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     : isAzure
     ? accessStore.azureApiKey
     : accessStore.useCustomProvider
-    ? accessStore.customProvider_apiKey
+    ? selectApiKey(accessStore.customProvider_apiKey)
     : accessStore.openaiApiKey;
   const clientConfig = getClientConfig();
   const makeBearer = (s: string) => `${isAzure ? "" : "Bearer "}${s.trim()}`;

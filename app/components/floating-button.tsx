@@ -621,7 +621,9 @@ export function FloatingButton() {
           <div className={styles.actionButtonsContainer}>
             <button
               className={styles.actionButton}
-              onClick={() => chatStore.newSession()}
+              onClick={() =>
+                chatStore.newSession(chatStore.currentSession().mask)
+              }
               title={Locale.Home.NewChat}
             >
               <MessageSquareIcon width={iconSize} height={iconSize} />
@@ -656,13 +658,23 @@ export function FloatingButton() {
                 <SettingsIcon width={iconSize} height={iconSize} />
               </button>
             )}
-            <button
-              className={styles.actionButton}
-              onClick={() => navigate(Path.CustomProvider)}
-              title={Locale.CustomProvider.Title}
-            >
-              <CustomProviderIcon width={iconSize} height={iconSize} />
-            </button>
+            {location.pathname === Path.CustomProvider ? (
+              <button
+                className={styles.actionButton}
+                onClick={() => navigate(Path.Home)}
+                title={Locale.NewChat.Return}
+              >
+                <HomeIcon width={iconSize} height={iconSize} />
+              </button>
+            ) : (
+              <button
+                className={styles.actionButton}
+                onClick={() => navigate(Path.CustomProvider)}
+                title={Locale.CustomProvider.Title}
+              >
+                <CustomProviderIcon width={iconSize} height={iconSize} />
+              </button>
+            )}
           </div>
         </div>
       ) : (

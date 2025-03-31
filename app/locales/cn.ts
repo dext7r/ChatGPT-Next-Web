@@ -236,7 +236,7 @@ const cn = {
     Search: "搜索消息",
     All: "选取全部",
     Latest: "最近几条",
-    Clear: "清除选中",
+    Clear: "清除全部",
     HideUserContinueMsg: "过滤“继续补全”消息",
   },
   Memory: {
@@ -798,7 +798,7 @@ const cn = {
     ApiKeyRequired: "请输入 API key",
     ApiConfigRequired: "请先填写 API Key 和 API URL",
     ModelNameRequired: "请输入模型名称",
-    SearchModel: "搜索或添加模型...",
+    SearchModel: "搜索或添加模型（支持逗号分隔多个模型，支持正则）",
     Select: {
       All: "选择全部",
       Clear: "清除",

@@ -394,7 +394,7 @@ export function SideBar(props: { className?: string }) {
             text={shouldNarrow ? undefined : Locale.Home.NewChat}
             onClick={() => {
               if (config.dontShowMaskSplashScreen) {
-                chatStore.newSession();
+                chatStore.newSession(chatStore.currentSession().mask);
                 navigate(Path.Chat);
               } else {
                 navigate(Path.NewChat);

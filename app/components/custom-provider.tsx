@@ -184,9 +184,10 @@ function ProviderModal(props: {
     try {
       const accessStore = useAccessStore.getState();
       // 调用真实的API获取模型列表
+      const api_key = formData.apiKey.split(",")[0].trim();
       const modelsStr = await accessStore.fetchAvailableModels(
         formData.baseUrl,
-        formData.apiKey,
+        api_key,
       );
 
       // 解析API返回的模型数据
@@ -316,9 +317,24 @@ function ProviderModal(props: {
 
   // 过滤模型列表
   const filteredModels = modelSearchTerm
-    ? models.filter((model) =>
-        model.name.toLowerCase().includes(modelSearchTerm.toLowerCase()),
-      )
+    ? models.filter((model) => {
+        const lowerName = model.name.toLowerCase();
+        const lowerSearchTerm = modelSearchTerm.toLowerCase();
+
+        // 首先尝试 includes() 匹配
+        if (lowerName.includes(lowerSearchTerm)) {
+          return true;
+        }
+
+        // 然后尝试正则匹配（安全地），正则不忽略大小写
+        try {
+          const regex = new RegExp(modelSearchTerm);
+          return regex.test(model.name);
+        } catch (e) {
+          // 如果正则表达式无效，则跳过正则匹配
+          return false;
+        }
+      })
     : models;
 
   return (

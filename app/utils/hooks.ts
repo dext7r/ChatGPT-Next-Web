@@ -27,18 +27,16 @@ export function useAllModels() {
 // New hook that combines built-in models with custom provider models
 export function useAllModelsWithCustomProviders() {
   const builtInModels = useAllModels();
-  const [customProviderModels, setCustomProviderModels] = useState<Model[]>([]);
-
-  // Load custom provider models from localStorage
-  useEffect(() => {
-    const storedProviders = safeLocalStorage().getItem(StoreKey.CustomProvider);
-    if (storedProviders) {
+  const [customProviderModels, setCustomProviderModels] = useState<Model[]>(
+    () => {
+      const storedProviders = safeLocalStorage().getItem(
+        StoreKey.CustomProvider,
+      );
+      if (!storedProviders) return [];
       try {
         const providers = JSON.parse(storedProviders) as userCustomProvider[];
-        // Only process active providers
         const activeProviders = providers.filter((p) => p.status === "active");
-        // Extract selected models from each provider
-        const models = activeProviders.flatMap((provider) => {
+        return activeProviders.flatMap((provider) => {
           return (provider.models || [])
             .filter((model) => model.available)
             .map((model) => ({
@@ -49,20 +47,19 @@ export function useAllModelsWithCustomProviders() {
                 id: model.name,
                 providerName: provider.name,
                 providerType: "custom",
-                baseUrl: provider.baseUrl,
-                apiKey: provider.apiKey,
+                // baseUrl: provider.baseUrl,
+                // apiKey: provider.apiKey,
               },
               isCustom: true as const,
             }));
         });
-
-        setCustomProviderModels(models);
       } catch (e) {
         console.error("Failed to parse custom providers:", e);
-        setCustomProviderModels([]);
+        return [];
       }
-    }
-  }, []);
+    },
+  );
+  // }, []);
   // Combine built-in models with custom provider models
   return useMemo(() => {
     return [...customProviderModels, ...builtInModels];

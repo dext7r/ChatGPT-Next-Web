@@ -78,6 +78,65 @@ function ProviderModal(props: {
     }
   }, [props.provider]);
 
+  const [rawInput, setRawInput] = useState("");
+  const parseRawInput = () => {
+    if (!rawInput.trim()) {
+      showToast("请输入需要解析的内容");
+      return;
+    }
+
+    // Initial data to be filled
+    let parsedName = "";
+    let parsedUrl = "";
+    let parsedApiKey = "";
+
+    // Extract name (first line is usually the name)
+    const lines = rawInput.split("\n");
+    if (lines.length > 0) {
+      parsedName = lines[0].trim();
+    }
+
+    // Extract URL with regex
+    const urlRegex = /(https?:\/\/[^\s]+)/i;
+    const urlMatch = rawInput.match(urlRegex);
+    if (urlMatch && urlMatch[1]) {
+      let url = urlMatch[1].trim();
+
+      // Process URL according to the rules
+      const urlObj = new URL(url);
+      const mainDomain = `${urlObj.protocol}//${urlObj.hostname}`;
+
+      // Check if it ends with 'completions' but is NOT 'v1/chat/completions'
+      if (url.endsWith("completions") && !url.endsWith("v1/chat/completions")) {
+        // For completions endpoints (not standard OpenAI path), add '#'
+        parsedUrl = url + "#";
+      } else {
+        // For all other cases, use just the main domain
+        parsedUrl = mainDomain;
+      }
+    }
+    // Extract API key with regex
+    const apiKeyRegex = /(sk-[^\s]+)/i;
+    const apiKeyMatch = rawInput.match(apiKeyRegex);
+    if (apiKeyMatch && apiKeyMatch[1]) {
+      parsedApiKey = apiKeyMatch[1].trim();
+    }
+
+    // Update form data
+    setFormData((prev) => ({
+      ...prev,
+      name: parsedName || prev.name,
+      baseUrl: parsedUrl || prev.baseUrl,
+      apiKey: parsedApiKey || prev.apiKey,
+    }));
+
+    // Clear the raw input area
+    // setRawInput("");
+
+    // Show success message
+    showToast("解析成功");
+  };
+
   // 添加切换供应商状态的函数
   const toggleProviderStatus = (id: string) => {
     if (!id) return; // 如果是新建的，还没有ID，则不执行
@@ -465,6 +524,21 @@ function ProviderModal(props: {
                 />
               </ListItem>
             </>
+            <div className={styles.intelligentParsingContainer}>
+              <textarea
+                placeholder={Locale.CustomProvider.ParsingPlaceholder}
+                value={rawInput}
+                onChange={(e) => setRawInput(e.target.value)}
+                className={styles.parsingTextarea}
+              />
+              <div className={styles.parsingButtonContainer}>
+                <IconButton
+                  text={Locale.CustomProvider.IntelligentParsing}
+                  onClick={parseRawInput}
+                  type="primary"
+                />
+              </div>
+            </div>
           </List>
         )}
         {currentStep === 2 && (

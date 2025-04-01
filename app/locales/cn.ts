@@ -825,6 +825,8 @@ const cn = {
     EmptyTitle: "暂无AI提供商",
     EmptyDescription: '点击"添加提供商"按钮来添加您的提供商',
     EmptySearchDescription: "尝试使用不同的搜索词或清除搜索",
+    ParsingPlaceholder: "输入请求样例或包含 api 信息的待解析文本",
+    IntelligentParsing: "智能解析",
   },
 };
 

@@ -854,6 +854,9 @@ const en: LocaleType = {
     EmptyTitle: "No AI Providers",
     EmptyDescription: 'Click the "Add Provider" button to create one',
     EmptySearchDescription: "Try different keywords or clear search filters",
+    ParsingPlaceholder:
+      "Please provide a sample request or the text containing the API information you would like me to parse.",
+    IntelligentParsing: "IntelligentParsing",
   },
   URLCommand: {
     Code: "Detected access code from url, confirm to apply? ",

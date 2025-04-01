@@ -245,7 +245,7 @@ export const useAccessStore = createPersistStore(
             )
             .map((model: any) => `${model.id}@OpenAI`)
             .join(",");
-          console.log("availableModels", availableModels);
+          // console.log("availableModels", availableModels);
           showToast("fetch and update models list successfully");
           return `-all,${availableModels}`;
         })

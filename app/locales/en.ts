@@ -863,6 +863,12 @@ const en: LocaleType = {
       DisplayName: "Display Name: ",
       Cancel: "Cancel",
       Save: "Save",
+      ErrorJson: "Invalid format. Please provide a valid JSON object.",
+      SuccessJson: "Model alias mapping has been successfully applied.",
+      CardView: "Card View",
+      JsonView: "JSON View",
+      ApplyJson: "Apply JSON Mapping",
+      EditJson: 'Edit JSON mapping (format: "Model: Model Alias")',
     },
   },
   URLCommand: {

@@ -49,6 +49,8 @@ function ProviderModal(props: {
   const [modelSearchTerm, setModelSearchTerm] = useState("");
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const [editedDisplayName, setEditedDisplayName] = useState("");
+  const [isJsonViewMode, setIsJsonViewMode] = useState(false);
+  const [displayNameMapText, setDisplayNameMapText] = useState("");
 
   // 当编辑现有提供商时，加载数据
   useEffect(() => {
@@ -230,6 +232,7 @@ function ProviderModal(props: {
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      setIsJsonViewMode(false);
     }
   };
 
@@ -403,6 +406,48 @@ function ProviderModal(props: {
 
     setEditingModel(null);
   };
+  // 生成显示名称映射JSON字符串的函数
+  const generateDisplayNameMapView = () => {
+    const displayNameMap: Record<string, string> = {};
+    models.forEach((model) => {
+      if (model.displayName && model.displayName !== model.name) {
+        displayNameMap[model.name] = model.displayName;
+      }
+    });
+
+    return JSON.stringify(displayNameMap, null, 2);
+  };
+  // 解析并应用显示名称映射的函数
+  const applyDisplayNameMap = () => {
+    try {
+      const json = JSON.parse(displayNameMapText);
+
+      // 验证是否为有效的映射格式
+      if (typeof json !== "object" || json === null) {
+        throw new Error(Locale.CustomProvider.EditModel.ErrorJson);
+      }
+
+      // 应用映射到模型
+      setModels(
+        models.map((model) => ({
+          ...model,
+          displayName: json[model.name] || model.displayName || model.name,
+        })),
+      );
+
+      showToast(Locale.CustomProvider.EditModel.SuccessJson);
+      setIsJsonViewMode(false); // 应用后切回正常视图
+    } catch (error) {
+      console.error("解析JSON失败:", error);
+      showToast(Locale.CustomProvider.EditModel.ErrorJson);
+    }
+  };
+  // 在JSON视图模式切换时更新文本内容
+  useEffect(() => {
+    if (isJsonViewMode) {
+      setDisplayNameMapText(generateDisplayNameMapView());
+    }
+  }, [isJsonViewMode]);
 
   // 切换模型选中状态
   const toggleModelSelection = (modelName: string) => {
@@ -453,7 +498,7 @@ function ProviderModal(props: {
         }
         onClose={props.onClose}
         actions={[
-          currentStep > 1 && (
+          currentStep > 1 && !isJsonViewMode && (
             <IconButton
               key="prev"
               text={Locale.CustomProvider.Previous}
@@ -469,16 +514,43 @@ function ProviderModal(props: {
               bordered
             />
           ) : null,
-          <IconButton
-            key="save"
-            text={
-              props.provider
-                ? Locale.CustomProvider.SaveChanges
-                : Locale.CustomProvider.AddProvider
-            }
-            type="primary"
-            onClick={handleSubmit}
-          />,
+          currentStep === 2 && (
+            <IconButton
+              key="viewToggle"
+              text={
+                isJsonViewMode
+                  ? Locale.CustomProvider.EditModel.CardView
+                  : Locale.CustomProvider.EditModel.JsonView
+              }
+              onClick={() => setIsJsonViewMode(!isJsonViewMode)}
+              bordered
+            />
+          ),
+
+          // 在JSON视图模式下显示应用按钮
+          currentStep === 2 && isJsonViewMode && (
+            <IconButton
+              key="applyJson"
+              text={Locale.CustomProvider.EditModel.ApplyJson}
+              type="primary"
+              onClick={applyDisplayNameMap}
+              bordered
+            />
+          ),
+
+          // 保存按钮 - 在JSON视图模式下不显示
+          !isJsonViewMode && (
+            <IconButton
+              key="save"
+              text={
+                props.provider
+                  ? Locale.CustomProvider.SaveChanges
+                  : Locale.CustomProvider.AddProvider
+              }
+              type="primary"
+              onClick={handleSubmit}
+            />
+          ),
         ]}
       >
         <div className={styles.stepsContainer}>
@@ -669,6 +741,34 @@ function ProviderModal(props: {
                 <div className={styles.loadingModels}>
                   <LoadingIcon />
                   <span>{Locale.CustomProvider.LoadingModels}</span>
+                </div>
+              ) : isJsonViewMode ? (
+                // JSON编辑视图 - 移除内部应用按钮
+                <div style={{ padding: "10px" }}>
+                  <div
+                    style={{
+                      marginBottom: "10px",
+                      fontSize: "14px",
+                      color: "#374151",
+                    }}
+                  >
+                    {Locale.CustomProvider.EditModel.EditJson}
+                  </div>
+                  <textarea
+                    value={displayNameMapText}
+                    onChange={(e) => setDisplayNameMapText(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "250px",
+                      padding: "12px",
+                      borderRadius: "6px",
+                      border: "1px solid #e5e7eb",
+                      fontFamily: "monospace",
+                      fontSize: "14px",
+                      lineHeight: "1.5",
+                      resize: "vertical",
+                    }}
+                  />
                 </div>
               ) : filteredModels.length > 0 ? (
                 /* 模型网格 */

@@ -833,6 +833,12 @@ const cn = {
       DisplayName: "显示名称：",
       Cancel: "取消",
       Save: "保存",
+      ErrorJson: "无效的格式，请提供有效的JSON对象",
+      SuccessJson: "模型别名映射已成功应用",
+      CardView: "卡片视图",
+      JsonView: "JSON视图",
+      ApplyJson: "应用 JSON 映射",
+      EditJson: "编辑 JSON 映射, 格式：“模型: 模型别名” ",
     },
   },
 };

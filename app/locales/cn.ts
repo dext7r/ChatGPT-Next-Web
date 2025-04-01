@@ -827,6 +827,13 @@ const cn = {
     EmptySearchDescription: "尝试使用不同的搜索词或清除搜索",
     ParsingPlaceholder: "输入请求样例或包含 api 信息的待解析文本",
     IntelligentParsing: "智能解析",
+    EditModel: {
+      EditDisplayName: "编辑显示名称",
+      ModelID: "模型ID：",
+      DisplayName: "显示名称：",
+      Cancel: "取消",
+      Save: "保存",
+    },
   },
 };
 

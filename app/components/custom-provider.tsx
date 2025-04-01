@@ -47,6 +47,8 @@ function ProviderModal(props: {
   const [models, setModels] = useState<Model[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelSearchTerm, setModelSearchTerm] = useState("");
+  const [editingModel, setEditingModel] = useState<Model | null>(null);
+  const [editedDisplayName, setEditedDisplayName] = useState("");
 
   // 当编辑现有提供商时，加载数据
   useEffect(() => {
@@ -358,6 +360,26 @@ function ProviderModal(props: {
       AddModels();
     }
   };
+  // 编辑模型显示名称的处理函数
+  const handleEditDisplayName = (model: Model, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingModel(model);
+    setEditedDisplayName(model.displayName || model.name);
+  };
+  // 保存显示名称
+  const saveDisplayName = () => {
+    if (!editingModel) return;
+
+    setModels(
+      models.map((model) =>
+        model.name === editingModel.name
+          ? { ...model, displayName: editedDisplayName.trim() || model.name }
+          : model,
+      ),
+    );
+
+    setEditingModel(null);
+  };
 
   // 切换模型选中状态
   const toggleModelSelection = (modelName: string) => {
@@ -374,27 +396,29 @@ function ProviderModal(props: {
     );
   };
 
-  // 过滤模型列表
-  const filteredModels = modelSearchTerm
+  const sortedFilteredModels = modelSearchTerm
     ? models.filter((model) => {
         const lowerName = model.name.toLowerCase();
         const lowerSearchTerm = modelSearchTerm.toLowerCase();
-
         // 首先尝试 includes() 匹配
         if (lowerName.includes(lowerSearchTerm)) {
           return true;
         }
-
-        // 然后尝试正则匹配（安全地），正则不忽略大小写
+        // 然后尝试正则匹配
         try {
           const regex = new RegExp(modelSearchTerm);
           return regex.test(model.name);
         } catch (e) {
-          // 如果正则表达式无效，则跳过正则匹配
           return false;
         }
       })
     : models;
+  // 然后对结果进行排序，将available=true的模型排在前面
+  const filteredModels = sortedFilteredModels.sort((a, b) => {
+    if (a.available && !b.available) return -1;
+    if (!a.available && b.available) return 1;
+    return 0;
+  });
 
   return (
     <div className="modal-mask">
@@ -634,11 +658,21 @@ function ProviderModal(props: {
                       }`}
                       onClick={() => toggleModelSelection(model.name)}
                     >
-                      <div
-                        className={styles.modelName}
-                        title={model.name} // 只添加title属性
-                      >
-                        {model.name}
+                      <div className={styles.modelContent}>
+                        <div
+                          className={styles.modelName}
+                          title={model.name} // 只添加title属性
+                        >
+                          {model.displayName || model.name}
+                        </div>
+                        {model.available && (
+                          <div
+                            className={styles.modelEditIcon}
+                            onClick={(e) => handleEditDisplayName(model, e)}
+                          >
+                            <EditIcon />
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -653,6 +687,48 @@ function ProviderModal(props: {
           </div>
         )}
       </Modal>
+      {editingModel && (
+        <div className="modal-mask" style={{ zIndex: 2000 }}>
+          <div className={styles.editNameModal}>
+            <div className={styles.editNameHeader}>
+              <h3>{Locale.CustomProvider.EditModel.EditDisplayName}</h3>
+              <span
+                className={styles.closeButton}
+                onClick={() => setEditingModel(null)}
+              >
+                <CloseIcon />
+              </span>
+            </div>
+            <div className={styles.editNameContent}>
+              <div className={styles.editNameRow}>
+                <label>{Locale.CustomProvider.EditModel.ModelID}</label>
+                <div className={styles.modelIdText}>{editingModel.name}</div>
+              </div>
+              <div className={styles.editNameRow}>
+                <label>{Locale.CustomProvider.EditModel.DisplayName}</label>
+                <input
+                  type="text"
+                  value={editedDisplayName}
+                  onChange={(e) => setEditedDisplayName(e.target.value)}
+                  placeholder={editingModel.name}
+                  className={styles.displayNameInput}
+                />
+              </div>
+            </div>
+            <div className={styles.editNameFooter}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setEditingModel(null)}
+              >
+                {Locale.CustomProvider.EditModel.Cancel}
+              </button>
+              <button className={styles.saveButton} onClick={saveDisplayName}>
+                {Locale.CustomProvider.EditModel.Save}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

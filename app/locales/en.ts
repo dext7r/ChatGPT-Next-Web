@@ -857,6 +857,13 @@ const en: LocaleType = {
     ParsingPlaceholder:
       "Please provide a sample request or the text containing the API information you would like me to parse.",
     IntelligentParsing: "IntelligentParsing",
+    EditModel: {
+      EditDisplayName: "Edit model's DisplayName",
+      ModelID: "Model ID: ",
+      DisplayName: "Display Name: ",
+      Cancel: "Cancel",
+      Save: "Save",
+    },
   },
   URLCommand: {
     Code: "Detected access code from url, confirm to apply? ",

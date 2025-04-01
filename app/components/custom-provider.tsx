@@ -251,6 +251,15 @@ function ProviderModal(props: {
         api_key,
       );
 
+      // 创建一个现有模型的映射，用于保留displayName
+      const existingModelsMap = new Map();
+      models.forEach((model) => {
+        // 只保存有自定义displayName的模型
+        if (model.displayName) {
+          existingModelsMap.set(model.name, model.displayName);
+        }
+      });
+
       // 解析API返回的模型数据
       let fetchedModels: Model[] = [];
       if (modelsStr) {
@@ -263,6 +272,7 @@ function ProviderModal(props: {
           const [id, provider] = modelName.split("@");
           return {
             name: id,
+            displayName: existingModelsMap.get(id),
             available: false,
             isDefault: false,
             provider: {
@@ -284,9 +294,22 @@ function ProviderModal(props: {
         .filter((m) => m.available)
         .map((m) => m.name);
 
+      // 构建displayName映射
+      const displayNameMap = new Map();
+      formData.models?.forEach((model) => {
+        if (model.displayName) {
+          displayNameMap.set(model.name, model.displayName);
+        }
+      });
+
       setModels(
         fetchedModels.map((model) => ({
           ...model,
+          // 保留显示名称的优先级:
+          // 1. 从API获取的模型已有displayName
+          // 2. 从现有formData.models中获取displayName
+          // 3. 不设置displayName
+          displayName: model.displayName || displayNameMap.get(model.name),
           available: selectedModelNames.includes(model.name),
         })),
       );

@@ -868,6 +868,7 @@ export const useChatStore = createPersistStore(
               model: modelConfig.compressModel,
               stream: false,
             },
+            type: "topic",
             onFinish(message, responseRes) {
               if (responseRes?.status === 200) {
                 let replyContent: string =
@@ -944,10 +945,11 @@ export const useChatStore = createPersistStore(
                     : getMessageTextContent(v),
               })),
             config: {
-              ...modelcfg,
+              // ...modelcfg,
               stream: true,
               model: modelConfig.compressModel,
             },
+            type: "compress",
             onUpdate(message) {
               session.memoryPrompt = message;
             },

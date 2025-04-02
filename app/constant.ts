@@ -169,8 +169,6 @@ export const KnowledgeCutOffDate: Record<string, string> = {
   "o1-preview": "2023-10",
   // After improvements,
   // it's now easier to add "KnowledgeCutOffDate" instead of stupid hardcoding it, as was done previously.
-  "gemini-pro": "2023-12",
-  "gemini-pro-vision": "2023-12",
 };
 
 export const DEFAULT_TTS_ENGINE = "OpenAI-TTS";
@@ -193,25 +191,24 @@ export const VISION_MODEL_REGEXES = [
   /claude-3/,
   /gemini-1\.5/,
   /gemini-exp/,
-  /gemini-2\.0/,
+  /gemini-2/,
   /learnlm/,
   /qwen-vl/,
   /qwen2-vl/,
   /gpt-4-turbo(?!.*preview)/, // Matches "gpt-4-turbo" but not "gpt-4-turbo-preview"
+  /gpt-4.5/,
   /^dall-e-3$/, // Matches exactly "dall-e-3"
   /glm-4v/,
   /vl/i,
   /pixtral/,
   /kimi-latest/,
+  /multimodal/,
 ];
 
 export const EXCLUDE_VISION_MODEL_REGEXES = [/claude-3-5-haiku-20241022/];
 
 const openaiModels = [
   "chatgpt-4o-latest",
-  "gpt-3.5-turbo",
-  "gpt-3.5-turbo-1106",
-  "gpt-3.5-turbo-0125",
   "gpt-4o",
   "gpt-4o-2024-05-13",
   "gpt-4o-2024-08-06",
@@ -228,21 +225,11 @@ const openaiModels = [
   "gpt-4-turbo-2024-04-09",
   "gpt-4-turbo-preview",
   "gpt-4-vision-preview",
-  // 非流模型
+  "gpt-4.5-preview",
   "o1-mini",
   "o1-preview",
-  // 非标准模型
-  "o1",
-  "o1-all",
+  "o3-mini",
   "o1-pro",
-  "o1-pro-all",
-  "gpt-4o-plus",
-  "gpt-4o-all",
-  "gpt-o1-mini",
-  "gpt-o1-preview",
-  "gpt-o1",
-  "gpt-o1-pro",
-  "gpt-4-all",
 ];
 
 const googleModels = [
@@ -263,9 +250,6 @@ const googleModels = [
 ];
 
 const anthropicModels = [
-  "claude-instant-1.2",
-  "claude-2.0",
-  "claude-2.1",
   "claude-3-haiku-20240307",
   "claude-3-5-haiku-20241022",
   "claude-3-5-haiku-latest",
@@ -320,6 +304,7 @@ export const internalAllowedWebDavEndpoints = [
   "https://dav.idrivesync.com",
   "https://webdav.yandex.com",
   "https://app.koofr.net/dav/Koofr",
+  "https://domi.teracloud.jp/dav",
 ];
 
 export const PLUGINS = [{ name: "Search Chat", path: Path.SearchChat }];

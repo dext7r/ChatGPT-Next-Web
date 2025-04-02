@@ -12,13 +12,14 @@ export function useAllModels() {
     return collectModelsWithDefaultModel(
       configStore.models,
       [configStore.customModels, accessStore.customModels].join(","),
-      accessStore.defaultModel,
+      accessStore,
     );
   }, [
     accessStore.customModels,
     accessStore.defaultModel,
     configStore.customModels,
     configStore.models,
+    accessStore,
   ]);
 
   return models;

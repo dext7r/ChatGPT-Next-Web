@@ -78,6 +78,9 @@ export class ChatGPTApi implements LLMApi {
     let baseUrl = "";
     if (accessStore.useCustomProvider) {
       baseUrl = accessStore.customProvider_baseUrl;
+      if (accessStore.customProvider_type === "deepseek") {
+        path = "chat/completions";
+      }
     } else if (accessStore.useCustomConfig) {
       const isAzure = accessStore.provider === ServiceProvider.Azure;
 

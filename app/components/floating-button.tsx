@@ -456,7 +456,12 @@ export function FloatingButton() {
   const getHistoryStat = () => {
     const session = chatStore.currentSession();
     const messages = session.messages;
+    const modelConfig = session.mask.modelConfig;
     // Initialize counters
+    let historyMessageCount = modelConfig.historyMessageCount;
+    let historyMaxTokens = modelConfig.sendMemory
+      ? modelConfig.compressMessageLengthThreshold
+      : "∞";
     let validMsgCnt = 0;
     let totalTokens = 0;
 
@@ -513,7 +518,7 @@ export function FloatingButton() {
       }
     }
     // 5. Return the formatted result
-    return `↑ ${validMsgCnt} / ${totalTokens}`;
+    return `${historyMessageCount}/${historyMaxTokens} : ${validMsgCnt} / ${totalTokens}`;
   };
 
   if (!config.enableFloatingButton) {

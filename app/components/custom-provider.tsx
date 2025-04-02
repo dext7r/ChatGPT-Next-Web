@@ -23,16 +23,34 @@ import CloseIcon from "../icons/close.svg";
 import LoadingIcon from "../icons/loading.svg";
 import SearchIcon from "../icons/zoom.svg";
 
+// 获取提供商类型标签
+const providerTypeLabels: Record<string, string> = {
+  openai: "OpenAI",
+  siliconflow: "SiliconFlow",
+  deepseek: "DeepSeek",
+  // azure: 'Azure OpenAI',
+  // anthropic: 'Anthropic',
+  // custom: '自定义API',
+};
+// 获取提供商默认的地址
+const providerTypeDefaultUrls: Record<string, string> = {
+  openai: "https://api.openai.com",
+  siliconflow: "https://api.siliconflow.cn",
+  deepseek: "https://api.deepseek.com",
+};
+
 const KeyItem = ({
-  keyText,
   onDelete,
   index,
+  apiKey,
   baseUrl,
+  type,
 }: {
-  keyText: string;
   onDelete: (index: number) => void;
   index: number;
+  apiKey: string;
   baseUrl: string;
+  type: string;
 }) => {
   const accessStore = useAccessStore.getState();
   const [loading, setLoading] = useState(false);
@@ -41,14 +59,22 @@ const KeyItem = ({
   const checkBalance = async () => {
     setLoading(true);
     try {
-      const result = await accessStore.checkSiliconFlowBalance(
-        keyText,
-        baseUrl,
-      );
-      if (result.isValid && result.totalBalance) {
+      let result = null;
+      if (type === "siliconflow") {
+        result = await accessStore.checkSiliconFlowBalance(apiKey, baseUrl);
+      } else if (type === "deepseek") {
+        result = await accessStore.checkDeepSeekBalance(apiKey, baseUrl);
+      } else if (
+        type === "openai" &&
+        baseUrl !== providerTypeDefaultUrls[type]
+      ) {
+        result = await accessStore.checkCustomOpenaiBalance(apiKey, baseUrl);
+      }
+      // 处理 result
+      if (result && result.isValid && result.totalBalance) {
         setBalance(result.totalBalance);
       } else {
-        showToast(result.error || "查询失败");
+        showToast(result?.error || "查询失败或不支持查询");
       }
     } catch (error) {
       console.error("查询余额出错:", error);
@@ -61,10 +87,10 @@ const KeyItem = ({
   return (
     <div className={styles.keyItem}>
       <div className={styles.keyContent}>
-        <div className={styles.keyText}>{keyText}</div>
+        <div className={styles.keyText}>{apiKey}</div>
       </div>
       <div className={styles.keyActions}>
-        {balance && <div className={styles.balanceDisplay}>￥ {balance}</div>}
+        {balance && <div className={styles.balanceDisplay}>{balance}</div>}
 
         {!loading && !balance ? (
           <IconButton
@@ -175,7 +201,7 @@ function ProviderModal(props: {
     const urlRegex = /(https?:\/\/[^\s]+)/i;
     const urlMatch = rawInput.match(urlRegex);
     if (urlMatch && urlMatch[1]) {
-      let url = urlMatch[1].trim();
+      let url = urlMatch[1].replace(/["'<>()\[\]]+$/, "").trim();
 
       // Process URL according to the rules
       const urlObj = new URL(url);
@@ -285,14 +311,14 @@ function ProviderModal(props: {
         showToast(Locale.CustomProvider.ApiNameRequired);
         return;
       }
-      if (!formData.baseUrl.trim()) {
-        showToast(Locale.CustomProvider.ApiUrlRequired);
-        return;
-      }
       if (!formData.apiKey.trim()) {
         showToast(Locale.CustomProvider.ApiKeyRequired);
         return;
       }
+    }
+    if (!formData.baseUrl.trim()) {
+      formData.baseUrl = providerTypeDefaultUrls[formData.type];
+      console.log(formData);
     }
     if (currentStep < 2) {
       setCurrentStep(currentStep + 1);
@@ -576,7 +602,7 @@ function ProviderModal(props: {
 
   // Update apiKey string when keyList changes
   useEffect(() => {
-    const apiKeyString = keyList.join(", ");
+    const apiKeyString = keyList.join(",");
     setFormData((prev) => ({ ...prev, apiKey: apiKeyString }));
   }, [keyList]);
 
@@ -642,10 +668,11 @@ function ProviderModal(props: {
                 {keyList.map((key, index) => (
                   <KeyItem
                     key={index}
-                    keyText={key}
                     onDelete={removeKeyFromList}
                     index={index}
+                    apiKey={key}
                     baseUrl={formData.baseUrl}
+                    type={formData.type}
                   />
                 ))}
               </div>
@@ -747,7 +774,7 @@ function ProviderModal(props: {
             <IconButton
               key="applyJson"
               text={Locale.CustomProvider.EditModel.ApplyJson}
-              type="primary"
+              // type="primary"
               onClick={applyDisplayNameMap}
               bordered
             />
@@ -762,11 +789,12 @@ function ProviderModal(props: {
                   ? Locale.CustomProvider.SaveChanges
                   : Locale.CustomProvider.AddProvider
               }
-              type="primary"
+              // type="primary"
               onClick={handleSubmit}
+              bordered
             />
           ),
-        ]}
+        ].filter(Boolean)}
       >
         <div className={styles.stepsContainer}>
           <div className={styles.steps}>
@@ -809,9 +837,7 @@ function ProviderModal(props: {
                 >
                   <option value="openai">OpenAI</option>
                   <option value="siliconflow">SiliconFlow</option>
-                  {/* <option value="azure">Azure OpenAI</option>
-                  <option value="anthropic">Anthropic Claude</option>
-                  <option value="custom">{Locale.CustomProvider.CustomAPI}</option> */}
+                  <option value="deepseek">DeepSeek</option>
                 </Select>
               </ListItem>
               <ListItem
@@ -835,7 +861,7 @@ function ProviderModal(props: {
                   style={{ width: "300px" }}
                   type="text"
                   value={formData.baseUrl}
-                  placeholder="https://api.openai.com"
+                  placeholder={providerTypeDefaultUrls[formData.type]}
                   onChange={(e) =>
                     handleChange("baseUrl", e.currentTarget.value)
                   }
@@ -1178,21 +1204,6 @@ export function CustomProvider() {
     );
   };
 
-  // 获取提供商类型标签
-  const getProviderTypeLabel = (type: string) => {
-    switch (type) {
-      case "openai":
-        return "OpenAI";
-      case "siliconflow":
-        return "SiliconFlow";
-      // case 'azure': return 'Azure OpenAI';
-      // case 'anthropic': return 'Anthropic';
-      // case 'custom': return '自定义API';
-      default:
-        return type;
-    }
-  };
-
   // 获取模型数量展示文本
   const getModelCountText = (provider: userCustomProvider) => {
     const count = provider.models?.filter((m) => m.available).length || 0;
@@ -1290,7 +1301,7 @@ export function CustomProvider() {
                       className={styles.metaItem}
                       style={{ backgroundColor: "#DAF1F4", color: "#004D5B" }}
                     >
-                      {getProviderTypeLabel(provider.type)}
+                      {providerTypeLabels[provider.type]}
                     </span>
                     <span
                       className={styles.metaItem}

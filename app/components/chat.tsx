@@ -970,6 +970,7 @@ export function ChatActions(props: {
   let storedProviders = safeLocalStorage().getItem(StoreKey.CustomProvider);
   let current_apiKey = null;
   let current_baseUrl = null;
+  let current_type = null;
   if (storedProviders) {
     try {
       storedProviders = JSON.parse(storedProviders);
@@ -983,6 +984,7 @@ export function ChatActions(props: {
         if (provider) {
           current_apiKey = provider.apiKey;
           current_baseUrl = provider.baseUrl;
+          current_type = provider.type;
         }
       }
     } catch (error) {
@@ -993,6 +995,7 @@ export function ChatActions(props: {
     access.useCustomProvider = true;
     access.customProvider_apiKey = current_apiKey;
     access.customProvider_baseUrl = current_baseUrl;
+    access.customProvider_type = current_type;
   } else {
     access.useCustomProvider = false;
   }

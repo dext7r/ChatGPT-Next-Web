@@ -827,6 +827,11 @@ const cn = {
     EmptySearchDescription: "尝试使用不同的搜索词或清除搜索",
     ParsingPlaceholder: "输入请求样例或包含 api 信息的待解析文本",
     IntelligentParsing: "智能解析",
+    KeyListView: "列表视图",
+    NormalView: "普通视图",
+    AddKey: "添加密钥",
+    NoKeysAdded: "尚未添加任何API密钥",
+    NewKeyPlaceholder: "输入新的API密钥",
     EditModel: {
       EditDisplayName: "编辑显示名称",
       ModelID: "模型ID：",

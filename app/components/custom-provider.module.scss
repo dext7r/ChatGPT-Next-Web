@@ -884,3 +884,140 @@
     }
   }
 }
+
+// ===== 11. Key List View =====
+.keyListContainer {
+  width: 100%;
+}
+.keyInputContainer {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  
+  .keyInput {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    
+    &:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+  }
+}
+.keyListScroll {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 4px;
+  background-color: #f9fafb;
+}
+.emptyKeys {
+  padding: 16px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+.keyList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.keyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  
+  .keyContent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .keyText {
+      font-family: monospace;
+      font-size: 14px;
+      color: #111827;
+      word-break: break-all;
+    }
+  }
+  
+  .keyActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .keyDeleteIcon {
+    color: #6b7280;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s, color 0.2s;
+    
+    &:hover {
+      opacity: 1;
+      color: #ef4444;
+    }
+  }
+  .balanceDisplay {
+    font-size: 12px;
+    color: #059669;
+    padding: 2px 8px;
+    background-color: #d1fae5;
+    border-radius: 4px;
+    margin-right: 8px;
+  }
+}
+// Add animation for key items
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.keyItem {
+  animation: slideIn 0.2s ease-out;
+}
+// Customize scrollbar for key list
+.keyListScroll {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+}
+// Responsive styles for key list view
+@media screen and (max-width: 768px) {
+  .keyInputContainer {
+    flex-direction: column;
+  }
+}

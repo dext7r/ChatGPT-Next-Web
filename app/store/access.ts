@@ -198,7 +198,7 @@ export const useAccessStore = createPersistStore(
           fetchState = 2;
         });
     },
-    fetchAvailableModels(url: string, apiKey: string): Promise<string> {
+    async fetchAvailableModels(url: string, apiKey: string): Promise<string> {
       // if (fetchState !== 0) return Promise.resolve(DEFAULT_ACCESS_STATE.customModels);
       fetchState = 1;
       return fetch(`${url.replace(/\/+$/, "")}/v1/models`, {
@@ -255,6 +255,60 @@ export const useAccessStore = createPersistStore(
           return DEFAULT_ACCESS_STATE.customModels;
         })
         .finally(() => (fetchState = 2));
+    },
+    async checkSiliconFlowBalance(
+      apiKey: string,
+      baseUrl: string,
+    ): Promise<{
+      isValid: boolean;
+      balance?: string;
+      totalBalance?: string;
+      chargeBalance?: string;
+      error?: string;
+    }> {
+      if (!apiKey) {
+        return Promise.resolve({
+          isValid: false,
+          error: "API key is required",
+        });
+      }
+      if (!baseUrl) {
+        baseUrl = "https://api.siliconflow.cn";
+      }
+      return fetch(`${baseUrl.replace(/\/+$/, "")}/v1/user/info`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`${res.status} - ${res.statusText}`);
+          }
+          return res.json();
+        })
+        .then((res) => {
+          if (res.code === 20000 && res.status === true && res.data) {
+            return {
+              isValid: true,
+              balance: res.data.balance,
+              totalBalance: res.data.totalBalance,
+              chargeBalance: res.data.chargeBalance,
+            };
+          } else {
+            return {
+              isValid: false,
+              error: res.message || "Invalid response format",
+            };
+          }
+        })
+        .catch((error) => {
+          console.error("[Access] failed to check SiliconFlow balance:", error);
+          return {
+            isValid: false,
+            error: error.message || "Failed to check balance",
+          };
+        });
     },
   }),
   {

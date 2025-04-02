@@ -21,6 +21,72 @@ import EditIcon from "../icons/edit.svg";
 import TrashIcon from "../icons/delete.svg";
 import CloseIcon from "../icons/close.svg";
 import LoadingIcon from "../icons/loading.svg";
+import SearchIcon from "../icons/zoom.svg";
+
+const KeyItem = ({
+  keyText,
+  onDelete,
+  index,
+  baseUrl,
+}: {
+  keyText: string;
+  onDelete: (index: number) => void;
+  index: number;
+  baseUrl: string;
+}) => {
+  const accessStore = useAccessStore.getState();
+  const [loading, setLoading] = useState(false);
+  const [balance, setBalance] = useState<string | null>(null);
+
+  const checkBalance = async () => {
+    setLoading(true);
+    try {
+      const result = await accessStore.checkSiliconFlowBalance(
+        keyText,
+        baseUrl,
+      );
+      if (result.isValid && result.totalBalance) {
+        setBalance(result.totalBalance);
+      } else {
+        showToast(result.error || "查询失败");
+      }
+    } catch (error) {
+      console.error("查询余额出错:", error);
+      showToast("查询余额失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={styles.keyItem}>
+      <div className={styles.keyContent}>
+        <div className={styles.keyText}>{keyText}</div>
+      </div>
+      <div className={styles.keyActions}>
+        {balance && <div className={styles.balanceDisplay}>￥ {balance}</div>}
+
+        {!loading && !balance ? (
+          <IconButton
+            icon={<SearchIcon />}
+            text="$"
+            bordered
+            onClick={checkBalance}
+            title="查询余额"
+          />
+        ) : loading ? (
+          <div style={{ width: "20px", height: "20px" }}>
+            <LoadingIcon />
+          </div>
+        ) : null}
+
+        <div className={styles.keyDeleteIcon} onClick={() => onDelete(index)}>
+          <TrashIcon />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // 提供商编辑模态框
 function ProviderModal(props: {
@@ -47,10 +113,15 @@ function ProviderModal(props: {
   const [models, setModels] = useState<Model[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelSearchTerm, setModelSearchTerm] = useState("");
+  // 模型编辑和json视图
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const [editedDisplayName, setEditedDisplayName] = useState("");
   const [isJsonViewMode, setIsJsonViewMode] = useState(false);
   const [displayNameMapText, setDisplayNameMapText] = useState("");
+  // API Key 列表视图状态
+  const [isKeyListViewMode, setIsKeyListViewMode] = useState(false);
+  const [keyList, setKeyList] = useState<string[]>([]);
+  const [newKey, setNewKey] = useState("");
 
   // 当编辑现有提供商时，加载数据
   useEffect(() => {
@@ -464,6 +535,138 @@ function ProviderModal(props: {
     );
   };
 
+  useEffect(() => {
+    if (props.provider) {
+      setFormData({
+        id: props.provider.id,
+        name: props.provider.name,
+        apiKey: props.provider.apiKey,
+        baseUrl: props.provider.baseUrl,
+        type: props.provider.type,
+        models: props.provider.models || [],
+        status: props.provider.status || "active",
+      });
+      if (props.provider.models) {
+        setModels(props.provider.models);
+      }
+
+      // Initialize key list from apiKey string
+      if (props.provider.apiKey) {
+        setKeyList(
+          props.provider.apiKey
+            .split(",")
+            .map((key) => key.trim())
+            .filter(Boolean),
+        );
+      }
+    } else {
+      // Reset for new provider
+      setFormData({
+        name: "",
+        apiKey: "",
+        baseUrl: "",
+        type: "openai",
+        models: [],
+        status: "active",
+      });
+      setModels([]);
+      setKeyList([]);
+    }
+  }, [props.provider]);
+
+  // Update apiKey string when keyList changes
+  useEffect(() => {
+    const apiKeyString = keyList.join(", ");
+    setFormData((prev) => ({ ...prev, apiKey: apiKeyString }));
+  }, [keyList]);
+
+  // Function to add a new key to the list
+  const addKeyToList = () => {
+    if (!newKey.trim()) {
+      showToast("API Key cannot be empty");
+      return;
+    }
+
+    // Check for duplicates
+    if (keyList.includes(newKey.trim())) {
+      showToast("This API Key already exists");
+      return;
+    }
+
+    setKeyList([...keyList, newKey.trim()]);
+    setNewKey("");
+  };
+
+  // Function to remove a key from the list
+  const removeKeyFromList = (index: number) => {
+    const updatedKeys = [...keyList];
+    updatedKeys.splice(index, 1);
+    setKeyList(updatedKeys);
+  };
+
+  // Function to handle key press in key input field
+  const handleKeyInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addKeyToList();
+    }
+  };
+  const renderApiKeysSection = () => {
+    if (isKeyListViewMode) {
+      return (
+        <div className={styles.keyListContainer}>
+          <div className={styles.keyInputContainer}>
+            <input
+              type="password"
+              value={newKey}
+              onChange={(e) => setNewKey(e.target.value)}
+              placeholder={Locale.CustomProvider.ApiKeyPlaceholder}
+              className={styles.keyInput}
+              onKeyDown={handleKeyInputKeyDown}
+            />
+            <IconButton
+              text="Add Key"
+              onClick={addKeyToList}
+              type="primary"
+              bordered
+            />
+          </div>
+
+          <div className={styles.keyListScroll}>
+            {keyList.length === 0 ? (
+              <div className={styles.emptyKeys}>
+                No API keys added. Add your first key above.
+              </div>
+            ) : (
+              <div className={styles.keyList}>
+                {keyList.map((key, index) => (
+                  <KeyItem
+                    key={index}
+                    keyText={key}
+                    onDelete={removeKeyFromList}
+                    index={index}
+                    baseUrl={formData.baseUrl}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <PasswordInput
+          style={{ width: "340px" }}
+          value={formData.apiKey}
+          type="text"
+          placeholder={Locale.CustomProvider.ApiKeyPlaceholder}
+          onChange={(e) => handleChange("apiKey", e.currentTarget.value)}
+          required
+        />
+      );
+    }
+  };
+
   const sortedFilteredModels = modelSearchTerm
     ? models.filter((model) => {
         const lowerName = model.name.toLowerCase();
@@ -514,6 +717,18 @@ function ProviderModal(props: {
               bordered
             />
           ) : null,
+          currentStep === 1 && (
+            <IconButton
+              key="keyViewToggle"
+              text={
+                isKeyListViewMode
+                  ? Locale.CustomProvider.NormalView
+                  : Locale.CustomProvider.KeyListView
+              }
+              onClick={() => setIsKeyListViewMode(!isKeyListViewMode)}
+              bordered
+            />
+          ),
           currentStep === 2 && (
             <IconButton
               key="viewToggle"
@@ -593,6 +808,7 @@ function ProviderModal(props: {
                   onChange={(e) => handleChange("type", e.target.value)}
                 >
                   <option value="openai">OpenAI</option>
+                  <option value="siliconflow">SiliconFlow</option>
                   {/* <option value="azure">Azure OpenAI</option>
                   <option value="anthropic">Anthropic Claude</option>
                   <option value="custom">{Locale.CustomProvider.CustomAPI}</option> */}
@@ -631,16 +847,7 @@ function ProviderModal(props: {
                 title="API Key"
                 subTitle={Locale.CustomProvider.ApiKeySubtitle}
               >
-                <PasswordInput
-                  style={{ width: "340px" }}
-                  value={formData.apiKey}
-                  type="text"
-                  placeholder={Locale.CustomProvider.ApiKeyPlaceholder}
-                  onChange={(e) =>
-                    handleChange("apiKey", e.currentTarget.value)
-                  }
-                  required
-                />
+                {renderApiKeysSection()}
               </ListItem>
             </>
             <div className={styles.intelligentParsingContainer}>
@@ -989,7 +1196,10 @@ export function CustomProvider() {
     const count = provider.models?.filter((m) => m.available).length || 0;
     return `${count} 个模型`;
   };
-
+  const getKeyCountText = (provider: userCustomProvider) => {
+    const count = provider.apiKey.split(",").filter((k) => k.trim()).length;
+    return `key: ${count}`;
+  };
   // 在 CustomProvider 组件中添加一个新函数来格式化模型列表显示
   const formatModelList = (models?: Model[]) => {
     if (!models || models.length === 0) {
@@ -1085,6 +1295,12 @@ export function CustomProvider() {
                       style={{ backgroundColor: "#D9E8FE", color: "#003D8F" }}
                     >
                       {getModelCountText(provider)}
+                    </span>
+                    <span
+                      className={`${styles.metaItem} ${styles.keyCountItem}`}
+                      style={{ backgroundColor: "#FFEDD5", color: "#C2410C" }}
+                    >
+                      {getKeyCountText(provider)}
                     </span>
                     {provider.status && (
                       <span

@@ -857,6 +857,11 @@ const en: LocaleType = {
     ParsingPlaceholder:
       "Please provide a sample request or the text containing the API information you would like me to parse.",
     IntelligentParsing: "IntelligentParsing",
+    KeyListView: "Key List View",
+    NormalView: "Normal View",
+    AddKey: "Add Key",
+    NoKeysAdded: "No API Keys Added Yet",
+    NewKeyPlaceholder: "Enter a new API key",
     EditModel: {
       EditDisplayName: "Edit model's DisplayName",
       ModelID: "Model ID: ",

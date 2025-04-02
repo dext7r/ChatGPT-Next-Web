@@ -139,6 +139,7 @@ async function request(req: NextRequest) {
       const modelTable = collectModelTable(
         DEFAULT_MODELS,
         serverConfig.customModels,
+        null,
       );
       const clonedBody = await req.text();
       fetchOptions.body = clonedBody;

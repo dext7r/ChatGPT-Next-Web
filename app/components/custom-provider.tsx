@@ -1183,6 +1183,8 @@ export function CustomProvider() {
     switch (type) {
       case "openai":
         return "OpenAI";
+      case "siliconflow":
+        return "SiliconFlow";
       // case 'azure': return 'Azure OpenAI';
       // case 'anthropic': return 'Anthropic';
       // case 'custom': return '自定义API';

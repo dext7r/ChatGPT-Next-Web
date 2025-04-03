@@ -171,3 +171,9 @@ docker 镜像：
 ## LICENSE
 
 [MIT](https://opensource.org/license/mit/)
+
+
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=QAbot-zh/ChatGPT-Next-Web&type=Date)](https://www.star-history.com/#QAbot-zh/ChatGPT-Next-Web&Date)

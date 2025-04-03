@@ -272,6 +272,7 @@ export const useAccessStore = createPersistStore(
       balance?: string;
       totalBalance?: string;
       chargeBalance?: string;
+      currency?: string;
       error?: string;
     }> {
       if (!apiKey) {
@@ -299,9 +300,10 @@ export const useAccessStore = createPersistStore(
           if (res.code === 20000 && res.status === true && res.data) {
             return {
               isValid: true,
-              balance: "￥ " + res.data.balance,
-              totalBalance: "￥ " + res.data.totalBalance,
-              chargeBalance: "￥ " + res.data.chargeBalance,
+              currency: "￥",
+              balance: res.data.balance,
+              totalBalance: res.data.totalBalance,
+              chargeBalance: res.data.chargeBalance,
             };
           } else {
             return {
@@ -327,6 +329,7 @@ export const useAccessStore = createPersistStore(
       balance?: string; // 总余额（等同于 totalBalance）
       totalBalance?: string; // 总余额（和 balance 相同）
       chargeBalance?: string; // 充值余额（即 toppedUpBalance）
+      currency?: string;
       error?: string;
     }> {
       // 参数验证
@@ -368,9 +371,10 @@ export const useAccessStore = createPersistStore(
         return {
           isValid: true,
           isAvailable: data.is_available,
-          balance: "￥ " + cnyBalance?.total_balance, // 总余额
-          totalBalance: "￥ " + cnyBalance?.total_balance, // 总余额（和 balance 相同）
-          chargeBalance: "￥ " + cnyBalance?.topped_up_balance, // 充值余额
+          currency: "￥",
+          balance: cnyBalance?.total_balance, // 总余额
+          totalBalance: cnyBalance?.total_balance, // 总余额（和 balance 相同）
+          chargeBalance: cnyBalance?.topped_up_balance, // 充值余额
         };
       } catch (error) {
         console.error("[DeepSeek] Failed to check balance:", error);
@@ -387,6 +391,7 @@ export const useAccessStore = createPersistStore(
     ): Promise<{
       isValid: boolean;
       totalBalance?: string; // 可用额度 (USD)
+      currency?: string;
       error?: string;
     }> {
       // 参数校验
@@ -426,9 +431,9 @@ export const useAccessStore = createPersistStore(
 
         // 3. 计算剩余额度
         const remaining = (parseFloat(total) - parseFloat(used)).toFixed(2);
-        return { isValid: true, totalBalance: `$ ${remaining}` };
+        return { isValid: true, totalBalance: remaining, currency: "$" };
       } catch (error) {
-        console.error("[DeepSeek] Failed to check balance:", error);
+        console.error("[OpenAI] Failed to check balance:", error);
         return {
           isValid: false,
           error:

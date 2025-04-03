@@ -17,6 +17,16 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+// 在适当位置添加
+.balanceButton {
+  background-color: #ECFDF5 !important;
+  color: #047857 !important;
+  border-color: #A7F3D0 !important;
+  
+  &:hover {
+    background-color: #D1FAE5 !important;
+  }
+}
 // ===== 2. 头部和导航 =====
 // 头部样式
 .header {

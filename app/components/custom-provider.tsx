@@ -72,7 +72,7 @@ const KeyItem = ({
       }
       // 处理 result
       if (result && result.isValid && result.totalBalance) {
-        setBalance(result.totalBalance);
+        setBalance(`${result.currency} ${result.totalBalance}`);
       } else {
         showToast(result?.error || "查询失败或不支持查询");
       }
@@ -694,29 +694,36 @@ function ProviderModal(props: {
     }
   };
 
-  const sortedFilteredModels = modelSearchTerm
-    ? models.filter((model) => {
-        const lowerName = model.name.toLowerCase();
-        const lowerSearchTerm = modelSearchTerm.toLowerCase();
-        // 首先尝试 includes() 匹配
-        if (lowerName.includes(lowerSearchTerm)) {
-          return true;
-        }
-        // 然后尝试正则匹配
-        try {
-          const regex = new RegExp(modelSearchTerm);
-          return regex.test(model.name);
-        } catch (e) {
-          return false;
-        }
-      })
-    : models;
-  // 然后对结果进行排序，将available=true的模型排在前面
-  const filteredModels = sortedFilteredModels.sort((a, b) => {
-    if (a.available && !b.available) return -1;
-    if (!a.available && b.available) return 1;
-    return 0;
-  });
+  // 模型网格排序和过滤
+  const filteredModels = models
+    .filter((model) => {
+      // 过滤无效模型
+      const hasValidName =
+        typeof model.name === "string" && model.name.trim() !== "";
+      if (!hasValidName) return false;
+
+      // 如果没有搜索关键词，直接通过
+      if (!modelSearchTerm) return true;
+
+      const lowerName = model.name.toLowerCase();
+      const lowerSearchTerm = modelSearchTerm.toLowerCase();
+
+      if (lowerName.includes(lowerSearchTerm)) {
+        return true;
+      }
+      try {
+        const regex = new RegExp(modelSearchTerm, "i");
+        return regex.test(model.name);
+      } catch (e) {
+        console.error(`Invalid regex: ${modelSearchTerm}`, e);
+        return false;
+      }
+    })
+    .sort((a, b) => {
+      if (a.available && !b.available) return -1;
+      if (!a.available && b.available) return 1;
+      return 0;
+    });
 
   return (
     <div className="modal-mask">
@@ -1096,6 +1103,14 @@ export function CustomProvider() {
   const [currentProvider, setCurrentProvider] =
     useState<userCustomProvider | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // 在 CustomProvider 函数中添加状态
+  const [providerBalances, setProviderBalances] = useState<
+    Record<string, string>
+  >({});
+  // 已有的 isSumming 状态可以改为记录每个提供商的加载状态
+  const [loadingBalances, setLoadingBalances] = useState<
+    Record<string, boolean>
+  >({});
 
   const navigate = useNavigate();
 
@@ -1193,8 +1208,8 @@ export function CustomProvider() {
       console.error("保存到本地存储失败:", error);
     }
 
-    // 关闭模态框
-    setIsModalOpen(false);
+    // // 关闭模态框
+    // setIsModalOpen(false);
 
     // 显示成功消息
     showToast(
@@ -1213,29 +1228,82 @@ export function CustomProvider() {
     const count = provider.apiKey.split(",").filter((k) => k.trim()).length;
     return `key: ${count}`;
   };
-  // 在 CustomProvider 组件中添加一个新函数来格式化模型列表显示
-  const formatModelList = (models?: Model[]) => {
-    if (!models || models.length === 0) {
-      return Locale.CustomProvider.NoModels;
+
+  // 新增的统计余额函数
+  const handleSumBalances = async (provider: userCustomProvider) => {
+    const accessStore = useAccessStore.getState();
+    const { id, apiKey, baseUrl, type } = provider;
+
+    const keys = apiKey
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    if (keys.length === 0) {
+      showToast("没有可用的 API Key 来统计余额。");
+      return;
     }
 
-    const selectedModels = models.filter((m) => m.available);
-    if (selectedModels.length === 0) {
-      return Locale.CustomProvider.NoSelectedModels;
+    if (providerBalances[id]) {
+      setProviderBalances((prev) => {
+        const newBalances = { ...prev };
+        delete newBalances[id];
+        return newBalances;
+      });
+      return;
     }
 
-    // 创建模型列表显示
-    return (
-      <div className={styles.modelPopoverContent}>
-        <div className={styles.modelList}>
-          {selectedModels.map((model) => (
-            <div key={model.name} className={styles.modelPill}>
-              {model.name}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    let totalBalance = 0;
+    let currency = "";
+
+    // 设置当前提供商的加载状态
+    setLoadingBalances((prev) => ({ ...prev, [id]: true }));
+
+    try {
+      // 使用 Promise.all 来并行获取所有 key 的余额
+      const balancePromises = keys.map(async (key) => {
+        try {
+          let result = null;
+          if (type === "siliconflow") {
+            result = await accessStore.checkSiliconFlowBalance(key, baseUrl);
+          } else if (type === "deepseek") {
+            result = await accessStore.checkDeepSeekBalance(key, baseUrl);
+          } else if (
+            type === "openai" &&
+            baseUrl !== providerTypeDefaultUrls[type]
+          ) {
+            result = await accessStore.checkCustomOpenaiBalance(key, baseUrl);
+          }
+
+          if (result && result.isValid && result.totalBalance) {
+            if (!currency && result.currency) {
+              currency = result.currency;
+            }
+            return parseFloat(result.totalBalance);
+          } else {
+            throw new Error(result?.error || "查询失败或不支持查询");
+          }
+        } catch (error) {
+          console.error(`API Key ${key} 余额查询失败:`, error);
+          return 0;
+        }
+      });
+
+      const balances = await Promise.all(balancePromises);
+      totalBalance = balances.reduce((acc, curr) => acc + curr, 0);
+
+      // 更新余额状态
+      setProviderBalances((prev) => ({
+        ...prev,
+        [id]: `${currency} ${totalBalance.toFixed(2)}`,
+      }));
+
+      showToast(`总余额: ${currency} ${totalBalance.toFixed(2)}`);
+    } catch (error) {
+      console.error("统计余额时发生错误:", error);
+      showToast("统计余额失败，请稍后再试。");
+    } finally {
+      setLoadingBalances((prev) => ({ ...prev, [id]: false }));
+    }
   };
 
   return (
@@ -1375,6 +1443,27 @@ export function CustomProvider() {
                     <div className={styles.toggleSlider}></div>
                   </div>
                 </div>
+                <IconButton
+                  icon={
+                    loadingBalances[provider.id] ? (
+                      <LoadingIcon />
+                    ) : (
+                      <SearchIcon />
+                    )
+                  }
+                  text={providerBalances[provider.id] || "查询余额"}
+                  onClick={() => handleSumBalances(provider)}
+                  title={
+                    providerBalances[provider.id]
+                      ? "点击清除"
+                      : "查询所有密钥余额"
+                  }
+                  bordered
+                  className={
+                    providerBalances[provider.id] ? styles.balanceButton : ""
+                  }
+                  disabled={loadingBalances[provider.id]}
+                />
                 <IconButton
                   icon={<EditIcon />}
                   onClick={() => handleEditProvider(provider)}

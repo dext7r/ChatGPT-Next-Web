@@ -569,6 +569,8 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
   
   &:hover {
     border-color: #2563eb;
@@ -760,7 +762,8 @@
 .modelContent {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
 }
 .modelName {
   font-weight: 500;
@@ -792,6 +795,93 @@
     color: #2563eb;
   }
 }
+// 编辑按钮样式 - 类似测试按钮
+.modelEditButton {
+  flex-shrink: 0;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 1px 1px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  text-align: center;
+  
+  &:hover {
+    background-color: #e5e7eb;
+    border-color: #9ca3af;
+    color: #4b5563;
+  }
+}
+
+// 模型测试图标
+.modelTestIcon {
+  flex-shrink: 0;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 1px 1px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  text-align: center;
+  
+  &:hover {
+    background-color: #e5e7eb;
+    border-color: #9ca3af;
+  }
+  
+  &.testing {
+    background-color: #dbeafe;
+    color: #2563eb;
+    border: 1px solid #93c5fd;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.1);
+  }
+  
+  &.success {
+    background-color: #d1fae5;
+    color: #059669;
+    border: 1px solid #6ee7b7;
+    box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.1);
+  }
+  
+  &.error {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.1);
+    font-weight: 500;
+  }
+}
+// 测试结果文本
+.testResult {
+  font-size: 10px;
+  font-family: monospace;
+  white-space: nowrap;
+}
+// 测试图标
+.testIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.modelFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
 // 添加编辑名称模态框样式
 .editNameModal {
   background-color: white;

@@ -139,6 +139,8 @@ function ProviderModal(props: {
   const [models, setModels] = useState<Model[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelSearchTerm, setModelSearchTerm] = useState("");
+  // 模型排序状态
+  const [initialSortDone, setInitialSortDone] = useState(false);
   // 模型编辑和json视图
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const [editedDisplayName, setEditedDisplayName] = useState("");
@@ -322,6 +324,7 @@ function ProviderModal(props: {
     }
     if (currentStep < 2) {
       setCurrentStep(currentStep + 1);
+      setInitialSortDone(false);
       fetchModels();
     }
   };
@@ -402,21 +405,39 @@ function ProviderModal(props: {
         }
       });
 
-      setModels(
-        fetchedModels.map((model) => ({
-          ...model,
-          // 保留显示名称的优先级:
-          // 1. 从API获取的模型已有displayName
-          // 2. 从现有formData.models中获取displayName
-          // 3. 不设置displayName
-          displayName: model.displayName || displayNameMap.get(model.name),
-          available: selectedModelNames.includes(model.name),
-        })),
-      );
+      let modelsToSet = fetchedModels.map((model) => ({
+        ...model,
+        // 保留显示名称的优先级:
+        // 1. 从API获取的模型已有displayName
+        // 2. 从现有formData.models中获取displayName
+        // 3. 不设置displayName
+        displayName: model.displayName || displayNameMap.get(model.name),
+        available: selectedModelNames.includes(model.name),
+      }));
+      // 如果是在 step 2 且还没有进行过初始排序，则进行一次排序
+      if (!initialSortDone) {
+        modelsToSet = modelsToSet.sort((a, b) => {
+          if (a.available && !b.available) return -1;
+          if (!a.available && b.available) return 1;
+          return a.name.localeCompare(b.name);
+        });
+        setInitialSortDone(true);
+      }
+      setModels(modelsToSet);
     } catch (error) {
       console.error("获取模型列表失败:", error);
       if (formData.models?.length) {
-        setModels(formData.models);
+        if (currentStep === 2 && !initialSortDone) {
+          const sortedModels = [...formData.models].sort((a, b) => {
+            if (a.available && !b.available) return -1;
+            if (!a.available && b.available) return 1;
+            return a.name.localeCompare(b.name);
+          });
+          setModels(sortedModels);
+          setInitialSortDone(true);
+        } else {
+          setModels(formData.models);
+        }
       } else {
         showToast(`获取模型列表失败: ${error}`);
       }
@@ -720,10 +741,156 @@ function ProviderModal(props: {
       }
     })
     .sort((a, b) => {
+      // 在 step 2 中且已完成初始排序，不再排序
+      if (currentStep === 2 && initialSortDone) {
+        return 0;
+      }
+
       if (a.available && !b.available) return -1;
       if (!a.available && b.available) return 1;
-      return 0;
+      return a.name.localeCompare(b.name);
     });
+
+  // 添加模型测试状态管理
+  const [modelTestStatus, setModelTestStatus] = useState<
+    Record<
+      string,
+      {
+        status: "idle" | "testing" | "success" | "error";
+        result?: string;
+        time?: number;
+      }
+    >
+  >({});
+  // 测试模型可用性
+  const testModelAvailability = async (model: Model, e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止冒泡，避免触发选择模型
+    const modelName = model.name;
+
+    // 更新状态为测试中
+    setModelTestStatus((prev) => ({
+      ...prev,
+      [modelName]: { status: "testing" },
+    }));
+    try {
+      const startTime = Date.now();
+
+      // 使用第一个API Key进行测试
+      const apiKey = formData.apiKey.split(",")[0].trim();
+
+      // 准备测试请求
+      const testMessage = {
+        role: "user",
+        content: "Hello. Please respond with 'OK'.",
+      };
+      let completionPath = "/v1/chat/completions";
+      if (formData.type === "deepseek") {
+        completionPath = "/chat/completions";
+      }
+      // 发送非流式请求
+      const response = await fetchWithTimeout(
+        `${formData.baseUrl}${completionPath}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [testMessage],
+            max_tokens: 20,
+            stream: false,
+          }),
+        },
+        10000, // 设置超时时间为10秒
+      );
+
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+
+      if (response.ok) {
+        // 测试成功
+        setModelTestStatus((prev) => ({
+          ...prev,
+          [modelName]: {
+            status: "success",
+            result: `${responseTime}ms`,
+            time: responseTime,
+          },
+        }));
+      } else {
+        // API返回错误
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: { message: "未知错误", code: "unknown" } }));
+        const errorCode =
+          errorData.error?.code ||
+          errorData.error?.type ||
+          `${response.status}`;
+        const errorMessage =
+          errorData.error?.message || `错误 ${response.status}`;
+
+        showToast(`模型 ${modelName} 测试失败: ${errorMessage}`);
+
+        setModelTestStatus((prev) => ({
+          ...prev,
+          [modelName]: {
+            status: "error",
+            result: errorCode,
+          },
+        }));
+      }
+    } catch (error) {
+      // 请求异常
+      console.error("测试模型失败:", error);
+      let errorMsg = "请求失败";
+      let errorCode = "Error";
+
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          errorMsg = "请求超时";
+          errorCode = "TIMEOUT";
+        } else if (error.message.includes("timeout")) {
+          errorMsg = "请求超时";
+          errorCode = "TIMEOUT";
+        } else {
+          errorMsg = error.message;
+          errorCode = error.name || "ERROR";
+        }
+      }
+      showToast(`模型 ${modelName} 测试失败: ${errorMsg}`);
+
+      setModelTestStatus((prev) => ({
+        ...prev,
+        [modelName]: {
+          status: "error",
+          result: errorCode,
+        },
+      }));
+    }
+  };
+  // 带超时的请求函数
+  const fetchWithTimeout = async (
+    url: string,
+    options: RequestInit,
+    timeout = 10000,
+  ) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(id);
+      return response;
+    } catch (error) {
+      clearTimeout(id);
+      throw error;
+    }
+  };
 
   return (
     <div className="modal-mask">
@@ -1028,12 +1195,51 @@ function ProviderModal(props: {
                         >
                           {model.displayName || model.name}
                         </div>
+                      </div>
+                      <div className={styles.modelFooter}>
+                        <div
+                          className={`${styles.modelTestIcon} ${
+                            modelTestStatus[model.name]?.status === "testing"
+                              ? styles.testing
+                              : modelTestStatus[model.name]?.status ===
+                                "success"
+                              ? styles.success
+                              : modelTestStatus[model.name]?.status === "error"
+                              ? styles.error
+                              : ""
+                          }`}
+                          onClick={(e) => testModelAvailability(model, e)}
+                          title={
+                            modelTestStatus[model.name]?.status === "success"
+                              ? `响应时间: ${modelTestStatus[model.name]
+                                  ?.result}`
+                              : modelTestStatus[model.name]?.status === "error"
+                              ? `错误: ${modelTestStatus[model.name]?.result}`
+                              : "测试模型可用性"
+                          }
+                        >
+                          {modelTestStatus[model.name]?.status === "testing" ? (
+                            <LoadingIcon />
+                          ) : modelTestStatus[model.name]?.status ===
+                            "success" ? (
+                            <span className={styles.testResult}>
+                              {modelTestStatus[model.name]?.result}
+                            </span>
+                          ) : modelTestStatus[model.name]?.status ===
+                            "error" ? (
+                            <span className={styles.testResult}>
+                              {modelTestStatus[model.name]?.result}
+                            </span>
+                          ) : (
+                            <span className={styles.testIcon}>Test</span>
+                          )}
+                        </div>
                         {model.available && (
                           <div
-                            className={styles.modelEditIcon}
+                            className={styles.modelEditButton}
                             onClick={(e) => handleEditDisplayName(model, e)}
                           >
-                            <EditIcon />
+                            Edit
                           </div>
                         )}
                       </div>

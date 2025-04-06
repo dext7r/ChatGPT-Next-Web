@@ -25,7 +25,7 @@ export function collectModelTable(
   > = {};
 
   // 检查各提供商是否有配置 API key
-  const hasOpenAIKey = !!accessStore?.openaiApiKey;
+  const hasOpenAIKey = !!accessStore?.openaiApiKey || !!accessStore?.accessCode;
   const hasAzureKey = !!accessStore?.azureApiKey;
   const hasGoogleKey = !!accessStore?.googleApiKey;
   const hasAnthropicKey = !!accessStore?.anthropicApiKey;

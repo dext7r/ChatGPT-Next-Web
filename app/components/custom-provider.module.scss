@@ -1039,9 +1039,11 @@
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+  width: 100%;
   
   .keyInput {
     flex: 1;
+    min-width: 400px;
     padding: 8px 12px;
     border: 1px solid #e5e7eb;
     border-radius: 6px;

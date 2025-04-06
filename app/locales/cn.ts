@@ -515,7 +515,7 @@ const cn = {
       SubTitle: "点击展开对话模型设置",
       CloseSubTile: "收起对话模型设置",
     },
-    Model: "模型 (model)",
+    ChatModel: "对话模型 (model)",
     StreamUsageEnable: {
       Title: "开启原生流式用量统计",
       SubTitle:
@@ -777,7 +777,7 @@ const cn = {
     Type: "类型",
     CustomAPI: "自定义 API",
     DescriptionPlaceholder: "添加描述（可选）",
-    ApiKeyPlaceholder: "输入您的 API Key",
+    ApiKeyPlaceholder: "输入您的 API Key，可以逗号或空格分隔多个密钥",
     Show: "显示",
     Hide: "隐藏",
     Previous: "上一步",
@@ -831,6 +831,9 @@ const cn = {
     KeyListView: "密钥：列表视图",
     NormalView: "密钥：普通视图",
     AddKey: "添加密钥",
+    ClearInput: "清除输入",
+    RefreshBalance: "刷新余额",
+    RemoveInvalidKey: "删除无效密钥",
     NoKeysAdded: "尚未添加任何API密钥",
     NewKeyPlaceholder: "输入新的API密钥",
     EditModel: {

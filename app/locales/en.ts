@@ -860,6 +860,9 @@ const en: LocaleType = {
     KeyListView: "Key List View",
     NormalView: "Normal View",
     AddKey: "Add Key",
+    ClearInput: "Clear Input",
+    RefreshBalance: "Refresh Balance",
+    RemoveInvalidKey: "Remove Invalid Key",
     NoKeysAdded: "No API Keys Added Yet",
     NewKeyPlaceholder: "Enter a new API key",
     EditModel: {

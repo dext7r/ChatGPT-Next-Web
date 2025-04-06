@@ -863,9 +863,11 @@ const en: LocaleType = {
     NoKeysAdded: "No API Keys Added Yet",
     NewKeyPlaceholder: "Enter a new API key",
     EditModel: {
-      EditDisplayName: "Edit model's DisplayName",
+      EditModelFeature: "Edit model's features",
       ModelID: "Model ID: ",
       DisplayName: "Display Name: ",
+      Description: "Description: ",
+      VisionSupport: "Enable Vision:",
       Cancel: "Cancel",
       Save: "Save",
       ErrorJson: "Invalid format. Please provide a valid JSON object.",

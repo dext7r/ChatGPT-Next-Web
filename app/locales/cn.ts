@@ -834,9 +834,11 @@ const cn = {
     NoKeysAdded: "尚未添加任何API密钥",
     NewKeyPlaceholder: "输入新的API密钥",
     EditModel: {
-      EditDisplayName: "编辑显示名称",
+      EditModelFeature: "编辑模型特性",
       ModelID: "模型ID：",
       DisplayName: "显示名称：",
+      Description: "模型描述：",
+      VisionSupport: "视觉支持：",
       Cancel: "取消",
       Save: "保存",
       ErrorJson: "无效的格式，请提供有效的JSON对象",

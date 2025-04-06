@@ -50,10 +50,10 @@ export function useAllModelsWithCustomProviders() {
                 id: model.name,
                 providerName: provider.name,
                 providerType: "custom-provider",
-                // baseUrl: provider.baseUrl,
-                // apiKey: provider.apiKey,
               },
               isCustom: true as const,
+              enableVision: model?.enableVision,
+              description: model?.description,
             }));
         });
       } catch (e) {

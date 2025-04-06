@@ -403,6 +403,52 @@
     transform: translateX(20px);
   }
 }
+
+// 切换开关容器
+.toggleContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+// 切换开关标签
+.toggleLabel {
+  font-size: 14px;
+  color: #374151;
+}
+// 如果需要，可以添加描述输入框的特殊样式
+.descriptionInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 400px;
+  
+  &:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  }
+}
+// 视觉支持行样式 - 使标签和开关在同一行
+.visionSupportRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  
+  label {
+    margin-right: 12px;
+    min-width: auto; // 防止标签占用过多空间
+    margin-bottom: 0; // 移除底部边距
+  }
+  
+  .toggleContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
 // 操作区中的开关容器样式调整
 .providerActions {
   .statusToggleContainer {

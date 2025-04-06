@@ -124,6 +124,7 @@ export interface Model {
   description?: string;
   provider?: LLMModelProvider;
   isDefault?: boolean;
+  enableVision?: boolean;
 }
 
 interface ChatProvider {

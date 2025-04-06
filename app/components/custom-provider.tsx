@@ -22,6 +22,7 @@ import TrashIcon from "../icons/delete.svg";
 import CloseIcon from "../icons/close.svg";
 import LoadingIcon from "../icons/loading.svg";
 import SearchIcon from "../icons/zoom.svg";
+import VisionIcon from "../icons/eye.svg";
 
 // 获取提供商类型标签
 const providerTypeLabels: Record<string, string> = {
@@ -146,6 +147,8 @@ function ProviderModal(props: {
   const [editedDisplayName, setEditedDisplayName] = useState("");
   const [isJsonViewMode, setIsJsonViewMode] = useState(false);
   const [displayNameMapText, setDisplayNameMapText] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
+  const [editedEnableVision, setEditedEnableVision] = useState(false);
   // API Key 列表视图状态
   const [isKeyListViewMode, setIsKeyListViewMode] = useState(false);
   const [keyList, setKeyList] = useState<string[]>([]);
@@ -405,15 +408,23 @@ function ProviderModal(props: {
         }
       });
 
-      let modelsToSet = fetchedModels.map((model) => ({
-        ...model,
-        // 保留显示名称的优先级:
-        // 1. 从API获取的模型已有displayName
-        // 2. 从现有formData.models中获取displayName
-        // 3. 不设置displayName
-        displayName: model.displayName || displayNameMap.get(model.name),
-        available: selectedModelNames.includes(model.name),
-      }));
+      let modelsToSet = fetchedModels.map((model) => {
+        const existingModel = formData.models?.find(
+          (m) => m.name === model.name,
+        );
+
+        return {
+          ...model,
+          // 保留显示名称的优先级:
+          // 1. 从API获取的模型已有displayName
+          // 2. 从现有formData.models中获取displayName
+          // 3. 不设置displayName
+          displayName: model.displayName || displayNameMap.get(model.name),
+          available: selectedModelNames.includes(model.name),
+          description: existingModel?.description || model?.description,
+          enableVision: existingModel?.enableVision || model?.enableVision,
+        };
+      });
       // 如果是在 step 2 且还没有进行过初始排序，则进行一次排序
       if (!initialSortDone) {
         modelsToSet = modelsToSet.sort((a, b) => {
@@ -509,6 +520,8 @@ function ProviderModal(props: {
     e.stopPropagation();
     setEditingModel(model);
     setEditedDisplayName(model.displayName || model.name);
+    setEditedDescription(model.description || "");
+    setEditedEnableVision(model.enableVision || false);
   };
   // 保存显示名称
   const saveDisplayName = () => {
@@ -517,7 +530,12 @@ function ProviderModal(props: {
     setModels(
       models.map((model) =>
         model.name === editingModel.name
-          ? { ...model, displayName: editedDisplayName.trim() || model.name }
+          ? {
+              ...model,
+              displayName: editedDisplayName.trim() || model.name,
+              description: editedDescription,
+              enableVision: editedEnableVision,
+            }
           : model,
       ),
     );
@@ -1234,6 +1252,9 @@ function ProviderModal(props: {
                             <span className={styles.testIcon}>Test</span>
                           )}
                         </div>
+                        {model?.enableVision && (
+                          <VisionIcon width="16" height="16" />
+                        )}
                         {model.available && (
                           <div
                             className={styles.modelEditButton}
@@ -1260,7 +1281,7 @@ function ProviderModal(props: {
         <div className="modal-mask" style={{ zIndex: 2000 }}>
           <div className={styles.editNameModal}>
             <div className={styles.editNameHeader}>
-              <h3>{Locale.CustomProvider.EditModel.EditDisplayName}</h3>
+              <h3>{Locale.CustomProvider.EditModel.EditModelFeature}</h3>
               <span
                 className={styles.closeButton}
                 onClick={() => setEditingModel(null)}
@@ -1282,6 +1303,34 @@ function ProviderModal(props: {
                   placeholder={editingModel.name}
                   className={styles.displayNameInput}
                 />
+              </div>
+              <div className={styles.editNameRow}>
+                <label>{Locale.CustomProvider.EditModel.Description}</label>
+                <input
+                  type="text"
+                  value={editedDescription}
+                  onChange={(e) => setEditedDescription(e.target.value)}
+                  placeholder="输入模型描述（可选）"
+                  className={styles.displayNameInput}
+                />
+              </div>
+              <div className={styles.editNameRow}>
+                <div className={styles.visionSupportRow}>
+                  <label>{Locale.CustomProvider.EditModel.VisionSupport}</label>
+                  <div className={styles.toggleContainer}>
+                    <div
+                      className={`${styles.toggleSwitch} ${
+                        editedEnableVision ? styles.active : ""
+                      }`}
+                      onClick={() => setEditedEnableVision(!editedEnableVision)}
+                    >
+                      <div className={styles.toggleSlider}></div>
+                    </div>
+                    <span className={styles.toggleLabel}>
+                      {editedEnableVision ? "已启用" : "未启用"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className={styles.editNameFooter}>

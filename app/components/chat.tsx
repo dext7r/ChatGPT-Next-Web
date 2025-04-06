@@ -962,44 +962,50 @@ export function ChatActions(props: {
   const currentModel = session.mask.modelConfig.model;
   const currentProviderName =
     session.mask.modelConfig?.providerName || ServiceProvider.OpenAI;
-  const currentModelDisplayName = models.find(
-    (m) =>
-      m.name === currentModel &&
-      m.provider?.providerName === currentProviderName,
-  )?.displayName;
-  let storedProviders = safeLocalStorage().getItem(StoreKey.CustomProvider);
-  let current_apiKey = null;
-  let current_baseUrl = null;
-  let current_type = null;
-  if (storedProviders) {
-    try {
-      storedProviders = JSON.parse(storedProviders);
+  const [currentModelInfo, setCurrentModelInfo] = useState<Model | null>(null);
+  useEffect(() => {
+    const _currentModel =
+      models.find(
+        (m) =>
+          m.name === currentModel &&
+          m.provider?.providerName === currentProviderName,
+      ) || null;
+    setCurrentModelInfo(_currentModel);
+    let storedProviders = safeLocalStorage().getItem(StoreKey.CustomProvider);
+    let current_apiKey = null;
+    let current_baseUrl = null;
+    let current_type = null;
+    if (storedProviders) {
+      try {
+        storedProviders = JSON.parse(storedProviders);
 
-      // 确保 storedProviders 是数组
-      if (Array.isArray(storedProviders)) {
-        const provider = storedProviders.find(
-          (prov) => prov.name === currentProviderName,
-        );
+        // 确保 storedProviders 是数组
+        if (Array.isArray(storedProviders)) {
+          const provider = storedProviders.find(
+            (prov) => prov.name === currentProviderName,
+          );
 
-        if (provider) {
-          current_apiKey = provider.apiKey;
-          current_baseUrl = provider.baseUrl;
-          current_type = provider.type;
+          if (provider) {
+            current_apiKey = provider.apiKey;
+            current_baseUrl = provider.baseUrl;
+            current_type = provider.type;
+          }
         }
+      } catch (error) {
+        console.error("Error parsing stored providers:", error);
       }
-    } catch (error) {
-      console.error("Error parsing stored providers:", error);
     }
-  }
-  if (current_baseUrl && current_apiKey) {
-    access.useCustomProvider = true;
-    access.customProvider_apiKey = current_apiKey;
-    access.customProvider_baseUrl = current_baseUrl;
-    access.customProvider_type = current_type;
-  } else {
-    access.useCustomProvider = false;
-  }
-  const canUploadImage = isVisionModel(currentModel);
+    if (current_baseUrl && current_apiKey) {
+      access.useCustomProvider = true;
+      access.customProvider_apiKey = current_apiKey;
+      access.customProvider_baseUrl = current_baseUrl;
+      access.customProvider_type = current_type;
+    } else {
+      access.useCustomProvider = false;
+    }
+  }, [models, session.mask.modelConfig.model]);
+  const canUploadImage =
+    isVisionModel(currentModel) || currentModelInfo?.enableVision;
 
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showUploadImage, setShowUploadImage] = useState(false);
@@ -1156,7 +1162,7 @@ export function ChatActions(props: {
         <ChatAction
           onClick={() => setShowModelSelector(true)}
           alwaysShowText={true}
-          text={currentModelDisplayName || currentModel}
+          text={currentModelInfo?.displayName || currentModel}
           icon={<RobotIcon />}
         />
 

@@ -515,7 +515,7 @@ const cn = {
       SubTitle: "点击展开对话模型设置",
       CloseSubTile: "收起对话模型设置",
     },
-    ChatModel: "对话模型 (model)",
+    Model: "对话模型 (model)",
     StreamUsageEnable: {
       Title: "开启原生流式用量统计",
       SubTitle:

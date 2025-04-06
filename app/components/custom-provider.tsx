@@ -322,26 +322,26 @@ function ProviderModal(props: {
   };
 
   const handleClose = () => {
-    // 如果在JSON视图模式下，先应用JSON更改
-    if (isJsonViewMode) {
-      try {
-        const json = JSON.parse(displayNameMapText);
-        if (typeof json === "object" && json !== null) {
-          setModels(
-            models.map((model) => ({
-              ...model,
-              displayName: json[model.name] || model.displayName || model.name,
-            })),
-          );
-        }
-      } catch (e) {
-        // 如果JSON解析失败，忽略错误继续保存其他内容
-        console.error("JSON解析失败，忽略显示名称更改", e);
-      }
-    }
+    // // 如果在JSON视图模式下，先应用JSON更改
+    // if (isJsonViewMode) {
+    //   try {
+    //     const json = JSON.parse(displayNameMapText);
+    //     if (typeof json === "object" && json !== null) {
+    //       setModels(
+    //         models.map((model) => ({
+    //           ...model,
+    //           displayName: json[model.name] || model.displayName || model.name,
+    //         })),
+    //       );
+    //     }
+    //   } catch (e) {
+    //     // 如果JSON解析失败，忽略错误继续保存其他内容
+    //     console.error("JSON解析失败，忽略显示名称更改", e);
+    //   }
+    // }
 
-    // 提交表单
-    handleSubmit();
+    // // 提交表单
+    // handleSubmit();
 
     // 调用原始的onClose
     props.onClose();

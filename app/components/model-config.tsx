@@ -6,32 +6,9 @@ import { InputRange } from "./input-range";
 import { ListItem, Select } from "./ui-lib";
 import { useAllModelsWithCustomProviders } from "../utils/hooks";
 import { groupBy } from "lodash-es";
-import { safeLocalStorage } from "../utils";
-import { useState, useEffect, Provider } from "react";
+import { getStoredModelConfigs, saveModelConfig } from "../utils";
+import { useState, useEffect } from "react";
 
-// 从localStorage获取模型配置
-function getStoredModelConfigs() {
-  try {
-    const configsStr = safeLocalStorage().getItem(StoreKey.TaskModelConfig);
-    return configsStr ? JSON.parse(configsStr) : {};
-  } catch (e) {
-    console.error("Error parsing model configs:", e);
-    return {};
-  }
-}
-// 保存模型配置到localStorage
-function saveModelConfig(key: string, value: string) {
-  try {
-    const configs = getStoredModelConfigs();
-    configs[key] = value;
-    safeLocalStorage().setItem(
-      StoreKey.TaskModelConfig,
-      JSON.stringify(configs),
-    );
-  } catch (e) {
-    console.error("Error saving model config:", e);
-  }
-}
 function findMatchingProvider(
   model: string,
   providername: string,

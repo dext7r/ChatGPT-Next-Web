@@ -77,7 +77,7 @@ export interface RichMessage {
 export interface ChatOptions {
   messages: RequestMessage[];
   config: LLMConfig;
-  type?: "chat" | "topic" | "compress";
+  type?: "chat" | "topic" | "compress" | "translate" | "ocr";
 
   onUpdate?: (message: string, chunk: string) => void;
   onFinish: (message: string | RichMessage, responseRes: Response) => void;
@@ -236,7 +236,6 @@ export function getHeaders(ignoreHeaders: boolean = false) {
       Accept: "application/json",
     };
   }
-
   const modelConfig = chatStore.currentSession().mask.modelConfig;
   const isGoogle = modelConfig.providerName === ServiceProvider.Google;
   const isAzure = accessStore.provider === ServiceProvider.Azure;

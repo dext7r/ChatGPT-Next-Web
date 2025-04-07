@@ -3,7 +3,11 @@ import { showToast } from "./components/ui-lib";
 import Locale from "./locales";
 import { RequestMessage, UploadFile } from "./client/api";
 import { useAccessStore } from "./store";
-import { VISION_MODEL_REGEXES, EXCLUDE_VISION_MODEL_REGEXES } from "./constant";
+import {
+  VISION_MODEL_REGEXES,
+  EXCLUDE_VISION_MODEL_REGEXES,
+  StoreKey,
+} from "./constant";
 import { estimateTokenLengthInLLM } from "./utils/token";
 
 export const readFileContent = async (
@@ -573,4 +577,28 @@ export function safeLocalStorage(): {
       }
     },
   };
+}
+
+// 从localStorage获取模型配置
+export function getStoredModelConfigs() {
+  try {
+    const configsStr = safeLocalStorage().getItem(StoreKey.TaskModelConfig);
+    return configsStr ? JSON.parse(configsStr) : {};
+  } catch (e) {
+    console.error("Error parsing model configs:", e);
+    return {};
+  }
+}
+// 保存模型配置到localStorage
+export function saveModelConfig(key: string, value: string) {
+  try {
+    const configs = getStoredModelConfigs();
+    configs[key] = value;
+    safeLocalStorage().setItem(
+      StoreKey.TaskModelConfig,
+      JSON.stringify(configs),
+    );
+  } catch (e) {
+    console.error("Error saving model config:", e);
+  }
 }

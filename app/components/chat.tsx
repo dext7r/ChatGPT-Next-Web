@@ -1031,6 +1031,7 @@ export function ChatActions(props: {
   }, [
     models,
     session.mask.modelConfig.model,
+    session.messages,
     currentModel,
     currentProviderName,
   ]);

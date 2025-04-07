@@ -70,7 +70,10 @@ docker 镜像：
 - 悬浮球信息栏：直观查看请求负载并支持快速编辑，需要在“个性化设置”里开启
    <img src="./docs/images/floating-button.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
 
-- 自定义 AI 提供商（暂时只支持 openai 类型）
+- 自定义 AI 提供商（暂时只支持 openai/deepseek/siliconflow 类型）
+   - 页面触发：左下角功能键（充电图标），或者悬浮球功能键（充电图标），或手动进入 #/custom-provider 路由页面
+   - 功能支持：单渠道配置多密钥，密钥余额查询，移除零余额和无效key，拉取模型，模型测试，配置模型别名和视觉支持等
+
    <img src="./docs/images/customProvider_1.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
    <img src="./docs/images/customProvider_2.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>
    <img src="./docs/images/customProvider_3.png" width="80%" alt="think" style="display:inline-block; margin-right:10px"/>

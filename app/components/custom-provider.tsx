@@ -23,6 +23,7 @@ import CloseIcon from "../icons/close.svg";
 import LoadingIcon from "../icons/loading.svg";
 import SearchIcon from "../icons/zoom.svg";
 import VisionIcon from "../icons/eye.svg";
+import VisionOffIcon from "../icons/eye-off.svg";
 
 // 获取提供商类型标签
 const providerTypeLabels: Record<string, string> = {
@@ -1516,17 +1517,34 @@ function ProviderModal(props: {
                             <span className={styles.testIcon}>Test</span>
                           )}
                         </div>
-                        {model?.enableVision && (
-                          <VisionIcon width="16" height="16" />
-                        )}
-                        {model.available && (
-                          <div
-                            className={styles.modelEditButton}
-                            onClick={(e) => handleEditDisplayName(model, e)}
-                          >
-                            Edit
-                          </div>
-                        )}
+                        <div
+                          className={styles.visionToggle}
+                          onClick={(e) => {
+                            e.stopPropagation(); // 阻止冒泡，避免触发模型选择
+                            setModels(
+                              models.map((m) =>
+                                m.name === model.name
+                                  ? { ...m, enableVision: !m.enableVision }
+                                  : m,
+                              ),
+                            );
+                          }}
+                          title={
+                            model.enableVision ? "关闭视觉支持" : "开启视觉支持"
+                          }
+                        >
+                          {model.enableVision ? (
+                            <VisionIcon width="16" height="16" />
+                          ) : (
+                            <VisionOffIcon width="16" height="16" />
+                          )}
+                        </div>
+                        <div
+                          className={styles.modelEditButton}
+                          onClick={(e) => handleEditDisplayName(model, e)}
+                        >
+                          Edit
+                        </div>
                       </div>
                     </div>
                   ))}

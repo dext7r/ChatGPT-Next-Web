@@ -617,6 +617,8 @@
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
+  height: 100px;
+  box-sizing: border-box;
   
   &:hover {
     border-color: #2563eb;
@@ -639,7 +641,7 @@
 .modelName {
   font-weight: 500;
   font-size: 14px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   color: #111827;
   white-space: normal;
   overflow: visible;
@@ -647,6 +649,7 @@
   display: -webkit-box;
   -webkit-line-clamp: 2; // Limit to 2 lines
   -webkit-box-orient: vertical;
+  word-break: break-all; // Allow word wrapping
   min-height: 36px; // Add minimum height for two lines
 }
 
@@ -841,32 +844,9 @@
     color: #2563eb;
   }
 }
-// 编辑按钮样式 - 类似测试按钮
-.modelEditButton {
-  flex-shrink: 0;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 1px 1px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background-color: #f3f4f6;
-  color: #6b7280;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  text-align: center;
-  
-  &:hover {
-    background-color: #e5e7eb;
-    border-color: #9ca3af;
-    color: #4b5563;
-  }
-}
 
 // 模型测试图标
-.modelTestIcon {
+.modelTestIcon, .visionToggle, .modelEditButton, .placeholderItem {
   flex-shrink: 0;
   font-size: 12px;
   cursor: pointer;
@@ -1169,3 +1149,4 @@
     flex-direction: column;
   }
 }
+

@@ -59,6 +59,7 @@ export enum StoreKey {
   Update = "chat-update",
   Sync = "sync",
   CustomProvider = "custom-providers-store",
+  TaskModelConfig = "task-model-config",
 }
 
 export const DEFAULT_SIDEBAR_WIDTH = 300;

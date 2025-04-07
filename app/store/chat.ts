@@ -805,19 +805,34 @@ export const useChatStore = createPersistStore(
         const config = useAppConfig.getState();
         const session = targetSession;
 
-        const compressModel = getCompressModel();
-        const [compressModelName, compressProviderName] =
-          compressModel.split(/@(?=[^@]*$)/);
-        if (compressModelName) {
-          session.mask.modelConfig.compressModel = compressModelName;
-          if (compressProviderName) {
-            session.mask.modelConfig.translateProviderName =
-              compressProviderName as ServiceProvider;
-          }
-        }
         const modelConfig = session.mask.modelConfig;
-
         const providerName = modelConfig.compressProviderName;
+        const access = useAccessStore.getState();
+
+        try {
+          const storedProvidersData = safeLocalStorage().getItem(
+            StoreKey.CustomProvider,
+          );
+          const providers = storedProvidersData
+            ? JSON.parse(storedProvidersData)
+            : [];
+
+          const provider = Array.isArray(providers)
+            ? providers.find((provider) => provider.name === providerName)
+            : null;
+          if (provider?.baseUrl && provider?.apiKey) {
+            // 使用解构赋值和可选链操作符
+            access.useCustomProvider = true;
+            access.customProvider_apiKey = provider.apiKey;
+            access.customProvider_baseUrl = provider.baseUrl;
+            access.customProvider_type = provider.type;
+          } else {
+            access.useCustomProvider = false;
+          }
+        } catch (error) {
+          console.error("Error processing custom providers:", error);
+          access.useCustomProvider = false;
+        }
         const api: ClientApi = getClientApi(providerName);
 
         // remove error messages if any

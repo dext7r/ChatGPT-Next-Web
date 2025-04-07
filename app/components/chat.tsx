@@ -538,7 +538,6 @@ export function ChatActions(props: {
   // continue chat
   const [isContinue, setIsContinue] = useState(false);
   // model
-  const { translateModel, ocrModel } = useAccessStore();
 
   // 监听用户输入变化，如果输入改变则重置撤销状态
   useEffect(() => {
@@ -578,18 +577,34 @@ export function ChatActions(props: {
     setIsTranslating(true);
     showToast(Locale.Chat.InputActions.Translate.isTranslatingToast);
     //
-    const [translateModelName, translateProviderName] =
-      translateModel.split(/@(?=[^@]*$)/);
-    if (translateModelName) {
-      session.mask.modelConfig.translateModel = translateModelName;
-      if (translateProviderName) {
-        session.mask.modelConfig.translateProviderName =
-          translateProviderName as ServiceProvider;
-      }
-    }
     const modelConfig = session.mask.modelConfig;
-
     const providerName = modelConfig.translateProviderName;
+
+    try {
+      const storedProvidersData = safeLocalStorage().getItem(
+        StoreKey.CustomProvider,
+      );
+      const providers = storedProvidersData
+        ? JSON.parse(storedProvidersData)
+        : [];
+
+      const provider = Array.isArray(providers)
+        ? providers.find((provider) => provider.name === providerName)
+        : null;
+
+      if (provider?.baseUrl && provider?.apiKey) {
+        // 使用解构赋值和可选链操作符
+        access.useCustomProvider = true;
+        access.customProvider_apiKey = provider.apiKey;
+        access.customProvider_baseUrl = provider.baseUrl;
+        access.customProvider_type = provider.type;
+      } else {
+        access.useCustomProvider = false;
+      }
+    } catch (error) {
+      console.error("Error processing custom providers:", error);
+      access.useCustomProvider = false;
+    }
     const api: ClientApi = getClientApi(providerName);
     api.llm.chat({
       messages: [
@@ -644,16 +659,34 @@ export function ChatActions(props: {
     setIsOCRing(true);
     showToast(Locale.Chat.InputActions.OCR.isDetectingToast);
     //
-    const [ocrModelName, ocrProviderName] = ocrModel.split(/@(?=[^@]*$)/);
-    if (ocrModelName) {
-      session.mask.modelConfig.ocrModel = ocrModelName;
-      if (ocrProviderName) {
-        session.mask.modelConfig.translateProviderName =
-          ocrProviderName as ServiceProvider;
-      }
-    }
     const modelConfig = session.mask.modelConfig;
-    const providerName = modelConfig.translateProviderName;
+    const providerName = modelConfig.ocrProviderName;
+
+    try {
+      const storedProvidersData = safeLocalStorage().getItem(
+        StoreKey.CustomProvider,
+      );
+      const providers = storedProvidersData
+        ? JSON.parse(storedProvidersData)
+        : [];
+
+      const provider = Array.isArray(providers)
+        ? providers.find((provider) => provider.name === providerName)
+        : null;
+
+      if (provider?.baseUrl && provider?.apiKey) {
+        // 使用解构赋值和可选链操作符
+        access.useCustomProvider = true;
+        access.customProvider_apiKey = provider.apiKey;
+        access.customProvider_baseUrl = provider.baseUrl;
+        access.customProvider_type = provider.type;
+      } else {
+        access.useCustomProvider = false;
+      }
+    } catch (error) {
+      console.error("Error processing custom providers:", error);
+      access.useCustomProvider = false;
+    }
 
     const api: ClientApi = getClientApi(providerName);
     let textValue = Locale.Chat.InputActions.OCR.DetectPrompt;
@@ -971,39 +1004,36 @@ export function ChatActions(props: {
           m.provider?.providerName === currentProviderName,
       ) || null;
     setCurrentModelInfo(_currentModel);
-    let storedProviders = safeLocalStorage().getItem(StoreKey.CustomProvider);
-    let current_apiKey = null;
-    let current_baseUrl = null;
-    let current_type = null;
-    if (storedProviders) {
-      try {
-        storedProviders = JSON.parse(storedProviders);
+    try {
+      const storedProvidersData = safeLocalStorage().getItem(
+        StoreKey.CustomProvider,
+      );
+      const providers = storedProvidersData
+        ? JSON.parse(storedProvidersData)
+        : [];
 
-        // 确保 storedProviders 是数组
-        if (Array.isArray(storedProviders)) {
-          const provider = storedProviders.find(
-            (prov) => prov.name === currentProviderName,
-          );
-
-          if (provider) {
-            current_apiKey = provider.apiKey;
-            current_baseUrl = provider.baseUrl;
-            current_type = provider.type;
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing stored providers:", error);
+      const provider = Array.isArray(providers)
+        ? providers.find((provider) => provider.name === currentProviderName)
+        : null;
+      if (provider?.baseUrl && provider?.apiKey) {
+        // 使用解构赋值和可选链操作符
+        access.useCustomProvider = true;
+        access.customProvider_apiKey = provider.apiKey;
+        access.customProvider_baseUrl = provider.baseUrl;
+        access.customProvider_type = provider.type;
+      } else {
+        access.useCustomProvider = false;
       }
-    }
-    if (current_baseUrl && current_apiKey) {
-      access.useCustomProvider = true;
-      access.customProvider_apiKey = current_apiKey;
-      access.customProvider_baseUrl = current_baseUrl;
-      access.customProvider_type = current_type;
-    } else {
+    } catch (error) {
+      console.error("Error processing custom providers:", error);
       access.useCustomProvider = false;
     }
-  }, [models, session.mask.modelConfig.model]);
+  }, [
+    models,
+    session.mask.modelConfig.model,
+    currentModel,
+    currentProviderName,
+  ]);
   const canUploadImage =
     isVisionModel(currentModel) || currentModelInfo?.enableVision;
 

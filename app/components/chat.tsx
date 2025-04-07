@@ -1036,7 +1036,7 @@ export function ChatActions(props: {
     currentProviderName,
   ]);
   const canUploadImage =
-    isVisionModel(currentModel) || currentModelInfo?.enableVision;
+    isVisionModel(currentModel) || !!currentModelInfo?.enableVision;
 
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showUploadImage, setShowUploadImage] = useState(false);
@@ -2287,7 +2287,15 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const currentModel = chatStore.currentSession().mask.modelConfig.model;
-      const canUploadImage = isVisionModel(currentModel);
+      const currentProviderName =
+        chatStore.currentSession().mask.modelConfig.providerName;
+      const currentModelInfo = modelTable.find(
+        (m) =>
+          m.name === currentModel &&
+          m.provider?.providerName === currentProviderName,
+      );
+      const canUploadImage =
+        isVisionModel(currentModel) || !!currentModelInfo?.enableVision;
       const items = (event.clipboardData || window.clipboardData).items;
 
       // 检查是否有文本内容
@@ -2448,7 +2456,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
         }
       }
     },
-    [attachImages, attachFiles, chatStore],
+    [attachImages, attachFiles, chatStore, modelTable],
   );
 
   function supportFileType(filename: string) {

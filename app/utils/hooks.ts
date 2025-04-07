@@ -11,7 +11,14 @@ export function useAllModels() {
   const models = useMemo(() => {
     return collectModelsWithDefaultModel(
       configStore.models,
-      [configStore.customModels, accessStore.customModels].join(","),
+      [
+        configStore.customModels,
+        accessStore.customModels,
+        accessStore.defaultModel,
+        accessStore.compressModel,
+        accessStore.translateModel,
+        accessStore.ocrModel,
+      ].join(","),
       accessStore,
     );
   }, [
@@ -21,7 +28,6 @@ export function useAllModels() {
     configStore.models,
     accessStore,
   ]);
-
   return models;
 }
 

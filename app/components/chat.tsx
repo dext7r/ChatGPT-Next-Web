@@ -28,7 +28,7 @@ import ResetIcon from "../icons/reload.svg";
 import BreakIcon from "../icons/break.svg";
 import SettingsIcon from "../icons/chat-settings.svg";
 import DeleteIcon from "../icons/clear.svg";
-import PinIcon from "../icons/pin.svg";
+// import PinIcon from "../icons/pin.svg";
 import EditIcon from "../icons/rename.svg";
 import EditToInputIcon from "../icons/edit_input.svg";
 import ConfirmIcon from "../icons/confirm.svg";
@@ -578,8 +578,13 @@ export function ChatActions(props: {
     showToast(Locale.Chat.InputActions.Translate.isTranslatingToast);
     //
     const modelConfig = session.mask.modelConfig;
-    const providerName = modelConfig.translateProviderName;
-
+    let translateModel = modelConfig.translateModel;
+    let providerName = modelConfig.translateProviderName;
+    if (!providerName && access.translateModel) {
+      let providerNameStr;
+      [translateModel, providerNameStr] = access.translateModel.split("@");
+      providerName = providerNameStr as ServiceProvider;
+    }
     try {
       const storedProvidersData = safeLocalStorage().getItem(
         StoreKey.CustomProvider,
@@ -587,7 +592,6 @@ export function ChatActions(props: {
       const providers = storedProvidersData
         ? JSON.parse(storedProvidersData)
         : [];
-
       const provider = Array.isArray(providers)
         ? providers.find((provider) => provider.name === providerName)
         : null;
@@ -614,7 +618,7 @@ export function ChatActions(props: {
         },
       ],
       config: {
-        model: modelConfig.translateModel,
+        model: translateModel,
         stream: false,
       },
       onFinish(message, responseRes) {
@@ -660,7 +664,13 @@ export function ChatActions(props: {
     showToast(Locale.Chat.InputActions.OCR.isDetectingToast);
     //
     const modelConfig = session.mask.modelConfig;
-    const providerName = modelConfig.ocrProviderName;
+    let ocrModel = modelConfig.ocrModel;
+    let providerName = modelConfig.ocrProviderName;
+    if (!providerName && access.ocrModel) {
+      let providerNameStr;
+      [ocrModel, providerNameStr] = access.ocrModel.split("@");
+      providerName = providerNameStr as ServiceProvider;
+    }
 
     try {
       const storedProvidersData = safeLocalStorage().getItem(
@@ -710,7 +720,7 @@ export function ChatActions(props: {
         },
       ],
       config: {
-        model: modelConfig.ocrModel,
+        model: ocrModel,
         stream: false,
       },
       onFinish(message, responseRes) {
@@ -1224,15 +1234,11 @@ export function ChatActions(props: {
             }}
           />
         )}
-        {isMobileScreen && (
+        {isMobileScreen && !showMobileActions && (
           <ChatAction
             onClick={toggleMobileActions}
-            text={
-              showMobileActions
-                ? Locale.Chat.InputActions.Collapse
-                : Locale.Chat.InputActions.Expand
-            }
-            icon={showMobileActions ? <CollapseIcon /> : <ExpandIcon />}
+            text={Locale.Chat.InputActions.Expand}
+            icon={<ExpandIcon />}
           />
         )}
       </div>
@@ -1276,18 +1282,18 @@ export function ChatActions(props: {
           alwaysShowText={isTranslating || originalTextForTranslate !== null}
           icon={<TranslateIcon />}
         />
-        {!isMobileScreen && (
-          <ChatAction
-            onClick={handleOCR}
-            text={
-              isOCRing
-                ? Locale.Chat.InputActions.OCR.isDetectingToast
-                : Locale.Chat.InputActions.OCR.Title
-            }
-            alwaysShowText={isOCRing}
-            icon={<OcrIcon />}
-          />
-        )}
+        {/* {!isMobileScreen && ( */}
+        <ChatAction
+          onClick={handleOCR}
+          text={
+            isOCRing
+              ? Locale.Chat.InputActions.OCR.isDetectingToast
+              : Locale.Chat.InputActions.OCR.Title
+          }
+          alwaysShowText={isOCRing}
+          icon={<OcrIcon />}
+        />
+        {/* )} */}
         <ChatAction
           onClick={handlePrivacy}
           text={
@@ -1300,6 +1306,14 @@ export function ChatActions(props: {
           alwaysShowText={isPrivacying || originalTextForPrivacy !== null}
           icon={<PrivacyIcon />}
         />
+        {isMobileScreen && showMobileActions && (
+          <ChatAction
+            onClick={toggleMobileActions}
+            alwaysShowText={true}
+            text={Locale.Chat.InputActions.Collapse}
+            icon={<CollapseIcon />}
+          />
+        )}
       </div>
     </div>
   );

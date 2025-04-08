@@ -802,12 +802,18 @@ export const useChatStore = createPersistStore(
         refreshTitle: boolean = false,
         targetSession: ChatSession,
       ) {
+        const access = useAccessStore.getState();
         const config = useAppConfig.getState();
         const session = targetSession;
 
         const modelConfig = session.mask.modelConfig;
-        const providerName = modelConfig.compressProviderName;
-        const access = useAccessStore.getState();
+        let compressModel = modelConfig.compressModel;
+        let providerName = modelConfig.compressProviderName;
+        if (!providerName && access.compressModel) {
+          let providerNameStr;
+          [compressModel, providerNameStr] = access.compressModel.split("@");
+          providerName = providerNameStr as ServiceProvider;
+        }
 
         try {
           const storedProvidersData = safeLocalStorage().getItem(
@@ -880,7 +886,7 @@ export const useChatStore = createPersistStore(
           api.llm.chat({
             messages: topicMessages,
             config: {
-              model: modelConfig.compressModel,
+              model: compressModel,
               stream: false,
             },
             type: "topic",

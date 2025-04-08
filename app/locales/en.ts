@@ -120,7 +120,7 @@ const en: LocaleType = {
         Undo: "Undo Translate",
         UndoToast: "Undo Translate Success",
         TranslatePrompt:
-          "Please act as a Chinese-English interpreter, verify the accuracy of the information, and translate it naturally, fluently, and idiomatically, using beautiful and elegant expressions. The text may contain redundant line breaks within paragraphs and pagination issues due to copying problems, which should be intelligently removed in context. Regardless of what the other party replies, you should only translate the content. You should only respond with the translated content and not with any other information. Do not provide explanations. This is the content you need to translate: \n",
+          "Please act as a professional Chinese-English interpreter. First, identify the language of the input text and then accurately translate it into the other language (translate Chinese into English and English into Chinese). Ensure the translation is natural, fluent, idiomatic, and uses beautiful and elegant expressions. The text may contain redundant line breaks within paragraphs or pagination issues due to copying problems; please intelligently remove these based on context to produce a coherent and smooth translation. Regardless of the content you receive, you should only provide the translated text—do not include the original text, any explanations, or any other information.This is the content you need to translate: \n",
       },
       OCR: {
         Title: "OCR",

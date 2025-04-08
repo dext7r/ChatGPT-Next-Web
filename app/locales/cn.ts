@@ -761,7 +761,7 @@ const cn = {
     Title: "自定义 AI 提供商",
     AddButton: "添加提供商",
     Count: "共 {count} 个提供商配置",
-    SearchPlaceholder: "搜索 AI 提供商...",
+    SearchPlaceholder: "搜索提供商名称或模型名称...",
     Loading: "加载 AI 提供商...",
     NoProviders: "未找到匹配的 AI 提供商",
     Edit: "编辑",

@@ -788,7 +788,7 @@ const en: LocaleType = {
     Title: "Custom AI Provider",
     AddButton: "Add Provider",
     Count: "Total {count} provider configurations",
-    SearchPlaceholder: "Search AI providers...",
+    SearchPlaceholder: "Search AI providers or available models...",
     Loading: "Loading AI providers...",
     NoProviders: "No matching AI providers found",
     Edit: "Edit",

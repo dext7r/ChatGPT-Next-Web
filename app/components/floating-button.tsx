@@ -28,6 +28,7 @@ import {
   getMessageTextContent,
   getMessageTextContentWithoutThinking,
 } from "../utils";
+import { Select } from "./ui-lib";
 
 interface Position {
   x: number;
@@ -50,6 +51,7 @@ interface SessionInfo {
   presencePenalty: number;
   presencePenaltyEnabled: boolean;
   sendMemory: boolean;
+  reasoning_effort: string;
 }
 
 export function FloatingButton() {
@@ -215,6 +217,7 @@ export function FloatingButton() {
     presencePenalty: mask.modelConfig.presence_penalty,
     presencePenaltyEnabled: mask.modelConfig.presence_penalty_enabled,
     sendMemory: mask.modelConfig.sendMemory,
+    reasoning_effort: mask.modelConfig?.reasoning_effort || "none",
   });
 
   // 当配置改变时更新会话信息
@@ -235,6 +238,7 @@ export function FloatingButton() {
       presencePenalty: mask.modelConfig.presence_penalty,
       presencePenaltyEnabled: mask.modelConfig.presence_penalty_enabled,
       sendMemory: mask.modelConfig.sendMemory,
+      reasoning_effort: mask.modelConfig.reasoning_effort,
     });
   }, [mask.modelConfig]);
 
@@ -524,6 +528,57 @@ export function FloatingButton() {
   if (!config.enableFloatingButton) {
     return null;
   }
+  const renderReasoningEffort = () => {
+    const value = sessionInfo.reasoning_effort || "none";
+    const isDisabled = value === "none";
+
+    const handleReasoningEffortChange = (
+      e: React.ChangeEvent<HTMLSelectElement>,
+    ) => {
+      const newValue = e.currentTarget.value;
+      chatStore.updateCurrentSession((session) => {
+        session.mask.modelConfig.reasoning_effort = newValue;
+      });
+
+      // Manually update sessionInfo to force a re-render
+      setSessionInfo((prev) => ({
+        ...prev,
+        reasoning_effort: newValue,
+      }));
+    };
+    return (
+      <div
+        className={
+          isDisabled
+            ? `${styles.paramItem} ${styles.paramItemDisabled}`
+            : styles.paramItem
+        }
+      >
+        {Locale.Settings.Params.reasoning_effort.tip && (
+          <div className={styles.tooltip}>
+            {Locale.Settings.Params.reasoning_effort.tip}
+          </div>
+        )}
+        <div className={styles.paramLabel}>
+          <span>{Locale.Settings.Params.reasoning_effort.name}</span>
+          <div className={styles.statusContainer}>
+            <span
+              className={`${styles.enableIndicator} ${
+                !isDisabled ? styles.enabled : ""
+              }`}
+            ></span>
+          </div>
+        </div>
+        <div className={styles.paramValueContainer}>
+          <Select value={value} onChange={handleReasoningEffortChange}>
+            <option value="low">low</option>
+            <option value="high">high</option>
+            <option value="none">none</option>
+          </Select>
+        </div>
+      </div>
+    );
+  };
   return (
     <div
       // --- MODIFIED: Use containerRef and add touch handler ---
@@ -564,7 +619,20 @@ export function FloatingButton() {
                 </span>
               </span>
             </div>
-
+            <div
+              className={styles.paramItem}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div className={styles.paramLabel}>
+                {Locale.Settings.Params.current_history}
+              </div>
+              <div className={styles.paramValue}>{getHistoryStat()}</div>
+            </div>
+            <div className={styles.divider}></div>
             <div
               className={`${styles.collapsibleContent} ${
                 isParamsCollapsed ? styles.collapsed : ""
@@ -611,12 +679,7 @@ export function FloatingButton() {
                   0,
                   Locale.Settings.Params.max_tokens.tip,
                 )}
-                <div className={styles.paramItem}>
-                  <div className={styles.paramLabel}>
-                    {Locale.Settings.Params.current_history}
-                  </div>
-                  <div className={styles.paramValue}>{getHistoryStat()}</div>
-                </div>
+                {renderReasoningEffort()}
               </div>
               <div className={styles.divider}></div>
             </div>

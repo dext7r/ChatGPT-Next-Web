@@ -556,6 +556,10 @@ const cn = {
         name: "重复抑制",
         tip: "降低重复词汇的可能性 (-2 到 2), 值越大越能避免AI使用重复词汇",
       },
+      reasoning_effort: {
+        name: "推理努力",
+        tip: "修改模型推理努力程序，当前仅grok适用",
+      },
       current_history: "当前上下文",
     },
     Temperature: {
@@ -577,6 +581,11 @@ const cn = {
     FrequencyPenalty: {
       Title: "频率惩罚度 (frequency_penalty)",
       SubTitle: "值越大，越有可能降低重复字词",
+    },
+    ReasoningEffort: {
+      Title: "推理努力程度(reasoning_effort)",
+      SubTitle:
+        "约束推理模型的努力程度和思考时间，仅适用于支持该参数的模型和供应商（当前仅grok)",
     },
     TTS: {
       Enable: {

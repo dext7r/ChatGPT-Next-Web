@@ -658,85 +658,26 @@ export function ModelConfigList(props: {
           }
         ></input>
       </ListItem>
-      {/* <ListItem
-        title={Locale.Settings.CompressModel.Title}
-        subTitle={Locale.Settings.CompressModel.SubTitle}
+      <ListItem
+        title={Locale.Settings.ReasoningEffort.Title}
+        subTitle={Locale.Settings.ReasoningEffort.SubTitle}
       >
         <Select
-          className={styles["select-compress-model"]}
-          aria-label={Locale.Settings.CompressModel.Title}
-          value={compressModelValue}
+          aria-label={Locale.Settings.ReasoningEffort.Title}
+          value={props.modelConfig.reasoning_effort || "none"} // 默认值，如果未设置则为 'none'
+          align="left"
           onChange={(e) => {
-            console.log("e.currentTarget.value", e.currentTarget.value);
-            const [model, providerName] =
-              e.currentTarget.value.split(/@(?=[^@]*$)/);
+            const value = e.currentTarget.value; // 获取选中的值
             props.updateConfig((config) => {
-              config.compressModel = ModalConfigValidator.model(model);
-              config.compressProviderName = providerName as ServiceProvider;
+              config.reasoning_effort = value; // 更新配置
             });
           }}
         >
-          {allModels
-            .filter((v) => v.available)
-            .map((v, i) => (
-              <option value={`${v.name}@${v.provider?.providerName}`} key={i}>
-                {v.displayName}({v.provider?.providerName})
-              </option>
-            ))}
-        </Select>
-      </ListItem> */}
-      {/* <ListItem
-        title={Locale.Settings.TranslateModel.Title}
-        subTitle={Locale.Settings.TranslateModel.SubTitle}
-      >
-        <Select
-          className={styles["select-translate-model"]}
-          aria-label={Locale.Settings.TranslateModel.Title}
-          value={translateModelValue}
-          onChange={(e) => {
-            const [model, providerName] =
-              e.currentTarget.value.split(/@(?=[^@]*$)/);
-            props.updateConfig((config) => {
-              config.translateModel = ModalConfigValidator.model(model);
-              config.translateProviderName = providerName as ServiceProvider;
-            });
-          }}
-        >
-          {allModels
-            .filter((v) => v.available)
-            .map((v, i) => (
-              <option value={`${v.name}@${v.provider?.providerName}`} key={i}>
-                {v.displayName}({v.provider?.providerName})
-              </option>
-            ))}
+          <option value="low">low</option>
+          <option value="high">high</option>
+          <option value="none">none</option>
         </Select>
       </ListItem>
-      <ListItem
-        title={Locale.Settings.OCRModel.Title}
-        subTitle={Locale.Settings.OCRModel.SubTitle}
-      >
-        <Select
-          className={styles["select-ocr-model"]}
-          aria-label={Locale.Settings.OCRModel.Title}
-          value={ocrModelValue}
-          onChange={(e) => {
-            const [model, providerName] =
-              e.currentTarget.value.split(/@(?=[^@]*$)/);
-            props.updateConfig((config) => {
-              config.ocrModel = ModalConfigValidator.model(model);
-              config.ocrProviderName = providerName as ServiceProvider;
-            });
-          }}
-        >
-          {allModels
-            .filter((v) => v.available)
-            .map((v, i) => (
-              <option value={`${v.name}@${v.provider?.providerName}`} key={i}>
-                {v.displayName}({v.provider?.providerName})
-              </option>
-            ))}
-        </Select>
-      </ListItem> */}
     </>
   );
 }

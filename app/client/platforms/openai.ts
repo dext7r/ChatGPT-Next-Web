@@ -64,6 +64,7 @@ interface RequestPayload {
   top_p?: number;
   max_tokens?: number;
   max_completion_tokens?: number;
+  reasoning_effort?: string;
   stream_options?: {
     include_usage?: boolean;
   };
@@ -177,6 +178,8 @@ export class ChatGPTApi implements LLMApi {
     const isDeepseekReasoner =
       model_name.includes("deepseek-reasoner") ||
       model_name.includes("deepseek-r1");
+    const isGrok = model_name.startsWith("grok-");
+    const isGrokThink = model_name.startsWith("grok-3-mini-");
     const thinkingModel = isThinkingModel(model_name);
 
     // const isThinking =
@@ -256,6 +259,18 @@ export class ChatGPTApi implements LLMApi {
       // temperature: !isO1 ? modelConfig.temperature : 1,
       // top_p: !isO1 ? modelConfig.top_p : 1,
     };
+    // reasoning_effort
+    if (isGrokThink) {
+      if (
+        modelConfig.reasoning_effort === "low" ||
+        modelConfig.reasoning_effort === "high"
+      ) {
+        requestPayload["reasoning_effort"] = modelConfig.reasoning_effort;
+      }
+    }
+    console.log(isGrokThink, modelConfig);
+    console.log(requestPayload);
+    // stream usage
     if (
       modelConfig.enableStreamUsageOptions &&
       options.config.stream &&
@@ -279,7 +294,11 @@ export class ChatGPTApi implements LLMApi {
       options?.type !== "compress" &&
       options?.type !== "topic"
     ) {
-      requestPayload["max_tokens"] = modelConfig.max_tokens;
+      if (isGrok) {
+        requestPayload["max_completion_tokens"] = modelConfig.max_tokens;
+      } else {
+        requestPayload["max_tokens"] = modelConfig.max_tokens;
+      }
     }
 
     if (!isMistral && !isDeepseekReasoner) {

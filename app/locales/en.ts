@@ -581,6 +581,10 @@ const en: LocaleType = {
         name: "重复抑制",
         tip: "降低重复词汇的可能性 (-2 到 2), 值越大越能避免AI使用重复词汇",
       },
+      reasoning_effort: {
+        name: "Reason Effort",
+        tip: "Modified model inference effort program, currently only grok",
+      },
       current_history: "当前上下文",
     },
     Temperature: {
@@ -604,6 +608,11 @@ const en: LocaleType = {
       Title: "Frequency Penalty",
       SubTitle:
         "A larger value decreasing the likelihood to repeat the same line",
+    },
+    ReasoningEffort: {
+      Title: "Reasoning Effort",
+      SubTitle:
+        "Effort and thought time of the constrained inference model, only for models and vendors that support this parameter (currently only grok)",
     },
     TTS: {
       Enable: {

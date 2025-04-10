@@ -259,15 +259,13 @@ export const useAppConfig = createPersistStore(
         state.modelConfig.ocrProviderName =
           DEFAULT_CONFIG.modelConfig.ocrProviderName;
       }
-      if (version < 4.1) {
+      if (version < 4.2) {
         state.modelConfig.temperature_enabled = true;
         state.modelConfig.top_p_enabled = false;
         state.modelConfig.max_tokens_enabled = false;
         state.modelConfig.presence_penalty_enabled = false;
         state.modelConfig.frequency_penalty_enabled = false;
         state.modelConfig.enableStreamUsageOptions = false;
-      }
-      if (version < 4.2) {
         state.modelConfig.reasoning_effort = "none";
       }
       return state as any;

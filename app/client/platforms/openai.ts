@@ -268,8 +268,6 @@ export class ChatGPTApi implements LLMApi {
         requestPayload["reasoning_effort"] = modelConfig.reasoning_effort;
       }
     }
-    console.log(isGrokThink, modelConfig);
-    console.log(requestPayload);
     // stream usage
     if (
       modelConfig.enableStreamUsageOptions &&

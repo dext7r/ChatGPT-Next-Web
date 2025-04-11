@@ -292,7 +292,8 @@ const cn = {
     },
     InjectSystemPrompts: {
       Title: "注入系统级提示信息",
-      SubTitle: "强制给每次请求的消息列表开头添加一个模拟 ChatGPT 的系统提示",
+      SubTitle:
+        "强制给每次请求的消息列表开头添加一个优化输出内容格式的系统提示",
     },
     InputTemplate: {
       Title: "用户输入预处理",
@@ -536,6 +537,7 @@ const cn = {
     },
     Params: {
       SessionInfo: "会话信息",
+      current_history: "当前上下文",
       temperature: {
         name: "随机温度",
         tip: "控制生成文本的随机性 (0-2), 值越大创造性越高, 低温抑制知识幻觉",
@@ -560,7 +562,6 @@ const cn = {
         name: "推理努力",
         tip: "修改模型推理努力程序，当前仅grok适用",
       },
-      current_history: "当前上下文",
     },
     Temperature: {
       Title: "随机性 (temperature)",
@@ -586,6 +587,14 @@ const cn = {
       Title: "推理努力程度(reasoning_effort)",
       SubTitle:
         "约束推理模型的努力程度和思考时间，仅适用于支持该参数的模型和供应商（当前仅grok)",
+    },
+    ParameterOverride: {
+      Title: "参数覆盖",
+      SubTitle: "用于覆盖请求参数，使用 json 格式",
+      ValidJson: "✓ 有效的 json 设置",
+      InvalidJson: "✗ json 格式错误",
+      EnableInfo: "已添加覆盖参数",
+      EmptyParam: "覆盖参数内容为空",
     },
     TTS: {
       Enable: {

@@ -1004,6 +1004,74 @@
   border: 1px solid var(--primary);
 }
 
+// Add this to chat.module.scss
+.param-override-header {
+  position: relative;
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border-radius: 10px 10px 0 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--primary);
+  cursor: default;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
+  
+  .param-override-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    
+    .param-override-icon {
+      font-size: 14px;
+    }
+  }
+  
+  .param-override-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--white);
+    border: var(--border-in-light);
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    font-size: 12px;
+    z-index: 100;
+    max-width: 300px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    margin-top: 5px;
+    color: var(--black);
+    
+    code {
+      background-color: rgba(0, 0, 0, 0.05);
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+  }
+
+  &:hover .param-override-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// Modify the existing chat-input-panel-inner to accommodate the header
+.chat-input-panel-inner.with-param-override {
+  flex-direction: column;
+  
+  .chat-input {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
 .chat-input {
   height: 100%;
   width: 100%;

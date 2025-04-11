@@ -89,6 +89,9 @@ export const DEFAULT_CONFIG = {
     enableInjectSystemPrompts: false,
     enableStreamUsageOptions: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
+    // 参数覆盖变量
+    paramOverrideContent: "",
+    enableParamOverride: false,
   },
 
   ttsConfig: {

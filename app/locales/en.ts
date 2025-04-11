@@ -560,32 +560,32 @@ const en: LocaleType = {
     //   current_history: "current_history",
     // },
     Params: {
-      SessionInfo: "会话信息",
+      SessionInfo: "Session Information",
+      current_history: "Current History",
       temperature: {
-        name: "随机温度",
-        tip: "控制生成文本的随机性 (0-2), 值越大创造性越高, 低温抑制知识幻觉",
+        name: "Randomness (Temperature)",
+        tip: "Controls the randomness of generated text (0–2). Higher values increase creativity, while lower values reduce hallucinations.",
       },
       top_p: {
-        name: "采样概率",
-        tip: "控制生成文本的多样性 (0-1), 值越小内容越单调, 通常与温度二选一使用",
+        name: "Sampling Probability (Top-p)",
+        tip: "Controls the diversity of generated text (0–1). Lower values make the content more focused. Typically used as an alternative to temperature.",
       },
       max_tokens: {
-        name: "最大回复",
-        tip: "生成文本的最大长度, 思考模型、视觉对话、代码生成建议设置高回复限制",
+        name: "Maximum Response Length",
+        tip: "Maximum length of generated text. For reasoning, visual dialogue, or code generation, a higher limit is recommended.",
       },
       presence_penalty: {
-        name: "话题创意",
-        tip: "鼓励模型谈论新话题 (-2 到 2), 值越大越容易扩展到新话题, 降低主题一致性",
+        name: "Topic Novelty",
+        tip: "Encourages the model to explore new topics (-2 to 2). Higher values promote topic changes but may reduce coherence.",
       },
       frequency_penalty: {
-        name: "重复抑制",
-        tip: "降低重复词汇的可能性 (-2 到 2), 值越大越能避免AI使用重复词汇",
+        name: "Repetition Penalty",
+        tip: "Reduces the likelihood of repeating words (-2 to 2). Higher values help avoid repetitive language.",
       },
       reasoning_effort: {
         name: "Reason Effort",
         tip: "Modified model inference effort program, currently only grok",
       },
-      current_history: "当前上下文",
     },
     Temperature: {
       Title: "Temperature",
@@ -613,6 +613,14 @@ const en: LocaleType = {
       Title: "Reasoning Effort",
       SubTitle:
         "Effort and thought time of the constrained inference model, only for models and vendors that support this parameter (currently only grok)",
+    },
+    ParameterOverride: {
+      Title: "Parameter Override",
+      SubTitle: "Override model parameters with custom JSON configuration",
+      ValidJson: "✓ Valid JSON",
+      InvalidJson: "✗ Invalid JSON format",
+      EnableInfo: "Parameter Override Enabled",
+      EmptyParam: "No parameters specified",
     },
     TTS: {
       Enable: {

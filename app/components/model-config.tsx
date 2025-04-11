@@ -678,6 +678,120 @@ export function ModelConfigList(props: {
           <option value="none">none</option>
         </Select>
       </ListItem>
+      {/* Parameter Override feature */}
+      <ListItem
+        title={Locale.Settings.ParameterOverride.Title}
+        subTitle={Locale.Settings.ParameterOverride.SubTitle}
+        vertical={true}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            width: "100%",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              justifyContent: "flex-end",
+            }}
+          >
+            <textarea
+              placeholder='{"stream_options": null, "temperature": 0.8}'
+              value={props.modelConfig.paramOverrideContent || ""}
+              rows={3}
+              style={{
+                width: "100%",
+                resize: "vertical",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+                backgroundColor: props.modelConfig.enableParamOverride
+                  ? "inherit"
+                  : "#f0f0f0",
+                opacity: props.modelConfig.enableParamOverride ? 1 : 0.7,
+                transition: "all 0.3s ease",
+                marginRight: "8px",
+              }}
+              disabled={!props.modelConfig.enableParamOverride}
+              onChange={(e) => {
+                const content = e.currentTarget.value;
+                props.updateConfig((config) => {
+                  config.paramOverrideContent = content;
+
+                  // Apply JSON parameters if enabled and valid
+                  if (config.enableParamOverride && content) {
+                    try {
+                      const overrideParams = JSON.parse(content);
+                      Object.assign(config, overrideParams);
+                    } catch (error) {
+                      // Just store the content even if invalid JSON
+                    }
+                  }
+                });
+              }}
+            />
+            <input
+              type="checkbox"
+              checked={props.modelConfig.enableParamOverride || false}
+              onChange={(e) => {
+                const isEnabled = e.currentTarget.checked;
+                props.updateConfig((config) => {
+                  config.enableParamOverride = isEnabled;
+
+                  // Apply JSON parameters if enabled and valid JSON exists
+                  if (isEnabled && config.paramOverrideContent) {
+                    try {
+                      const overrideParams = JSON.parse(
+                        config.paramOverrideContent,
+                      );
+                      Object.assign(config, overrideParams);
+                    } catch (error) {
+                      console.error(
+                        "Failed to parse parameter override JSON:",
+                        error,
+                      );
+                    }
+                  }
+                });
+              }}
+            />
+          </div>
+
+          {props.modelConfig.enableParamOverride &&
+            props.modelConfig.paramOverrideContent && (
+              <div
+                style={{
+                  fontSize: "0.75em",
+                  marginTop: "2px",
+                  width: "55%",
+                  textAlign: "left",
+                  color: (() => {
+                    try {
+                      JSON.parse(props.modelConfig.paramOverrideContent);
+                      return "#10a37f"; // Success color
+                    } catch (e) {
+                      return "#e53e3e"; // Error color
+                    }
+                  })(),
+                }}
+              >
+                {(() => {
+                  try {
+                    JSON.parse(props.modelConfig.paramOverrideContent);
+                    return Locale.Settings.ParameterOverride.ValidJson;
+                  } catch (e) {
+                    return Locale.Settings.ParameterOverride.InvalidJson;
+                  }
+                })()}
+              </div>
+            )}
+        </div>
+      </ListItem>
     </>
   );
 }

@@ -29,17 +29,8 @@ import {
 import { prettyObject } from "@/app/utils/format";
 import { getClientConfig } from "@/app/config/client";
 import { makeAzurePath } from "@/app/azure";
-import {
-  getMessageTextContent,
-  getMessageTextContentWithoutThinking,
-  isVisionModel,
-  isThinkingModel,
-  wrapThinkingPart,
-} from "@/app/utils";
-import {
-  preProcessImageContent,
-  preProcessMultimodalContent,
-} from "@/app/utils/chat";
+import { isVisionModel, isThinkingModel, wrapThinkingPart } from "@/app/utils";
+import { preProcessMultimodalContent } from "@/app/utils/chat";
 import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
 export interface OpenAIListModelResponse {
@@ -319,9 +310,28 @@ export class ChatGPTApi implements LLMApi {
       }
     }
 
+    // 进行参数覆盖
+    // console.log("[parameter]", modelConfig.enableParamOverride, modelConfig.paramOverrideContent);
+    // {"stream_options":null, "temperature":0.1}
+    if (modelConfig.enableParamOverride && modelConfig.paramOverrideContent) {
+      let overrideObj = {};
+      try {
+        // 如果 paramOverrideContent 已经是对象，可以直接赋值
+        overrideObj =
+          typeof modelConfig.paramOverrideContent === "string"
+            ? JSON.parse(modelConfig.paramOverrideContent)
+            : modelConfig.paramOverrideContent;
+      } catch (e) {
+        console.error("paramOverrideContent parse error:", e);
+      }
+      if (overrideObj && typeof overrideObj === "object") {
+        Object.assign(requestPayload, overrideObj);
+      }
+    }
+
     console.log("[Request] openai payload: ", requestPayload);
 
-    const shouldStream = !!options.config.stream; // && !isO1; // o1 已经开始支持流式
+    const shouldStream = !!requestPayload["stream"]; // && !isO1; // o1 已经开始支持流式
     const controller = new AbortController();
     options.onController?.(controller);
 

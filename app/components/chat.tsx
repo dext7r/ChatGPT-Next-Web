@@ -2765,6 +2765,11 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       `${mainInfo} - ${statInfo}`
     );
   };
+
+  const enableParamOverride =
+    session.mask.modelConfig.enableParamOverride || false;
+  const paramOverrideContent =
+    session.mask.modelConfig.paramOverrideContent || "";
   return (
     <div className={styles.chat} key={session.id}>
       <div className="window-header" data-tauri-drag-region>
@@ -3237,9 +3242,21 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             attachImages.length != 0 || attachFiles.length != 0
               ? styles["chat-input-panel-inner-attach"]
               : ""
-          }`}
+          } ${enableParamOverride ? styles["with-param-override"] : ""}`}
           htmlFor="chat-input"
         >
+          {enableParamOverride && (
+            <div className={styles["param-override-header"]}>
+              <div className={styles["param-override-indicator"]}>
+                <span className={styles["param-override-icon"]}>⚙️</span>
+                <span>{Locale.Settings.ParameterOverride.EnableInfo}</span>
+              </div>
+              <div className={styles["param-override-tooltip"]}>
+                {paramOverrideContent ||
+                  Locale.Settings.ParameterOverride.EmptyParam}
+              </div>
+            </div>
+          )}
           <textarea
             id="chat-input"
             ref={inputRef}

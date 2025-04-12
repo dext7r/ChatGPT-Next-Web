@@ -44,6 +44,7 @@ export type ChatMessage = RequestMessage & {
   providerName?: string;
   beClear?: boolean;
   isContinuePrompt?: boolean;
+  isStreamRequest?: boolean;
 
   statistic?: {
     singlePromptTokens?: number;
@@ -601,6 +602,7 @@ export const useChatStore = createPersistStore(
                 if (!botMessage.statistic) {
                   botMessage.statistic = {};
                 }
+                botMessage.isStreamRequest = !!message?.is_stream_request;
                 botMessage.statistic.completionTokens =
                   message?.usage?.completion_tokens;
                 botMessage.statistic.firstReplyLatency =

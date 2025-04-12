@@ -64,6 +64,7 @@ export interface SpeechOptions {
 export interface RichMessage {
   content: string;
   reasoning_content: string;
+  is_stream_request?: boolean;
   usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;

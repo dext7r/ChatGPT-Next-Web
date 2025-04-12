@@ -2708,7 +2708,12 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     }`;
     const { statistic } = message;
     if (!statistic) return mainInfo;
-
+    const isStreaming =
+      message.isStreamRequest !== undefined
+        ? message.isStreamRequest
+        : statistic &&
+          "firstReplyLatency" in statistic &&
+          statistic.firstReplyLatency !== undefined;
     const {
       singlePromptTokens,
       completionTokens,
@@ -2716,38 +2721,51 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       totalReplyLatency,
     } = statistic;
 
-    // 根据角色动态处理统计信息
     if (message.role === "assistant") {
-      // Assistant 需要检查所有相关字段
-      if (
-        completionTokens === undefined ||
-        !firstReplyLatency ||
-        !totalReplyLatency
-      ) {
-        return mainInfo;
+      if (isStreaming) {
+        // For streaming, check all relevant fields
+        if (
+          completionTokens === undefined ||
+          !firstReplyLatency ||
+          !totalReplyLatency
+        ) {
+          return mainInfo;
+        }
+      } else {
+        // For non-streaming, only check completionTokens and totalReplyLatency
+        if (completionTokens === undefined || !totalReplyLatency) {
+          return mainInfo;
+        }
       }
     } else {
-      // 其他角色只需要检查 prompt tokens
+      // Other roles only need to check prompt tokens
       if (singlePromptTokens === undefined) return mainInfo;
     }
 
-    // 动态生成统计信息
     const tokenString =
       message.role === "assistant"
         ? `${completionTokens} Tokens`
         : `${singlePromptTokens} Tokens`;
 
-    // 仅 assistant 显示性能指标
     const performanceInfo =
       message.role === "assistant"
         ? (() => {
-            const ttft = (firstReplyLatency! / 1000).toFixed(2);
-            const latency = (totalReplyLatency! / 1000).toFixed(2);
-            const speed = (
-              (1000 * completionTokens!) /
-              (totalReplyLatency! - firstReplyLatency!)
-            ).toFixed(2);
-            return `⚡ ${speed} T/s ⏱️ FT:${ttft}s | TT:${latency}s`;
+            if (isStreaming) {
+              const ttft = (firstReplyLatency! / 1000).toFixed(2);
+              const latency = (totalReplyLatency! / 1000).toFixed(2);
+              const speed = (
+                (1000 * completionTokens!) /
+                (totalReplyLatency! - firstReplyLatency!)
+              ).toFixed(2);
+              return `⚡ ${speed} T/s ⏱️ FT:${ttft}s | TT:${latency}s`;
+            } else {
+              const speed = (
+                (1000 * completionTokens!) /
+                totalReplyLatency!
+              ).toFixed(2);
+              const latency = (totalReplyLatency! / 1000).toFixed(2);
+              return `⚡ ${speed} T/s ⏱️ ${latency}s (Non-stream)`;
+            }
           })()
         : "";
 

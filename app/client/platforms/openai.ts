@@ -112,7 +112,35 @@ export class ChatGPTApi implements LLMApi {
     if (res.error) {
       return "```\n" + JSON.stringify(res, null, 4) + "\n```";
     }
-    return res.choices?.at(0)?.message?.content ?? res;
+    let richMessage: RichMessage = {
+      content: "",
+      reasoning_content: "",
+    };
+    richMessage.reasoning_content =
+      res.choices?.at(0)?.message?.reasoning_content ||
+      res.choices?.at(0)?.message?.reasoning;
+    const content = res.choices?.at(0)?.message?.content;
+    if (richMessage.reasoning_content) {
+      richMessage.content =
+        "<think>\n" +
+        richMessage.reasoning_content +
+        "\n</think>\n\n" +
+        content;
+    } else {
+      richMessage.content = content ?? res;
+    }
+    let prompt_tokens = res.usage?.prompt_tokens;
+    let completion_tokens = res.usage?.completion_tokens;
+    let total_tokens = res.usage?.total_tokens;
+    richMessage.usage = {
+      prompt_tokens: prompt_tokens,
+      completion_tokens:
+        prompt_tokens !== undefined && total_tokens !== undefined
+          ? total_tokens - prompt_tokens
+          : completion_tokens,
+      total_tokens: total_tokens,
+    };
+    return richMessage ?? res;
   }
 
   async speech(options: SpeechOptions): Promise<ArrayBuffer> {
@@ -419,6 +447,7 @@ export class ChatGPTApi implements LLMApi {
               completionTokens = estimateTokenLengthInLLM(full_reply);
             }
             richMessage.content = full_reply;
+            richMessage.is_stream_request = true;
             richMessage.usage = {
               completion_tokens: completionTokens,
               first_content_latency: firstReplyLatency,
@@ -498,7 +527,10 @@ export class ChatGPTApi implements LLMApi {
               const content = choices[0]?.delta?.content;
               const textmoderation = json?.prompt_filter_results;
               completionTokens =
-                json?.usage?.completion_tokens || completionTokens;
+                json?.usage?.total_tokens != null &&
+                json?.usage?.prompt_tokens != null
+                  ? json.usage.total_tokens - json.usage.prompt_tokens
+                  : json?.usage?.completion_tokens ?? completionTokens;
 
               if (firstReplyLatency == 0) {
                 firstReplyLatency = Date.now() - startRequestTime;
@@ -654,11 +686,22 @@ export class ChatGPTApi implements LLMApi {
           openWhenHidden: true,
         });
       } else {
+        let startRequestTime = Date.now();
         const res = await fetch(chatPath, chatPayload);
         clearTimeout(requestTimeoutId);
 
         const resJson = await res.json();
         const message = await this.extractMessage(resJson);
+        let finishRequestTime = Date.now();
+        if (
+          message &&
+          typeof message === "object" &&
+          "usage" in message &&
+          message.usage
+        ) {
+          message.usage.total_latency = finishRequestTime - startRequestTime;
+          message.is_stream_request = false;
+        }
         options.onFinish(message, res);
       }
     } catch (e) {

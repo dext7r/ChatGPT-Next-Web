@@ -423,13 +423,12 @@
 }
 
 :global(.dark) .actionButton {
-  background-color: rgba(30, 58, 138, 0.3); /* 深蓝色背景 */
-  border-color: #1e40af; /* 深蓝色边框 */
-  color: #60a5fa; /* 暗模式下图标颜色 */
+  background-color: var(--black);
+  border-color: #1e40af;
+  color: var(--black);
 }
 
 :global(.dark) .actionButton:hover {
-  background-color: rgba(30, 58, 138, 0.5);
   border-color: #3b82f6;
 }
 

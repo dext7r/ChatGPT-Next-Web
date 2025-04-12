@@ -1,9 +1,9 @@
 // ===== 1. 通用容器和布局 =====
 .container {
   width: 100%;
-  background-color: #ffffff;
+  background-color: var(--white);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
   overflow: hidden;
 }
 
@@ -34,7 +34,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-in-light);
 
   .headerLeft {
     display: flex;
@@ -45,13 +45,12 @@
   h1 {
     font-size: 18px;
     font-weight: 600;
-    color: #111827;
+    color: var(--black);
     margin: 0;
   }
 
   .providerCount {
     font-size: 14px;
-    color: #6b7280;
     margin-top: 4px;
   }
 }
@@ -84,7 +83,7 @@
     left: 40px;
     right: 40px;
     height: 2px;
-    background-color: #e5e7eb;
+    background-color: var(--border-color);
     z-index: 0;
     transform: translateY(-50%);
   }
@@ -101,7 +100,7 @@
   &.active {
     .stepNumber {
       background-color: var(--primary);
-      color: white;
+      color: var(--white);
       border-color: var(--primary);
     }
     
@@ -124,16 +123,14 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: white;
   font-size: 14px;
   font-weight: 500;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--black);
   transition: all 0.3s ease;
 }
 
 .stepText {
   font-size: 14px;
-  color: #6b7280;
   transition: all 0.3s ease;
 }
 
@@ -355,17 +352,6 @@
       .providerName {
         font-weight: 600;
         font-size: 16px;
-        color: #111827;
-      }
-
-      .providerDetails {
-        font-size: 14px;
-        color: #6b7280;
-        margin-top: 4px;
-        max-width: 360px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
       }
       
       .providerMeta {
@@ -457,7 +443,7 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background-color: white;
+    background-color: var(--white);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: 0.3s;
   }
@@ -476,7 +462,7 @@
 // 切换开关标签
 .toggleLabel {
   font-size: 14px;
-  color: #374151;
+  color: var(--black);
 }
 // 如果需要，可以添加描述输入框的特殊样式
 .descriptionInput {
@@ -604,7 +590,7 @@
     
     &.active {
       background-color: var(--primary);
-      color: white;
+      color: var(--white);
       font-weight: 500;
     }
     
@@ -625,13 +611,13 @@
       font-weight: 500;
       
       .active & {
-        background-color: white;
+        background-color: var(--white);
         color: var(--primary);
       }
       
       .disabled & {
         background-color: var(--secondary);
-        color: white;
+        color: var(--white);
       }
     }
   }
@@ -691,21 +677,15 @@
   
   &.selected {
     border-color: #2563eb;
-    background-color: rgba(37, 99, 235, 0.05);
+    background-color: rgba(37, 99, 235, 0.3);
   }
-  
-  // .modelName {
-  //   font-weight: 500;
-  //   font-size: 14px;
-  //   color: #111827;
-  // }
 }
 
 .modelName {
   font-weight: 500;
   font-size: 14px;
   margin-bottom: 8px;
-  color: #111827;
+  // color: var(--white);
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
@@ -881,7 +861,7 @@
   font-weight: 500;
   font-size: 14px;
   margin-bottom: 4px;
-  color: #111827;
+  color: var(--black);
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
@@ -973,7 +953,7 @@
 
 // 添加编辑名称模态框样式
 .editNameModal {
-  background-color: white;
+  background-color: var(--white);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.1);
   width: 500px;
@@ -1013,12 +993,12 @@
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 6px;
-    color: #374151;
+    color: var(--black);
   }
   
   .modelIdText {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--black);
     padding: 8px 0;
     word-break: break-all;
   }
@@ -1056,7 +1036,7 @@
   .cancelButton {
     background: none;
     border: 1px solid #e5e7eb;
-    color: #4b5563;
+    color: var(--black);
     
     &:hover {
       background-color: #f3f4f6;
@@ -1065,7 +1045,7 @@
   
   .saveButton {
     background-color: var(--primary, #2563eb);
-    color: white;
+    color: var(--white);
     border: none;
     
     &:hover {
@@ -1123,15 +1103,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background-color: white;
-  border: 1px solid #e5e7eb;
+  background-color: var(--second);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   transition: all 0.2s;
   
-  &:hover {
-    border-color: #d1d5db;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  }
+  // &:hover {
+  //   border-color: #d1d5db;
+  //   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  // }
   
   .keyContent {
     display: flex;
@@ -1141,7 +1121,6 @@
     .keyText {
       font-family: monospace;
       font-size: 14px;
-      color: #111827;
       word-break: break-all;
     }
   }

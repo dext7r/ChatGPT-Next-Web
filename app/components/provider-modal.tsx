@@ -1534,8 +1534,10 @@ export function ProviderModal(props: ProviderModalProps) {
             </div>
             <div className={styles.editNameContent}>
               <div className={styles.editNameRow}>
-                <label>{Locale.CustomProvider.EditModel.ModelID}</label>
-                <div className={styles.modelIdText}>{editingModel.name}</div>
+                <label>
+                  {Locale.CustomProvider.EditModel.ModelID}
+                  {editingModel.name}
+                </label>
               </div>
               <div className={styles.editNameRow}>
                 <label>{Locale.CustomProvider.EditModel.DisplayName}</label>

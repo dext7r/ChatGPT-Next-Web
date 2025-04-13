@@ -224,7 +224,7 @@
     }
   }
 
-  @media screen and (max-width: 600px) {
+  @media screen and (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
 
@@ -273,15 +273,29 @@
     }
   }
   
-  @media screen and (max-width: 600px) {
+  @media screen and (max-width: 768px) {
     flex-direction: column;
     .searchBar {
       margin-right: 0;
+      margin-bottom: 10px;
     }
     .actions {
-      margin-top: 10px;
-      button {
-        flex-grow: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 0;
+      width: 100%;
+
+      button,
+      .icon-button {
+        flex: 1 1 48%; 
+        min-width: 120px; 
+        max-width: 100%;
+        margin-right: 0 !important;
+        margin-bottom: 4px;
+        font-size: 15px;
+        white-space: normal;
+        word-break: break-all;
       }
     }
   }
@@ -378,6 +392,7 @@
       gap: 8px;
       opacity: 0.8;
       transition: opacity 0.2s;
+      flex-wrap: wrap;
       
       &:hover {
         opacity: 1;
@@ -410,17 +425,57 @@
     }
   }
 }
+@media screen and (max-width: 768px) {
+  .providerList {
+    padding: 0 4vw;
+
+    .providerItem {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding: 12px 8px;
+
+      .providerInfo {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .providerActions {
+        justify-content: flex-start;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+      }
+    }
+  }
+}
+
 // 状态切换容器
 .statusToggleContainer {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   
   span {
     font-size: 14px;
     font-weight: 500;
   }
 }
+@media screen and (max-width: 768px) {
+  .providerActions {
+    button, .icon-button {
+      min-width: 36px;
+      min-height: 32px;
+      font-size: 13px;
+      padding: 4px 6px;
+    }
+  }
+  .statusToggleContainer {
+    gap: 4px;
+  }
+}
+
 // 开关按钮样式
 .toggleSwitch {
   position: relative;
@@ -902,8 +957,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  text-align: center;
+  min-width: 28px; // 减少最小宽度
+  max-width: 48px; // 限制最大宽度
+  overflow: hidden; // 超出部分隐藏
+  text-overflow: ellipsis; // 超出显示省略号
+  white-space: nowrap; // 防止文本换行
   
   &:hover {
     background-color: #e5e7eb;
@@ -949,6 +1007,8 @@
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 // 添加编辑名称模态框样式
@@ -1017,7 +1077,36 @@
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
     }
   }
+
+  @media screen and (max-width: 768px) {
+    .editNameModal {
+      width: 95vw;
+    }
+    
+    .editNameContent {
+      padding: 16px;
+    }
+    
+    .displayNameInput {
+      font-size: 15px;
+      min-width: 300px;
+      box-sizing: border-box;
+    }
+    
+    .visionSupportRow {
+      align-items: flex-start;
+      
+      label {
+        margin-bottom: 6px;
+      }
+      
+      .toggleContainer {
+        align-self: flex-start;
+      }
+    }
+  }
 }
+
 .editNameFooter {
   display: flex;
   justify-content: flex-end;
@@ -1057,25 +1146,67 @@
 // ===== 11. Key List View =====
 .keyListContainer {
   width: 100%;
+  box-sizing: border-box;
+  padding: 0 24px;
 }
 .keyInputContainer {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   width: 100%;
   
   .keyInput {
-    flex: 1;
-    min-width: 400px;
-    padding: 8px 12px;
+    max-width: unset;
+    flex-grow: 1;
+    margin-right: 10px;
+    padding: 10px 16px;
     border: 1px solid #e5e7eb;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
     
     &:focus {
       outline: none;
       border-color: #2563eb;
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+  }
+  
+  .actions {
+    display: flex;
+    
+    button:not(:last-child) {
+      margin-right: 10px;
+    }
+  }
+  
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    
+    .keyInput {
+      margin-right: 0;
+      margin-bottom: 10px;
+    }
+    
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 0;
+      width: 100%;
+      button,
+      .icon-button {
+        flex: 1 1 48%; 
+        min-width: 120px; 
+        max-width: 100%;
+        margin-right: 0 !important;
+        margin-bottom: 8px;
+        font-size: 15px;
+        white-space: normal;
+        word-break: break-all;
+      }
+      button:last-child,
+      .icon-button:last-child {
+        margin-bottom: 0;
+      }
     }
   }
 }
@@ -1107,11 +1238,6 @@
   border: 1px solid var(--border-color);
   border-radius: 6px;
   transition: all 0.2s;
-  
-  // &:hover {
-  //   border-color: #d1d5db;
-  //   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  // }
   
   .keyContent {
     display: flex;
@@ -1192,3 +1318,43 @@
   }
 }
 
+@media screen and (max-width: 768px) {
+  .keyListContainer {
+    padding: 0 2vw;
+  }
+  .keyInputContainer {
+    flex-direction: column;
+    gap: 6px;
+    .keyInput {
+      min-width: 0;
+      width: 100%;
+      font-size: 15px;
+    }
+  }
+  .keyListScroll {
+    max-height: 40vw;
+    min-height: 80px;
+    padding: 2px;
+  }
+  .keyItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 8px 6px;
+    .keyContent {
+      gap: 4px;
+      .keyText {
+        font-size: 13px;
+      }
+    }
+    .balanceDisplay {
+      font-size: 11px;
+      padding: 2px 6px;
+      margin-right: 0;
+      margin-bottom: 2px;
+    }
+    .keyActions {
+      gap: 2px;
+    }
+  }
+}

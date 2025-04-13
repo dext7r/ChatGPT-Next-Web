@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useAccessStore, useAppConfig } from "../store";
 import { collectModelsWithDefaultModel } from "./model";
 import { safeLocalStorage } from "../utils";

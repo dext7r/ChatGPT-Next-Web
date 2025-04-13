@@ -17,12 +17,11 @@ RUN set -e; \
     npm config set registry https://registry.npmmirror.com/ && \
     yarn config set network-timeout 300000
 
-# 并行安装主依赖和sharp（使用npm的preinstall脚本）
-RUN echo "开始并行安装..." && \
-    (yarn install --ignore-optional & \
-    npm install sharp --ignore-scripts & \
-    wait) && \
-    echo "安装完成"
+# 按顺序安装依赖（移除并行）
+# 先安装sharp（使用npm）
+RUN npm install sharp --ignore-scripts
+# 再安装其他依赖（使用yarn）
+RUN yarn install --frozen-lockfile --ignore-optional
 
 # 第三阶段：构建阶段
 FROM base AS builder

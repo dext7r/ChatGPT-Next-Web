@@ -70,11 +70,14 @@ const SearchCollapse = styled(
           activeKey={activeKeys}
           onChange={(keys) => setActiveKeys(keys as string[])}
           bordered={false}
-        >
-          <Panel header={title} key="1">
-            {children}
-          </Panel>
-        </Collapse>
+          items={[
+            {
+              key: "1",
+              label: title,
+              children: children,
+            },
+          ]}
+        ></Collapse>
       </div>
     );
   },
@@ -165,11 +168,14 @@ const ThinkCollapse = styled(
           activeKey={activeKeys}
           onChange={(keys) => !disabled && setActiveKeys(keys as string[])}
           bordered={false}
-        >
-          <Panel header={title} key="1">
-            {children}
-          </Panel>
-        </Collapse>
+          items={[
+            {
+              key: "1",
+              label: title,
+              children: children,
+            },
+          ]}
+        ></Collapse>
       </div>
     );
   },

@@ -1,5 +1,7 @@
-FROM node:18-alpine AS base
+# 第一阶段：基础镜像
+FROM node:22-alpine AS base
 
+# 第二阶段：依赖安装（利用缓存层）
 FROM base AS deps
 
 RUN apk add --no-cache libc6-compat
@@ -8,90 +10,63 @@ WORKDIR /app
 
 COPY package.json yarn.lock ./
 
-# 设置多个Yarn镜像源并尝试安装（POSIX兼容写法）
+# 设置镜像源（合并Yarn和npm配置）
 RUN set -e; \
-    registries="https://registry.npmmirror.com/ https://registry.npmjs.org/ https://registry.yarnpkg.com/"; \
-    success=0; \
-    for registry in $registries; do \
-        echo "尝试Yarn镜像源: $registry"; \
-        yarn config set registry "$registry"; \
-        if yarn install --network-timeout 300000; then \
-            echo "成功使用镜像源: $registry"; \
-            success=1; \
-            break; \
-        else \
-            echo "镜像源 $registry 失败，尝试下一个..."; \
-            yarn cache clean; \
-        fi; \
-    done; \
-    if [ $success -ne 1 ]; then echo "所有镜像源尝试失败"; exit 1; fi
+    echo "设置镜像源..." && \
+    yarn config set registry https://registry.npmmirror.com/ && \
+    npm config set registry https://registry.npmmirror.com/ && \
+    yarn config set network-timeout 300000
 
-# 安装sharp时设置多个npm镜像源（POSIX兼容写法）
-RUN set -e; \
-    registries="https://registry.npmmirror.com/ https://registry.npmjs.org/ https://registry.yarnpkg.com/"; \
-    success=0; \
-    for registry in $registries; do \
-        echo "尝试npm镜像源: $registry"; \
-        npm config set registry "$registry"; \
-        if npm install sharp; then \
-            echo "成功使用镜像源安装sharp: $registry"; \
-            success=1; \
-            break; \
-        else \
-            echo "镜像源 $registry 安装sharp失败，尝试下一个..."; \
-            npm cache clean --force; \
-        fi; \
-    done; \
-    if [ $success -ne 1 ]; then echo "所有sharp安装尝试失败"; exit 1; fi
+# 并行安装主依赖和sharp（使用npm的preinstall脚本）
+RUN echo "开始并行安装..." && \
+    (yarn install --ignore-optional & \
+    npm install sharp --ignore-scripts & \
+    wait) && \
+    echo "安装完成"
 
+# 第三阶段：构建阶段
 FROM base AS builder
-
-RUN apk update && apk add --no-cache git
-
-ENV OPENAI_API_KEY=""
-ENV GOOGLE_API_KEY=""
-ENV CODE=""
-
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN yarn build
+# 使用构建参数和缓存
+ARG NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=$NEXT_TELEMETRY_DISABLED
 
+RUN yarn build && \
+    yarn cache clean
+
+
+# 第四阶段：运行时镜像（最小化）
 FROM base AS runner
 WORKDIR /app
 
-RUN apk add git proxychains-ng
+RUN apk add --no-cache --virtual .run-deps \
+    git \
+    proxychains-ng \
+    && rm -rf /var/cache/apk/*
 
-ENV PROXY_URL=""
-ENV OPENAI_API_KEY=""
-ENV GOOGLE_API_KEY=""
-ENV CODE=""
+# 从构建阶段复制必要文件
+COPY --from=builder --chown=node:node \
+    /app/public \
+    /app/.next/static \
+    /app/.next/server \
+    /app/.next/standalone ./
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/.next/server ./.next/server
-
+USER node
 EXPOSE 3000
 
-CMD if [ -n "$PROXY_URL" ]; then \
-    export HOSTNAME="0.0.0.0"; \
-    protocol=$(echo $PROXY_URL | cut -d: -f1); \
-    host=$(echo $PROXY_URL | cut -d/ -f3 | cut -d: -f1); \
-    port=$(echo $PROXY_URL | cut -d: -f3); \
-    conf=/etc/proxychains.conf; \
-    echo "strict_chain" > $conf; \
-    echo "proxy_dns" >> $conf; \
-    echo "remote_dns_subnet 224" >> $conf; \
-    echo "tcp_read_time_out 15000" >> $conf; \
-    echo "tcp_connect_time_out 8000" >> $conf; \
-    echo "localnet 127.0.0.0/255.0.0.0" >> $conf; \
-    echo "localnet ::1/128" >> $conf; \
-    echo "[ProxyList]" >> $conf; \
-    echo "$protocol $host $port" >> $conf; \
-    cat /etc/proxychains.conf; \
-    proxychains -f $conf node server.js; \
+# 使用exec格式的CMD
+CMD ["sh", "-c", \
+    "if [ -n \"$PROXY_URL\" ]; then \
+        echo \"使用代理: $PROXY_URL\" && \
+        protocol=$(echo $PROXY_URL | cut -d: -f1) && \
+        host=$(echo $PROXY_URL | cut -d/ -f3 | cut -d: -f1) && \
+        port=$(echo $PROXY_URL | cut -d: -f3) && \
+        conf=/tmp/proxychains.conf && \
+        printf \"strict_chain\nproxy_dns\nremote_dns_subnet 224\n[ProxyList]\n$protocol $host $port\n\" > $conf && \
+        proxychains -f $conf node server.js; \
     else \
-    node server.js; \
-    fi
+        node server.js; \
+    fi"]

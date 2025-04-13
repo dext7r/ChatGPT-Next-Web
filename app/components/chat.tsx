@@ -3484,17 +3484,42 @@ export function Chat() {
 
   const modelTable = useMemo(() => {
     const filteredModels = allModels.filter((m) => m.available);
-    const defaultModel = filteredModels.find((m) => m.isDefault);
+    const modelMap = new Map<string, (typeof allModels)[0]>();
+
+    filteredModels.forEach((model) => {
+      const key = `${model.name}@${model?.provider?.id}`;
+
+      if (modelMap.has(key)) {
+        // 合并已存在的模型
+        const existingModel = modelMap.get(key)!;
+
+        // 合并 description（如果新模型有 description 而旧模型没有）
+        if (model.description && !existingModel.description) {
+          existingModel.description = model.description;
+        }
+        if (model.displayName && !existingModel.displayName) {
+          existingModel.displayName = model.displayName;
+        }
+        if (model.isDefault) {
+          existingModel.isDefault = true;
+        }
+      } else {
+        // 添加新模型
+        modelMap.set(key, { ...model });
+      }
+    });
+
+    // 转换为数组
+    const mergedModels = Array.from(modelMap.values());
+
+    // 确保默认模型排在第一位
+    const defaultModel = mergedModels.find((m) => m.isDefault);
 
     if (defaultModel) {
-      const arr = [
-        defaultModel,
-        ...filteredModels.filter((m) => m !== defaultModel),
-      ];
-      return arr;
-    } else {
-      return filteredModels;
+      return [defaultModel, ...mergedModels.filter((m) => m !== defaultModel)];
     }
+
+    return mergedModels;
   }, [allModels]);
   // Update session messages based on modelTable
   useEffect(() => {

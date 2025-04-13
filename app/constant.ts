@@ -402,8 +402,16 @@ export const textFileExtensions = [
   "adoc",
   "srt",
   "vtt",
+  "docx",
+  "doc",
+  "pptx",
+  "ppt",
+  "pdf",
+  "xlsx",
+  "xls",
+  "zip",
 ];
 
 export const MAX_DOC_CNT = 6; // 一次性支持上传的文件数量
-export const maxFileSizeInKB = 1024 * 1; // 1 MB
+export const maxFileSizeInKB = 1024 * 5; // 1 MB
 export const minTokensForPastingAsFile = 4096; // 超过4k个token的文本粘贴为附件文件

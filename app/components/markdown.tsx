@@ -25,7 +25,6 @@ import { useAppConfig } from "../store/config";
 
 import { Collapse } from "antd";
 import styled from "styled-components";
-const { Panel } = Collapse;
 
 interface SearchCollapseProps {
   title?: string | React.ReactNode;

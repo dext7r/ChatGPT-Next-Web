@@ -622,6 +622,8 @@ const en: LocaleType = {
       EnableInfo: "Parameter Override Enabled",
       EmptyParam: "No parameters specified",
     },
+    DocumentUploadWarning:
+      "⚠️The current Chat model does not support upload image or visual support is not configured.",
     TTS: {
       Enable: {
         Title: "Enable TTS",

@@ -865,18 +865,23 @@ export function ChatActions(props: {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
 
-    // 设置接受的文件类型
-    if (canUploadImage) {
-      // 支持图片和文本文件
-      const imageTypes =
-        "image/png, image/jpeg, image/webp, image/heic, image/heif";
-      const textTypes = textFileExtensions.map((ext) => `.${ext}`).join(",");
-      fileInput.accept = `${imageTypes}, ${textTypes}`;
-    } else {
-      // 只支持文本文件
-      fileInput.accept = textFileExtensions.map((ext) => `.${ext}`).join(",");
-    }
+    // // 设置接受的文件类型
+    // if (canUploadImage) {
+    //   // 支持图片和文本文件
+    //   const imageTypes =
+    //     "image/png, image/jpeg, image/webp, image/heic, image/heif";
+    //   const textTypes = textFileExtensions.map((ext) => `.${ext}`).join(",");
+    //   fileInput.accept = `${imageTypes}, ${textTypes}`;
+    // } else {
+    //   // 只支持文本文件
+    //   fileInput.accept = textFileExtensions.map((ext) => `.${ext}`).join(",");
+    // }
 
+    // Always accept image files, regardless of model
+    const imageTypes =
+      "image/png, image/jpeg, image/webp, image/heic, image/heif";
+    const textTypes = textFileExtensions.map((ext) => `.${ext}`).join(",");
+    fileInput.accept = `${imageTypes}, ${textTypes}`;
     fileInput.multiple = true;
 
     fileInput.onchange = async (event: any) => {
@@ -892,14 +897,15 @@ export function ChatActions(props: {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.type.startsWith("image/")) {
-          if (canUploadImage) {
-            imageFiles.push(file);
-          } else {
-            showToast(
-              Locale.Chat.InputActions.UploadFile.UnsupportToUploadImage,
-            );
-            continue;
-          }
+          imageFiles.push(file);
+          // if (canUploadImage) {
+          //   imageFiles.push(file);
+          // } else {
+          //   showToast(
+          //     Locale.Chat.InputActions.UploadFile.UnsupportToUploadImage,
+          //   );
+          //   continue;
+          // }
         } else {
           textFiles.push(file);
         }
@@ -1060,7 +1066,7 @@ export function ChatActions(props: {
     const show = isVisionModel(currentModel);
     setShowUploadImage(show);
     if (!show) {
-      setAttachImages([]);
+      // setAttachImages([]);
       setUploading(false);
     }
 
@@ -1768,10 +1774,16 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       return;
     }
     setIsLoading(true);
-    chatStore
-      .onUserInput(userInput, attachImages, attachFiles)
-      .then(() => setIsLoading(false));
-    setAttachImages([]);
+    if (canUploadImage) {
+      chatStore
+        .onUserInput(userInput, attachImages, attachFiles)
+        .then(() => setIsLoading(false));
+      setAttachImages([]);
+    } else {
+      chatStore
+        .onUserInput(userInput, [], attachFiles)
+        .then(() => setIsLoading(false));
+    }
     setAttachFiles([]);
     chatStore.setLastInput(userInput);
     setUserInput("");
@@ -2298,18 +2310,23 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Extract these as shared variables in the ChatComponent function
+  const modelName = session.mask.modelConfig.model;
+  const providerName =
+    session.mask.modelConfig.providerName || ServiceProvider.OpenAI;
+  // Find the current model info from modelTable
+  const currentModelInfo = useMemo(() => {
+    return modelTable.find(
+      (m) => m.name === modelName && m.provider?.providerName === providerName,
+    );
+  }, [modelName, providerName, modelTable]);
+  // Determine if the model supports vision
+  const canUploadImage = useMemo(() => {
+    return isVisionModel(modelName) || !!currentModelInfo?.enableVision;
+  }, [modelName, currentModelInfo]);
+
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const currentModel = chatStore.currentSession().mask.modelConfig.model;
-      const currentProviderName =
-        chatStore.currentSession().mask.modelConfig.providerName;
-      const currentModelInfo = modelTable.find(
-        (m) =>
-          m.name === currentModel &&
-          m.provider?.providerName === currentProviderName,
-      );
-      const canUploadImage =
-        isVisionModel(currentModel) || !!currentModelInfo?.enableVision;
       const items = (event.clipboardData || window.clipboardData).items;
 
       // 检查是否有文本内容
@@ -2372,12 +2389,12 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           if (file) {
             // 处理图片文件
             if (item.type.startsWith("image/")) {
-              if (!canUploadImage) {
-                showToast(
-                  Locale.Chat.InputActions.UnsupportedModelForUploadImage,
-                );
-                continue;
-              }
+              // if (!canUploadImage) {
+              //   showToast(
+              //     Locale.Chat.InputActions.UnsupportedModelForUploadImage,
+              //   );
+              //   continue;
+              // }
               const images: string[] = [];
               images.push(...attachImages);
               images.push(
@@ -2470,7 +2487,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
         }
       }
     },
-    [attachImages, attachFiles, chatStore, modelTable],
+    [attachImages, attachFiles, canUploadImage],
   );
 
   function supportFileType(filename: string) {
@@ -3260,9 +3277,22 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             attachImages.length != 0 || attachFiles.length != 0
               ? styles["chat-input-panel-inner-attach"]
               : ""
-          } ${enableParamOverride ? styles["with-param-override"] : ""}`}
+          } ${enableParamOverride ? styles["with-param-override"] : ""} ${
+            attachImages.length > 0 && !canUploadImage
+              ? styles["with-vision-warning"]
+              : ""
+          }`}
           htmlFor="chat-input"
         >
+          {attachImages.length > 0 && !canUploadImage && (
+            <div className={styles["vision-warning-header"]}>
+              <div className={styles["vision-warning-indicator"]}>
+                <div className={styles["vision-warning-icon"]}>
+                  {Locale.Settings.DocumentUploadWarning}
+                </div>
+              </div>
+            </div>
+          )}
           {enableParamOverride && (
             <div className={styles["param-override-header"]}>
               <div className={styles["param-override-indicator"]}>

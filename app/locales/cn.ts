@@ -596,6 +596,7 @@ const cn = {
       EnableInfo: "已添加覆盖参数",
       EmptyParam: "覆盖参数内容为空",
     },
+    DocumentUploadWarning: "⚠️当前对话模型不支持图片理解或未配置视觉支持",
     TTS: {
       Enable: {
         Title: "启用文本转语音",

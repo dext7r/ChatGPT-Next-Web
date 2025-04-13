@@ -105,8 +105,8 @@
   }
 
   .attach-file-icon {
-    min-width: 16px;
-    max-width: 16px;
+    min-width: 28px;
+    max-width: 28px;
   }
 
   .attach-file-icon:hover {
@@ -859,7 +859,9 @@
 }
 
 .chat-message-item-file-icon {
-  max-width: 16px;
+  max-width: 40px;
+  height: 40px;
+  flex-shrink: 0;
 }
 
 .chat-message-item-file-name {
@@ -1064,6 +1066,73 @@
 
 // Modify the existing chat-input-panel-inner to accommodate the header
 .chat-input-panel-inner.with-param-override {
+  flex-direction: column;
+  
+  .chat-input {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+.vision-warning-header {
+  position: relative;
+  background-color: rgba(255, 187, 0, 0.1); // Amber/yellow background for warning
+  border-radius: 10px 10px 0 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #b45309; // Amber/brown text for warning
+  cursor: default;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 187, 0, 0.2);
+  
+  .vision-warning-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    
+    .vision-warning-icon {
+      font-size: 14px;
+    }
+  }
+  
+  .vision-warning-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--white);
+    border: var(--border-in-light);
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    font-size: 12px;
+    z-index: 100;
+    max-width: 300px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    margin-top: 5px;
+    color: var(--black);
+    
+    code {
+      background-color: rgba(0, 0, 0, 0.05);
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+  }
+
+  &:hover .vision-warning-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// Modify the chat-input-panel-inner to accommodate the warning header
+.chat-input-panel-inner.with-vision-warning {
   flex-direction: column;
   
   .chat-input {

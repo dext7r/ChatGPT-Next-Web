@@ -168,6 +168,7 @@ export function MessageExporter() {
     format: "image" as ExportFormat,
     includeContext: true,
     useDisplayName: true,
+    shareSessionTitle: "",
   });
 
   function updateExportConfig(updater: (config: typeof exportConfig) => void) {
@@ -197,7 +198,7 @@ export function MessageExporter() {
       return (
         <MarkdownPreviewer
           messages={selectedMessages}
-          topic={session.topic}
+          topic={exportConfig.shareSessionTitle || session.topic}
           useDisplayName={exportConfig.useDisplayName}
         />
       );
@@ -205,7 +206,7 @@ export function MessageExporter() {
       return (
         <JsonPreviewer
           messages={selectedMessages}
-          topic={session.topic}
+          topic={exportConfig.shareSessionTitle || session.topic}
           useDisplayName={exportConfig.useDisplayName}
         />
       );
@@ -213,7 +214,7 @@ export function MessageExporter() {
       return (
         <ImagePreviewer
           messages={selectedMessages}
-          topic={session.topic}
+          topic={exportConfig.shareSessionTitle || session.topic}
           useDisplayName={exportConfig.useDisplayName}
         />
       );
@@ -275,6 +276,22 @@ export function MessageExporter() {
               onChange={(e) => {
                 updateExportConfig(
                   (config) => (config.useDisplayName = e.currentTarget.checked),
+                );
+              }}
+            ></input>
+          </ListItem>
+          <ListItem
+            title={Locale.Export.ShareSessionTitle.Title}
+            subTitle={Locale.Export.ShareSessionTitle.SubTitle}
+          >
+            <input
+              type="text"
+              style={{ width: "100%" }}
+              value={exportConfig.shareSessionTitle || session.topic}
+              onChange={(e) => {
+                updateExportConfig(
+                  (config) =>
+                    (config.shareSessionTitle = e.currentTarget.value),
                 );
               }}
             ></input>
@@ -425,13 +442,13 @@ export function PreviewActions(props: {
           icon={<DownloadIcon />}
           onClick={props.download}
         ></IconButton>
-        <IconButton
+        {/* <IconButton
           text={Locale.Export.Share}
           bordered
           shadow
           icon={loading ? <LoadingIcon /> : <ShareIcon />}
           onClick={share}
-        ></IconButton>
+        ></IconButton> */}
       </div>
       <div
         style={{
@@ -638,7 +655,7 @@ export function ImagePreviewer(props: {
               {estimateMessagesToken(props.messages)} Tokens)
             </div>
             <div className={styles["chat-info-item"]}>
-              {Locale.Exporter.Topic}: {session.topic}
+              {Locale.Exporter.Topic}: {props.topic}
             </div>
             <div className={styles["chat-info-item"]}>
               {Locale.Exporter.Time}:{" "}
@@ -841,10 +858,11 @@ export function JsonPreviewer(props: {
   useDisplayName: boolean;
 }) {
   const msgs = {
+    sessionTitle: props.topic.trim(),
     messages: [
       {
         role: "system",
-        content: `${Locale.FineTuned.Sysmessage} ${props.topic}`,
+        content: `${Locale.FineTuned.Sysmessage}`,
       },
       ...props.messages.map((m) => ({
         role: m.role,

@@ -232,6 +232,10 @@ const en: LocaleType = {
       SubTitle:
         "Use DisplayName in exported messages, if the model does not define an alias, the original name will be used",
     },
+    ShareSessionTitle: {
+      Title: "Session Title",
+      SubTitle: "Support to Set Session Title to override original title",
+    },
     Steps: {
       Select: "Select",
       Preview: "Preview",

@@ -623,17 +623,15 @@ export function ChatActions(props: {
       },
       onFinish(message, responseRes) {
         if (responseRes?.status === 200) {
+          if (typeof message !== "string") {
+            message = message.content;
+          }
           if (!isValidMessage(message)) {
             showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
             return;
           }
 
-          let translatedContent: string;
-          if (typeof message === "string") {
-            translatedContent = message;
-          } else {
-            translatedContent = message.content;
-          }
+          let translatedContent = message;
           translatedContent = translatedContent || props.userInput; // 避免空翻译无法撤销
 
           // 保存原始文本和翻译结果以便撤销

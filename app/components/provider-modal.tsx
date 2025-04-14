@@ -23,13 +23,23 @@ import VisionOffIcon from "../icons/eye-off.svg";
 import TrashIcon from "../icons/delete.svg";
 import { useMobileScreen } from "../utils";
 
+// 获取提供商类型标签
+export const providerTypeLabels: Record<string, string> = {
+  openai: "OpenAI",
+  siliconflow: "SiliconFlow",
+  deepseek: "DeepSeek",
+  openrouter: "OpenRouter",
+  // azure: 'Azure OpenAI',
+  // anthropic: 'Anthropic',
+  // custom: '自定义API',
+};
 // 获取提供商默认的地址
-const providerTypeDefaultUrls: Record<string, string> = {
+export const providerTypeDefaultUrls: Record<string, string> = {
   openai: "https://api.openai.com",
   siliconflow: "https://api.siliconflow.cn",
   deepseek: "https://api.deepseek.com",
+  openrouter: "https://openrouter.ai/api",
 };
-
 // KeyItem 组件
 const KeyItem = ({
   onDelete,
@@ -63,7 +73,9 @@ const KeyItem = ({
     setLoading(true);
     try {
       let result = null;
-      if (type === "siliconflow") {
+      if (type === "openrouter") {
+        result = await accessStore.checkOpenRouterBalance(apiKey, baseUrl);
+      } else if (type === "siliconflow") {
         result = await accessStore.checkSiliconFlowBalance(apiKey, baseUrl);
       } else if (type === "deepseek") {
         result = await accessStore.checkDeepSeekBalance(apiKey, baseUrl);
@@ -75,7 +87,7 @@ const KeyItem = ({
       }
       // 处理 result
       if (result && result.isValid && result.totalBalance) {
-        setBalance(`${result.currency} ${result.totalBalance}`);
+        setBalance(`${result.currency} ${result.totalBalance.toFixed(2)}`);
       } else {
         showToast(result?.error || "查询失败或不支持查询");
       }
@@ -740,7 +752,11 @@ export function ProviderModal(props: ProviderModalProps) {
                   const promises = keyList.map(async (key) => {
                     try {
                       let result: any = null;
-                      if (formData.type === "siliconflow") {
+                      if (formData.type === "openrouter") {
+                        result = await useAccessStore
+                          .getState()
+                          .checkOpenRouterBalance(key, formData.baseUrl);
+                      } else if (formData.type === "siliconflow") {
                         result = await useAccessStore
                           .getState()
                           .checkSiliconFlowBalance(key, formData.baseUrl);
@@ -864,7 +880,11 @@ export function ProviderModal(props: ProviderModalProps) {
                       // 如果没有查询过余额，进行查询
                       try {
                         let result: any = null;
-                        if (formData.type === "siliconflow") {
+                        if (formData.type === "openrouter") {
+                          result = await useAccessStore
+                            .getState()
+                            .checkOpenRouterBalance(key, formData.baseUrl);
+                        } else if (formData.type === "siliconflow") {
                           result = await useAccessStore
                             .getState()
                             .checkSiliconFlowBalance(key, formData.baseUrl);
@@ -1281,6 +1301,7 @@ export function ProviderModal(props: ProviderModalProps) {
                   <option value="openai">OpenAI</option>
                   <option value="siliconflow">SiliconFlow</option>
                   <option value="deepseek">DeepSeek</option>
+                  <option value="openrouter">OpenRouter</option>
                 </Select>
               </ListItem>
               <ListItem

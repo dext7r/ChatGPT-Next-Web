@@ -270,7 +270,7 @@ export const useAccessStore = createPersistStore(
     ): Promise<{
       isValid: boolean;
       balance?: string;
-      totalBalance?: string;
+      totalBalance?: number;
       chargeBalance?: string;
       currency?: string;
       error?: string;
@@ -327,7 +327,7 @@ export const useAccessStore = createPersistStore(
       isValid: boolean;
       isAvailable?: boolean;
       balance?: string; // 总余额（等同于 totalBalance）
-      totalBalance?: string; // 总余额（和 balance 相同）
+      totalBalance?: number; // 总余额（和 balance 相同）
       chargeBalance?: string; // 充值余额（即 toppedUpBalance）
       currency?: string;
       error?: string;
@@ -385,12 +385,64 @@ export const useAccessStore = createPersistStore(
         };
       }
     },
+    async checkOpenRouterBalance(
+      apiKey: string,
+      baseUrl: string,
+    ): Promise<{
+      isValid: boolean;
+      totalBalance?: number;
+      currency?: string;
+      error?: string;
+    }> {
+      if (!apiKey) {
+        return Promise.resolve({
+          isValid: false,
+          error: "API key is required",
+        });
+      }
+      if (!baseUrl) {
+        baseUrl = "https://openrouter.ai/api";
+      }
+      return fetch(`${baseUrl.replace(/\/+$/, "")}/v1/credits`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`${res.status} - ${res.statusText}`);
+          }
+          return res.json();
+        })
+        .then((res) => {
+          if (res.data) {
+            return {
+              isValid: true,
+              currency: "$",
+              totalBalance: res.data.total_credits - res.data.total_usage,
+            };
+          } else {
+            return {
+              isValid: false,
+              error: res.message || "Invalid response format",
+            };
+          }
+        })
+        .catch((error) => {
+          console.error("[Access] failed to check OpenRouter balance:", error);
+          return {
+            isValid: false,
+            error: error.message || "Failed to check balance",
+          };
+        });
+    },
     async checkCustomOpenaiBalance(
       apiKey: string,
       baseUrl: string,
     ): Promise<{
       isValid: boolean;
-      totalBalance?: string; // 可用额度 (USD)
+      totalBalance?: number; // 可用额度 (USD)
       currency?: string;
       error?: string;
     }> {
@@ -430,7 +482,7 @@ export const useAccessStore = createPersistStore(
         const used = (total_usage / 100).toFixed(2); // 转换为美元
 
         // 3. 计算剩余额度
-        const remaining = (parseFloat(total) - parseFloat(used)).toFixed(2);
+        const remaining = parseFloat(total) - parseFloat(used);
         return { isValid: true, totalBalance: remaining, currency: "$" };
       } catch (error) {
         console.error("[OpenAI] Failed to check balance:", error);

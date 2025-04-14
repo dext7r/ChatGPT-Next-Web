@@ -155,6 +155,36 @@ const ThinkCollapse = styled(
       toggleCollapse();
     };
 
+    // Recursive function to extract text from children
+    const extractText = (node: any): string => {
+      if (!node) return "";
+
+      // Direct string
+      if (typeof node === "string") return node;
+
+      // Array of nodes
+      if (Array.isArray(node)) {
+        return node.map(extractText).join("");
+      }
+
+      // React element
+      if (node.props && node.props.children) {
+        return extractText(node.props.children);
+      }
+
+      return "";
+    };
+
+    const handleCopyContent = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        const text = extractText(children);
+        copyToClipboard(`<think>${text}</think>`);
+      } catch (err) {
+        console.error("Failed to copy thinking content:", err);
+      }
+    };
+
     return (
       <div
         onContextMenu={handleRightClick}
@@ -170,7 +200,20 @@ const ThinkCollapse = styled(
           items={[
             {
               key: "1",
-              label: title,
+              label: (
+                <div className="think-collapse-header">
+                  <span>{title}</span>
+                  {!disabled && (
+                    <span
+                      className="copy-think-button"
+                      onClick={handleCopyContent}
+                      title={Locale.Chat.Actions.Copy}
+                    >
+                      📋
+                    </span>
+                  )}
+                </div>
+              ),
               children: children,
             },
           ]}
@@ -198,7 +241,22 @@ const ThinkCollapse = styled(
       color: var(--primary) !important;
     }
   }
+  .think-collapse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  .copy-think-button {
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
 
+    &:hover {
+      opacity: 1;
+    }
+  }
   .ant-collapse-content {
     background-color: transparent !important;
     border-top: 1px solid var(--border-in-light) !important;

@@ -111,7 +111,12 @@ const KeyItem = ({
       }
       // 处理 result
       if (result && result.isValid && result.totalBalance) {
-        setBalance(`${result.currency} ${result.totalBalance.toFixed(2)}`);
+        try {
+          const formattedBalance = Number(result.totalBalance).toFixed(2);
+          setBalance(`${result.currency} ${formattedBalance}`);
+        } catch (e) {
+          showToast("余额格式化失败");
+        }
       } else {
         showToast(result?.error || "查询失败或不支持查询");
       }
@@ -834,11 +839,9 @@ export function ProviderModal(props: ProviderModalProps) {
           time: responseTime,
         };
       } else {
-        const errorData = await response
-          .json()
-          .catch(() => ({
-            error: { message: "Unknown error", code: "unknown" },
-          }));
+        const errorData = await response.json().catch(() => ({
+          error: { message: "Unknown error", code: "unknown" },
+        }));
 
         const fullError =
           errorData.error?.message || `Error ${response.status}`;
@@ -1108,7 +1111,9 @@ export function ProviderModal(props: ProviderModalProps) {
                       if (result && result.isValid && result.totalBalance) {
                         setKeyBalances((prev) => ({
                           ...prev,
-                          [key]: `${result.currency} ${result.totalBalance}`,
+                          [key]: `${result.currency} ${Number(
+                            result.totalBalance,
+                          ).toFixed(2)}`,
                         }));
                       } else {
                         setKeyBalances((prev) => ({

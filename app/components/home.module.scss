@@ -248,21 +248,58 @@
 
 .chat-item-pin {
   position: absolute;
-  top: 0;
-  right: 50px;
+  top: 30px;
+  right: 3px;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: all ease 0.3s;
   cursor: pointer;
 }
 
-.chat-item:hover .chat-item-pin {
-  opacity: 0.7;
+.chat-item:hover > .chat-item-pin {
+  opacity: 0.5;
+  transform: translateX(-4px);
 }
 
-.chat-item-pin:hover {
+.chat-item:hover > .chat-item-pin:hover {
   opacity: 1;
 }
 
+/* 默认：展开状态（左上角） */
+.chat-item-pin-expanded {
+  position: absolute;
+  top: 0;
+  right: 50px;
+  opacity: 0;
+  transition: all ease 0.3s;
+  cursor: pointer;
+}
+
+.chat-item:hover > .chat-item-pin-expanded {
+  opacity: 0.5;
+  transform: translateX(4px);
+}
+.chat-item:hover > .chat-item-pin-expanded:hover {
+  opacity: 1;
+}
+
+/* 收起状态：右上角 delete 下方 */
+.chat-item-pin-narrow {
+  position: absolute;
+  top: 30px; /* delete 下方，按实际调整 */
+  right: 3px;
+  left: auto;
+  opacity: 0;
+  transition: all ease 0.3s;
+  cursor: pointer;
+}
+
+.chat-item:hover > .chat-item-pin-narrow {
+  opacity: 0.5;
+  transform: translateX(-4px);
+}
+.chat-item:hover > .chat-item-pin-narrow:hover {
+  opacity: 1;
+}
 .chat-item-delete {
   position: absolute;
   top: 0;

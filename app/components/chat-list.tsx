@@ -89,30 +89,6 @@ export function ChatItem(props: {
               </div>
             </>
           )}
-          {props.pinned ? (
-            <div
-              className={styles["chat-item-pin"]}
-              onClickCapture={(e) => {
-                props.onUnpin?.();
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <UnpinIcon />
-            </div>
-          ) : (
-            <div
-              className={styles["chat-item-pin"]}
-              onClickCapture={(e) => {
-                props.onPin?.();
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <PinIcon />
-            </div>
-          )}
-
           <div
             className={styles["chat-item-delete"]}
             onClickCapture={(e) => {
@@ -122,6 +98,22 @@ export function ChatItem(props: {
             }}
           >
             <DeleteIcon />
+          </div>
+          <div
+            className={
+              styles["chat-item-pin"] +
+              " " +
+              (props.narrow
+                ? styles["chat-item-pin-narrow"]
+                : styles["chat-item-pin-expanded"])
+            }
+            onClickCapture={(e) => {
+              props.pinned ? props.onUnpin?.() : props.onPin?.();
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {props.pinned ? <UnpinIcon /> : <PinIcon />}
           </div>
         </div>
       )}

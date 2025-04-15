@@ -1197,7 +1197,7 @@ export function ChatActions(props: {
           icon={<PrivacyModeIcon />}
           onClick={() => {
             if (!session?.inPrivateMode) {
-              chatStore.newSession(session.mask, true);
+              chatStore.newSession(undefined, true);
               showToast(Locale.Chat.InputActions.PrivateMode.OnToast);
             } else {
               chatStore.deleteSession(chatStore.currentSessionIndex);
@@ -1705,7 +1705,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           session.messages[session.messages.length - 1].beClear = true;
         }
       }),
-    new: () => chatStore.newSession(session.mask),
+    new: () => chatStore.newSession(),
     search: () => navigate(Path.SearchChat),
     newm: () => navigate(Path.NewChat),
     prev: () => chatStore.nextSession(-1),
@@ -2641,7 +2641,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       ) {
         event.preventDefault();
         setTimeout(() => {
-          chatStore.newSession(session.mask);
+          chatStore.newSession();
           navigate(Path.Chat);
         }, 10);
       }

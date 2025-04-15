@@ -1203,10 +1203,10 @@
         white-space: normal;
         word-break: break-all;
       }
-      button:last-child,
-      .icon-button:last-child {
-        margin-bottom: 0;
-      }
+      // button:last-child,
+      // .icon-button:last-child {
+      //   margin-bottom: 0;
+      // }
     }
   }
 }
@@ -1357,4 +1357,49 @@
       gap: 2px;
     }
   }
+}
+// Update these styles in custom-provider.module.scss
+.testConfigContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.testModelLabel {
+  margin-right: 10px;
+  font-size: 14px;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.testModelInput {
+  flex: 1;
+  padding: 8px 10px;
+  margin-right: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+}
+// Update the test result styles in custom-provider.module.scss
+.testResult {
+  margin-left: 8px;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.testSuccess {
+  color: #047857;
+  background-color: #ecfdf5;
+}
+
+.testError {
+  color: #b91c1c;
+  background-color: #fef2f2;
 }

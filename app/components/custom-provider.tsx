@@ -762,7 +762,7 @@ export function CustomProvider() {
           <IconButton
             icon={<CloseIcon />}
             bordered
-            onClick={() => navigate(Path.Settings)}
+            onClick={() => navigate(Path.Home)}
             title={Locale.CustomProvider.Return}
           />
         </div>

@@ -53,7 +53,7 @@ export function useAllModelsWithCustomProviders() {
                 provider.name
               }`,
               provider: {
-                id: model.name,
+                id: provider.id,
                 providerName: provider.name,
                 providerType: "custom-provider",
               },

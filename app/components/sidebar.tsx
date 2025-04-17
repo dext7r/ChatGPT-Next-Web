@@ -12,12 +12,14 @@ import MaskIcon from "../icons/mask.svg";
 import DragIcon from "../icons/drag.svg";
 import DiscoveryIcon from "../icons/discovery.svg";
 import CustomProviderIcon from "../icons/custom-models.svg";
+import HomeIcon from "../icons/home.svg";
 
 import parse from "html-react-parser";
 
 import Locale from "../locales";
 
 import { useAppConfig, useChatStore, useAccessStore } from "../store";
+import { useLocation } from "react-router-dom";
 
 import {
   DEFAULT_SIDEBAR_WIDTH,
@@ -279,6 +281,9 @@ export function SideBar(props: { className?: string }) {
     const currentSession = state.sessions[state.currentSessionIndex];
     return !!currentSession?.inPrivateMode;
   });
+  const location = useLocation();
+  const isSettingsRoute = location.pathname === Path.Settings;
+  const isCustomProviderRoute = location.pathname === Path.CustomProvider;
 
   return (
     <SideBarContainer
@@ -360,10 +365,14 @@ export function SideBar(props: { className?: string }) {
               />
             </div>
             <div className={styles["sidebar-action"]}>
-              <Link to={Path.Settings}>
+              <Link to={isSettingsRoute ? Path.Home : Path.Settings}>
                 <IconButton
-                  aria={Locale.Settings.Title}
-                  icon={<SettingsIcon />}
+                  aria={
+                    isSettingsRoute
+                      ? Locale.NewChat.Return
+                      : Locale.Settings.Title
+                  }
+                  icon={isSettingsRoute ? <HomeIcon /> : <SettingsIcon />}
                   shadow
                 />
               </Link>
@@ -378,10 +387,22 @@ export function SideBar(props: { className?: string }) {
               </a>
             </div>
             <div className={styles["sidebar-action"]}>
-              <Link to={Path.CustomProvider}>
+              <Link
+                to={isCustomProviderRoute ? Path.Home : Path.CustomProvider}
+              >
                 <IconButton
-                  aria={Locale.CustomProvider.Title}
-                  icon={<CustomProviderIcon />}
+                  aria={
+                    isCustomProviderRoute
+                      ? Locale.NewChat.Return
+                      : Locale.CustomProvider.Title
+                  }
+                  icon={
+                    isCustomProviderRoute ? (
+                      <HomeIcon />
+                    ) : (
+                      <CustomProviderIcon />
+                    )
+                  }
                   shadow
                 />
               </Link>

@@ -189,6 +189,7 @@ export const DEFAULT_TTS_VOICES = [
 export const VISION_MODEL_REGEXES = [
   /vision/,
   /gpt-4o/,
+  /gpt-4.1/,
   /claude-3/,
   /gemini-1\.5/,
   /gemini-exp/,
@@ -204,6 +205,7 @@ export const VISION_MODEL_REGEXES = [
   /pixtral/,
   /kimi-latest/,
   /multimodal/,
+  /llama-4/,
 ];
 
 export const EXCLUDE_VISION_MODEL_REGEXES = [/claude-3-5-haiku-20241022/];

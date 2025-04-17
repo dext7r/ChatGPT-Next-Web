@@ -94,6 +94,10 @@ const KeyItem = ({
   }, [externalBalance]);
 
   const checkBalance = async () => {
+    if (baseUrl.endsWith("#")) {
+      showToast("当前渠道不支持余额查询");
+      return;
+    }
     setLoading(true);
     try {
       let result = null;
@@ -1073,146 +1077,20 @@ export function ProviderModal(props: ProviderModalProps) {
               <IconButton
                 text={Locale.CustomProvider.RefreshBalance}
                 onClick={async () => {
-                  setKeyBalances({});
-                  // 刷新所有Key的余额
-                  const loadingState: Record<string, boolean> = {};
-                  keyList.forEach((key) => {
-                    loadingState[key] = true;
-                  });
-                  setLoadingKeyBalances(loadingState);
-
-                  // 并行查询所有key的余额
-                  const promises = keyList.map(async (key) => {
-                    try {
-                      let result: any = null;
-                      if (formData.type === "openrouter") {
-                        result = await useAccessStore
-                          .getState()
-                          .checkOpenRouterBalance(key, formData.baseUrl);
-                      } else if (formData.type === "siliconflow") {
-                        result = await useAccessStore
-                          .getState()
-                          .checkSiliconFlowBalance(key, formData.baseUrl);
-                      } else if (formData.type === "deepseek") {
-                        result = await useAccessStore
-                          .getState()
-                          .checkDeepSeekBalance(key, formData.baseUrl);
-                      } else if (
-                        formData.type === "openai" &&
-                        formData.baseUrl !==
-                          providerTypeDefaultUrls[formData.type]
-                      ) {
-                        result = await useAccessStore
-                          .getState()
-                          .checkCustomOpenaiBalance(key, formData.baseUrl);
-                      }
-
-                      // 更新该key的余额信息
-                      if (result && result.isValid && result.totalBalance) {
-                        setKeyBalances((prev) => ({
-                          ...prev,
-                          [key]: `${result.currency} ${Number(
-                            result.totalBalance,
-                          ).toFixed(2)}`,
-                        }));
-                      } else {
-                        setKeyBalances((prev) => ({
-                          ...prev,
-                          [key]: null,
-                        }));
-                      }
-                    } catch (error) {
-                      setKeyBalances((prev) => ({
-                        ...prev,
-                        [key]: null,
-                      }));
-                    } finally {
-                      // 标记该key加载完成
-                      setLoadingKeyBalances((prev) => ({
-                        ...prev,
-                        [key]: false,
-                      }));
-                    }
-                  });
-
-                  await Promise.all(promises);
-                  showToast("所有余额刷新完成");
-                }}
-                bordered
-              />
-              {/* <IconButton
-                text={Locale.CustomProvider.RemoveInvalidKey}
-                onClick={async () => {
-                  // 添加确认对话框
-                  const confirmContent = (
-                    <div style={{ lineHeight: "1.4" }}>
-                      <div style={{ fontWeight: "500" }}>
-                        此操作将会移除所有无法查询到余额的密钥。
-                      </div>
-
-                      <div
-                        style={{
-                          margin: "8px 0",
-                          padding: "8px 10px",
-                          backgroundColor: "#fff7ed",
-                          borderLeft: "3px solid #f97316",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontWeight: "600",
-                            color: "#c2410c",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          将移除以下类型的密钥:
-                        </div>
-                        <ul
-                          style={{
-                            paddingLeft: "20px",
-                            margin: "4px 0 0 0",
-                            color: "#9a3412",
-                          }}
-                        >
-                          <li>API请求错误的密钥</li>
-                          <li>余额为0或无效的密钥</li>
-                          <li>无法连接的密钥</li>
-                        </ul>
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: "8px",
-                          fontWeight: "600",
-                          color: "#dc2626",
-                        }}
-                      >
-                        此操作执行后无法撤回，是否继续？
-                      </div>
-                    </div>
-                  );
-                  // 如果用户取消，则不执行后续操作
-                  if (!(await showConfirm(confirmContent))) {
+                  if (formData.baseUrl.endsWith("#")) {
+                    showToast("当前渠道不支持余额查询");
                     return;
-                  }
-                  const validKeys: string[] = [];
-                  const invalidKeys: string[] = [];
-                  const reasons: Record<string, string> = {};
+                  } else {
+                    setKeyBalances({});
+                    // 刷新所有Key的余额
+                    const loadingState: Record<string, boolean> = {};
+                    keyList.forEach((key) => {
+                      loadingState[key] = true;
+                    });
+                    setLoadingKeyBalances(loadingState);
 
-                  showToast("正在检查无效Key...");
-                  for (let key of keyList) {
-                    // 检查是否已经有该key的余额信息
-                    if (key in keyBalances) {
-                      // 有余额显示的key被认为是有效的
-                      if (hasValidBalance(keyBalances[key])) {
-                        validKeys.push(key);
-                      } else {
-                        invalidKeys.push(key);
-                        reasons[key] = "缓存余额无效或为空";
-                      }
-                    } else {
-                      // 如果没有查询过余额，进行查询
+                    // 并行查询所有key的余额
+                    const promises = keyList.map(async (key) => {
                       try {
                         let result: any = null;
                         if (formData.type === "openrouter") {
@@ -1237,68 +1115,40 @@ export function ProviderModal(props: ProviderModalProps) {
                             .checkCustomOpenaiBalance(key, formData.baseUrl);
                         }
 
-                        // 更新余额缓存
+                        // 更新该key的余额信息
                         if (result && result.isValid && result.totalBalance) {
-                          // 尝试将余额转换为浮点数
-                          const balance = parseFloat(result.totalBalance);
-                          if (!isNaN(balance) && balance > 0) {
-                            validKeys.push(key);
-                            setKeyBalances((prev) => ({
-                              ...prev,
-                              [key]: `${result.currency} ${result.totalBalance}`,
-                            }));
-                          } else {
-                            invalidKeys.push(key);
-                            reasons[
-                              key
-                            ] = `余额为0或无效: ${result.totalBalance}`;
-                            setKeyBalances((prev) => ({
-                              ...prev,
-                              [key]: null,
-                            }));
-                          }
+                          setKeyBalances((prev) => ({
+                            ...prev,
+                            [key]: `${result.currency} ${Number(
+                              result.totalBalance,
+                            ).toFixed(2)}`,
+                          }));
                         } else {
-                          invalidKeys.push(key);
-                          reasons[key] = `API返回无效结果: ${
-                            result?.error || "未知错误"
-                          }`;
                           setKeyBalances((prev) => ({
                             ...prev,
                             [key]: null,
                           }));
                         }
                       } catch (error) {
-                        // 请求失败的key视为无效
-                        invalidKeys.push(key);
-                        reasons[key] = `API请求失败: ${
-                          error instanceof Error ? error.message : "未知错误"
-                        }`;
                         setKeyBalances((prev) => ({
                           ...prev,
                           [key]: null,
                         }));
+                      } finally {
+                        // 标记该key加载完成
+                        setLoadingKeyBalances((prev) => ({
+                          ...prev,
+                          [key]: false,
+                        }));
                       }
-                    }
-                  }
-                  console.log(
-                    "无效key列表及原因:",
-                    invalidKeys.map((k) => ({
-                      key: k,
-                      reason: reasons[k],
-                    })),
-                  );
-                  setKeyList(validKeys);
-                  showToast("无效Key已移除");
-                  // 显示结果
-                  const removedCount = keyList.length - validKeys.length;
-                  if (removedCount > 0) {
-                    showToast(`已移除 ${removedCount} 个无效Key`);
-                  } else {
-                    showToast("没有发现无效Key");
+                    });
+
+                    await Promise.all(promises);
+                    showToast("所有余额刷新完成");
                   }
                 }}
                 bordered
-              /> */}
+              />
               <IconButton
                 text={Locale.CustomProvider.RemoveInvalidKey}
                 onClick={removeInvalidKeys}

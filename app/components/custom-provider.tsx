@@ -22,6 +22,8 @@ import LoadingIcon from "../icons/loading.svg";
 import SearchIcon from "../icons/zoom.svg";
 import EnableIcon from "../icons/light.svg";
 import DisableIcon from "../icons/lightning.svg";
+import DownloadIcon from "../icons/download.svg";
+import UploadIcon from "../icons/upload.svg";
 
 function getAvailableModelsTooltip(provider: userCustomProvider) {
   if (!provider.models || provider.models.length === 0)
@@ -658,6 +660,10 @@ export function CustomProvider() {
     const accessStore = useAccessStore.getState();
     const { id, apiKey, baseUrl, type } = provider;
 
+    if (baseUrl.endsWith("#")) {
+      showToast("当前渠道不支持余额查询");
+      return;
+    }
     const keys = apiKey
       .split(",")
       .map((k) => k.trim())

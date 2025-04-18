@@ -444,7 +444,7 @@ export function PreCode(props: { children: any }) {
   }, [renderArtifacts]);
   return (
     <>
-      <pre ref={ref}>
+      <pre ref={ref} style={{ position: "relative" }}>
         <span
           className="copy-code-button"
           onClick={() => {
@@ -511,12 +511,20 @@ function CustomCode(props: { children: any; className?: string }) {
     setCollapsed((collapsed) => !collapsed);
   };
   const renderShowMoreButton = () => {
-    if (showToggle && enableCodeFold && collapsed) {
+    if (showToggle && enableCodeFold) {
       return (
         <div
           className={`show-hide-button ${collapsed ? "collapsed" : "expanded"}`}
+          style={{
+            position: "absolute",
+            right: "12px",
+            bottom: "12px",
+            zIndex: 1,
+          }}
         >
-          <button onClick={toggleCollapsed}>{Locale.NewChat.More}</button>
+          <button onClick={toggleCollapsed} className="code-fold-btn">
+            {collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
+          </button>
         </div>
       );
     }
@@ -530,7 +538,7 @@ function CustomCode(props: { children: any; className?: string }) {
         ref={ref}
         style={{
           maxHeight: enableCodeFold && collapsed ? "400px" : "none",
-          overflowY: "hidden",
+          overflowY: enableCodeFold && collapsed ? "auto" : "visible",
         }}
       >
         {props.children}

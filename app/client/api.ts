@@ -150,6 +150,11 @@ export interface userCustomProvider {
   status: "active" | "inactive";
   models?: Model[];
   description?: string;
+  balance?: {
+    amount: number;
+    currency: string;
+    lastUpdated?: string;
+  };
 }
 
 export class ClientApi {

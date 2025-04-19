@@ -664,6 +664,16 @@ export function CustomProvider() {
       showToast("当前渠道不支持余额查询");
       return;
     }
+
+    // if (provider.balance) {
+    //   const updatedProviders = providers.map((p) =>
+    //     p.id === provider.id ? { ...p, balance: undefined } : p,
+    //   );
+    //   setProviders(updatedProviders);
+    //   saveProvidersToStorage(updatedProviders);
+    //   return;
+    // }
+
     const keys = apiKey
       .split(",")
       .map((k) => k.trim())
@@ -673,22 +683,22 @@ export function CustomProvider() {
       return;
     }
 
-    if (providerBalances[id]) {
-      setProviderBalances((prev) => {
-        const newBalances = { ...prev };
-        delete newBalances[id];
-        return newBalances;
-      });
-      return;
-    }
-
-    let totalBalance = 0;
-    let currency = "";
+    // if (providerBalances[id]) {
+    //   setProviderBalances((prev) => {
+    //     const newBalances = { ...prev };
+    //     delete newBalances[id];
+    //     return newBalances;
+    //   });
+    //   return;
+    // }
 
     // 设置当前提供商的加载状态
     setLoadingBalances((prev) => ({ ...prev, [id]: true }));
 
     try {
+      let totalBalance = 0;
+      let currency = "";
+
       // 使用 Promise.all 来并行获取所有 key 的余额
       const balancePromises = keys.map(async (key) => {
         try {
@@ -710,7 +720,9 @@ export function CustomProvider() {
             if (!currency && result.currency) {
               currency = result.currency;
             }
-            return result.totalBalance;
+            return typeof result.totalBalance === "string"
+              ? parseFloat(result.totalBalance) || 0
+              : Number(result.totalBalance) || 0;
           } else {
             throw new Error(result?.error || "查询失败或不支持查询");
           }
@@ -723,11 +735,26 @@ export function CustomProvider() {
       const balances = await Promise.all(balancePromises);
       totalBalance = balances.reduce((acc, curr) => acc + curr, 0);
 
-      // 更新余额状态
-      setProviderBalances((prev) => ({
-        ...prev,
-        [id]: `${currency} ${totalBalance.toFixed(2)}`,
-      }));
+      const updatedProviders = providers.map((p) =>
+        p.id === provider.id
+          ? {
+              ...p,
+              balance: {
+                amount: totalBalance,
+                currency,
+                lastUpdated: new Date().toISOString(),
+              },
+            }
+          : p,
+      );
+      setProviders(updatedProviders);
+      saveProvidersToStorage(updatedProviders);
+
+      // // 更新余额状态
+      // setProviderBalances((prev) => ({
+      //   ...prev,
+      //   [id]: `${currency} ${totalBalance.toFixed(2)}`,
+      // }));
 
       showToast(`总余额: ${currency} ${totalBalance.toFixed(2)}`);
     } catch (error) {
@@ -736,6 +763,11 @@ export function CustomProvider() {
     } finally {
       setLoadingBalances((prev) => ({ ...prev, [id]: false }));
     }
+  };
+
+  const getBalanceText = (provider: userCustomProvider) => {
+    if (!provider.balance) return null;
+    return `${provider.balance.currency} ${provider.balance.amount.toFixed(2)}`;
   };
 
   return (
@@ -869,6 +901,14 @@ export function CustomProvider() {
                           : Locale.CustomProvider.Status.Disabled}
                       </span>
                     )}
+                    {provider.balance && (
+                      <span
+                        className={styles.metaItem}
+                        style={{ backgroundColor: "#FEEBC8", color: "#92400E" }}
+                      >
+                        {getBalanceText(provider)}
+                      </span>
+                    )}
                     {provider.baseUrl && (
                       <span
                         className={styles.metaItem}
@@ -918,12 +958,16 @@ export function CustomProvider() {
                       <SearchIcon />
                     )
                   }
-                  text={providerBalances[provider.id] || "查询余额"}
+                  text={
+                    loadingBalances[provider.id]
+                      ? "查询中..."
+                      : provider.balance
+                      ? "更新余额"
+                      : "查询余额"
+                  }
                   onClick={() => handleSumBalances(provider)}
                   title={
-                    providerBalances[provider.id]
-                      ? "点击清除"
-                      : "查询所有密钥余额"
+                    provider.balance ? "点击更新余额信息" : "查询所有密钥余额"
                   }
                   bordered
                   className={

@@ -48,7 +48,7 @@ export const providerTypeDefaultUrls: Record<string, string> = {
   openrouter: "https://openrouter.ai/api",
 };
 export const providerTypeDefaultTestModel: Record<string, string> = {
-  openai: "gpt-4.1",
+  openai: "gpt-4o-mini",
   siliconflow: "Qwen/Qwen2.5-7B-Instruct",
   deepseek: "deepseek-chat",
   openrouter: "qwen/qwen-2.5-7b-instruct:free",
@@ -243,6 +243,10 @@ export function ProviderModal(props: ProviderModalProps) {
         type: props.provider.type,
         models: props.provider.models || [],
         status: props.provider.status || "active",
+        balance: props.provider.balance,
+        testModel:
+          props.provider.testModel ||
+          providerTypeDefaultTestModel[props.provider.type],
       });
 
       if (props.provider.models) {
@@ -257,10 +261,12 @@ export function ProviderModal(props: ProviderModalProps) {
         type: "openai",
         models: [],
         status: "active",
+        balance: undefined,
+        testModel: providerTypeDefaultTestModel["openai"],
       });
       setModels([]);
     }
-  }, [props.provider]);
+  }, [props.provider, isKeyListViewMode]);
 
   const [rawInput, setRawInput] = useState("");
   const parseRawInput = () => {
@@ -328,12 +334,13 @@ export function ProviderModal(props: ProviderModalProps) {
   const handleSubmit = () => {
     // 准备保存的数据，包括选中的模型
     const selectedModels = models.filter((model) => model.available);
-
     const saveData: userCustomProvider = {
       ...formData,
       id: formData.id || `provider-${Date.now()}`, // 确保有ID
       models: selectedModels,
       status: (formData.status as "active" | "inactive") || "active",
+      balance: formData.balance,
+      testModel: formData.testModel,
     };
 
     props.onSave(saveData);
@@ -644,6 +651,8 @@ export function ProviderModal(props: ProviderModalProps) {
         type: props.provider.type,
         models: props.provider.models || [],
         status: props.provider.status || "active",
+        balance: props.provider.balance,
+        testModel: props.provider.testModel,
       });
       if (props.provider.models) {
         setModels(props.provider.models);
@@ -785,14 +794,19 @@ export function ProviderModal(props: ProviderModalProps) {
       }
     >
   >({});
-  const [testModel, setTestModel] = useState("gpt-4o-mini");
+  // const [testModel, setTestModel] = useState("gpt-4o-mini");
 
   // Add this useEffect to update the test model when formData.type changes
   useEffect(() => {
     // This will run when formData.type changes
+    // if (!formData.testModel) {
     const defaultTestModel =
       providerTypeDefaultTestModel[formData.type] || "gpt-4o-mini";
-    setTestModel(defaultTestModel);
+    setFormData((prev) => ({
+      ...prev,
+      testModel: defaultTestModel,
+    }));
+    // }
   }, [formData.type]);
 
   // Add this helper function to test a single key
@@ -813,6 +827,7 @@ export function ProviderModal(props: ProviderModalProps) {
     try {
       const startTime = Date.now();
       let completionPath = "/v1/chat/completions";
+      const modelToTest = formData.testModel;
 
       const response = await fetchWithTimeout(
         `${formData.baseUrl}${completionPath}`,
@@ -823,7 +838,7 @@ export function ProviderModal(props: ProviderModalProps) {
             Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: testModel,
+            model: modelToTest,
             messages: [{ role: "user", content: testMessage }],
             max_tokens: 20,
             stream: false,
@@ -883,6 +898,12 @@ export function ProviderModal(props: ProviderModalProps) {
 
   // Function to test all keys
   const testAllKeys = async () => {
+    if (!formData.testModel?.trim()) {
+      showToast(
+        "Test model cannot be empty. Please specify a model to test with.",
+      );
+      return;
+    }
     for (const key of keyList) {
       await testKeyConnectivity(key);
     }
@@ -927,7 +948,58 @@ export function ProviderModal(props: ProviderModalProps) {
             <li>模型不可用的密钥</li>
           </ul>
         </div>
-
+        <div
+          style={{
+            margin: "8px 0",
+            padding: "8px 10px",
+            backgroundColor: "#f0f9ff",
+            borderLeft: "3px solid #0ea5e9",
+            borderRadius: "4px",
+          }}
+        >
+          <div
+            style={{
+              fontWeight: "600",
+              color: "#0369a1",
+              marginBottom: "4px",
+            }}
+          >
+            测试信息:
+          </div>
+          <ul
+            style={{
+              paddingLeft: "20px",
+              margin: "4px 0 0 0",
+              color: "#0c4a6e",
+            }}
+          >
+            <li>
+              测试模型:{" "}
+              <code
+                style={{
+                  background: "#e0f2fe",
+                  padding: "2px 4px",
+                  borderRadius: "3px",
+                }}
+              >
+                {formData.testModel || "未指定"}
+              </code>
+            </li>
+            <li>
+              接口地址:{" "}
+              <code
+                style={{
+                  background: "#e0f2fe",
+                  padding: "2px 4px",
+                  borderRadius: "3px",
+                  wordBreak: "break-all",
+                }}
+              >
+                {formData.baseUrl || providerTypeDefaultUrls[formData.type]}
+              </code>
+            </li>
+          </ul>
+        </div>
         <div
           style={{
             marginTop: "8px",
@@ -1036,11 +1108,13 @@ export function ProviderModal(props: ProviderModalProps) {
             <label className={styles.testModelLabel}>Test Model:</label>
             <input
               type="text"
-              value={testModel}
-              onChange={(e) => setTestModel(e.target.value)}
-              placeholder={
-                providerTypeDefaultTestModel[formData.type] || "gpt-4o-mini"
-              }
+              value={formData.testModel}
+              onChange={(e) => {
+                handleChange("testModel", e.target.value);
+              }}
+              // placeholder={
+              //   providerTypeDefaultTestModel[formData.type] || "gpt-4o-mini"
+              // }
               className={styles.testModelInput}
             />
             <IconButton
@@ -1089,6 +1163,9 @@ export function ProviderModal(props: ProviderModalProps) {
                       loadingState[key] = true;
                     });
                     setLoadingKeyBalances(loadingState);
+                    let totalBalance = 0;
+                    let currency = "";
+                    let hasValidBalance = false;
 
                     // 并行查询所有key的余额
                     const promises = keyList.map(async (key) => {
@@ -1118,6 +1195,12 @@ export function ProviderModal(props: ProviderModalProps) {
 
                         // 更新该key的余额信息
                         if (result && result.isValid && result.totalBalance) {
+                          const balance = Number(result.totalBalance);
+                          if (!isNaN(balance)) {
+                            totalBalance += balance;
+                            currency = result.currency || currency;
+                            hasValidBalance = true;
+                          }
                           setKeyBalances((prev) => ({
                             ...prev,
                             [key]: `${result.currency} ${Number(
@@ -1145,7 +1228,28 @@ export function ProviderModal(props: ProviderModalProps) {
                     });
 
                     await Promise.all(promises);
-                    showToast("所有余额刷新完成");
+                    // 更新渠道总余额
+                    if (hasValidBalance) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        balance: {
+                          amount: totalBalance,
+                          currency: currency,
+                          lastUpdated: new Date().toISOString(),
+                        },
+                      }));
+                    } else {
+                      // 如果没有有效的余额，清除总余额
+                      setFormData((prev) => ({
+                        ...prev,
+                        balance: undefined,
+                      }));
+                    }
+                    showToast(
+                      `所有余额刷新完成，当前渠道总额度：${currency} ${totalBalance.toFixed(
+                        2,
+                      )}`,
+                    );
                   }
                 }}
                 bordered

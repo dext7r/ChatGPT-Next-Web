@@ -150,6 +150,7 @@ export interface userCustomProvider {
   status: "active" | "inactive";
   models?: Model[];
   description?: string;
+  testModel?: string;
   balance?: {
     amount: number;
     currency: string;

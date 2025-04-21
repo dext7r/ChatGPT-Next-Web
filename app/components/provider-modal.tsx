@@ -710,6 +710,7 @@ export function ProviderModal(props: ProviderModalProps) {
 
     setKeyList([...keyList, ...uniqueNewKeys]);
     setNewKey("");
+    showToast(`${uniqueNewKeys.length} Keys had added successfully`);
   };
 
   // Function to remove a key from the list

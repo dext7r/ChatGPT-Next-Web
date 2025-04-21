@@ -3,11 +3,12 @@ import { IconButton } from "./button";
 import styles from "./custom-provider.module.scss";
 import { useNavigate } from "react-router-dom";
 import { Path, StoreKey } from "../constant";
-import { safeLocalStorage } from "../utils";
+import { safeLocalStorage, downloadAs, readFromFile } from "../utils";
 import Locale from "../locales";
 import { showToast, showConfirm } from "./ui-lib";
 import { useAccessStore } from "../store";
 import { userCustomProvider } from "../client/api";
+import { getClientConfig } from "../config/client";
 import {
   ProviderModal,
   providerTypeLabels,
@@ -22,8 +23,10 @@ import LoadingIcon from "../icons/loading.svg";
 import SearchIcon from "../icons/zoom.svg";
 import EnableIcon from "../icons/light.svg";
 import DisableIcon from "../icons/lightning.svg";
-import DownloadIcon from "../icons/download.svg";
-import UploadIcon from "../icons/upload.svg";
+import ImportIcon from "../icons/download.svg";
+import ExportIcon from "../icons/upload.svg";
+
+const isApp = !!getClientConfig()?.isApp;
 
 function getAvailableModelsTooltip(provider: userCustomProvider) {
   if (!provider.models || provider.models.length === 0)
@@ -83,6 +86,231 @@ export function CustomProvider() {
       safeLocalStorage().setItem(StoreKey.CustomProvider, jsonString);
     } catch (error) {
       console.error("保存到localStorage失败:", error);
+    }
+  };
+
+  // 导出服务提供商
+  const handleExportProviders = () => {
+    const datePart = isApp
+      ? `${new Date().toLocaleDateString().replace(/\//g, "_")} ${new Date()
+          .toLocaleTimeString()
+          .replace(/:/g, "_")}`
+      : new Date().toLocaleString().replace(/[\/:\\]/g, "_");
+
+    const fileName = `Providers-${datePart}.json`;
+
+    // Export using the utility function
+    downloadAs(JSON.stringify(providers, null, 2), fileName);
+
+    showToast("供应商配置已导出");
+  };
+
+  // 从 JSON 文件导入服务提供商
+  const handleImportProviders = async () => {
+    // Create file input element
+    try {
+      // Read file content using the utility function
+      const rawContent = await readFromFile();
+      if (!rawContent) return; // User canceled or file was empty
+
+      // Parse the imported data
+      const importedProviders = JSON.parse(rawContent) as userCustomProvider[];
+
+      // Validate imported data
+      if (!Array.isArray(importedProviders)) {
+        throw new Error("导入的文件格式不正确");
+      }
+
+      // Confirm import with user
+      const confirmContent = (
+        <div style={{ lineHeight: "1.4" }}>
+          <div style={{ marginBottom: "8px" }}>
+            确定要导入这些供应商配置吗？
+          </div>
+
+          <div
+            style={{
+              padding: "8px 10px",
+              borderLeft: "3px solid #3b82f6",
+              backgroundColor: "#eff6ff",
+              margin: "8px 0",
+            }}
+          >
+            <div
+              style={{
+                fontWeight: "600",
+                color: "#1e40af",
+                marginBottom: "4px",
+              }}
+            >
+              将导入 {importedProviders.length} 个供应商配置:
+            </div>
+            <div
+              style={{
+                maxHeight: "150px",
+                overflowY: "auto",
+                paddingRight: "5px",
+              }}
+            >
+              {importedProviders.map((provider, index) => (
+                <div
+                  key={index}
+                  style={{
+                    marginBottom: "4px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ fontWeight: "500" }}>
+                    {index + 1}. {provider.name}
+                  </span>
+                  <span
+                    style={{
+                      color: "#6b7280",
+                      fontSize: "13px",
+                      marginLeft: "8px",
+                    }}
+                  >
+                    {provider.type}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{ marginTop: "12px", fontSize: "14px", color: "#6b7280" }}
+          >
+            <p style={{ marginBottom: "8px" }}>选择导入方式:</p>
+            <div>
+              <input
+                type="radio"
+                id="merge"
+                name="importOption"
+                value="merge"
+                defaultChecked
+              />
+              <label htmlFor="merge" style={{ marginLeft: "8px" }}>
+                合并 - 添加新供应商，保留现有供应商
+              </label>
+            </div>
+            <div style={{ marginTop: "6px" }}>
+              <input
+                type="radio"
+                id="replace"
+                name="importOption"
+                value="replace"
+              />
+              <label htmlFor="replace" style={{ marginLeft: "8px" }}>
+                替换 - 清除现有供应商，仅使用导入的供应商
+              </label>
+            </div>
+          </div>
+        </div>
+      );
+
+      if (await showConfirm(confirmContent)) {
+        // Get selected import mode
+        const selectedRadio = document.querySelector(
+          'input[name="importOption"]:checked',
+        ) as HTMLInputElement | null;
+        const importMode = selectedRadio ? selectedRadio.value : "merge";
+
+        // Process import based on selected mode
+        if (importMode === "replace") {
+          // Replace existing providers
+          setProviders(importedProviders);
+          saveProvidersToStorage(importedProviders);
+          showToast(`已替换为 ${importedProviders.length} 个导入的供应商`);
+        } else {
+          // Merge with existing providers
+          // Add unique ID to imported providers if missing
+          const processedImports = importedProviders.map((provider) => ({
+            ...provider,
+            id:
+              provider.id ||
+              `provider-${Date.now()}-${Math.random()
+                .toString(36)
+                .substring(2, 9)}`,
+          }));
+          // Track stats for user feedback
+          let mergedCount = 0;
+          let renamedCount = 0;
+          let addedCount = 0;
+          const updatedProviders = [...providers];
+          // Process each imported provider
+          processedImports.forEach((importedProvider) => {
+            // Find existing provider with same name
+            const existingProviderIndex = updatedProviders.findIndex(
+              (p) => p.name === importedProvider.name,
+            );
+
+            if (existingProviderIndex >= 0) {
+              const existingProvider = updatedProviders[existingProviderIndex];
+
+              // Check if baseUrl matches
+              if (existingProvider.baseUrl === importedProvider.baseUrl) {
+                // Merge providers - combine API keys
+                const existingKeys = existingProvider.apiKey
+                  .split(",")
+                  .map((k) => k.trim())
+                  .filter(Boolean);
+                const importedKeys = importedProvider.apiKey
+                  .split(",")
+                  .map((k) => k.trim())
+                  .filter(Boolean);
+
+                // Combine keys and remove duplicates
+                const combinedKeysSet = new Set([
+                  ...existingKeys,
+                  ...importedKeys,
+                ]);
+                const combinedKeys = Array.from(combinedKeysSet).join(",");
+
+                // Update the existing provider with merged keys
+                updatedProviders[existingProviderIndex] = {
+                  ...existingProvider,
+                  apiKey: combinedKeys,
+                  // Optionally merge other fields if needed
+                };
+
+                mergedCount++;
+              } else {
+                // Same name but different baseUrl - rename and add as new
+                let newName = `${importedProvider.name}-1`;
+                let counter = 2;
+
+                // Keep incrementing counter until we find a unique name
+                while (updatedProviders.some((p) => p.name === newName)) {
+                  newName = `${importedProvider.name}-${counter}`;
+                  counter++;
+                }
+
+                // Add with new name
+                updatedProviders.push({
+                  ...importedProvider,
+                  name: newName,
+                  id: `provider-${Date.now()}-${renamedCount}`, // Ensure unique ID
+                });
+
+                renamedCount++;
+              }
+            } else {
+              // No name conflict - add directly
+              updatedProviders.push(importedProvider);
+              addedCount++;
+            }
+          });
+          setProviders(updatedProviders);
+          saveProvidersToStorage(updatedProviders);
+          showToast(
+            `导入完成: ${mergedCount}个合并, ${renamedCount}个重命名, ${addedCount}个新增`,
+          );
+        }
+      }
+    } catch (error) {
+      console.error("导入失败:", error);
+      showToast("导入失败: 文件格式不正确");
     }
   };
 
@@ -785,6 +1013,20 @@ export function CustomProvider() {
           </div>
         </div>
         <div className={styles.actions}>
+          <IconButton
+            icon={<ExportIcon />}
+            text="导出配置"
+            bordered
+            onClick={handleExportProviders}
+            title="导出供应商配置到文件"
+          />
+          <IconButton
+            icon={<ImportIcon />}
+            text="导入配置"
+            bordered
+            onClick={handleImportProviders}
+            title="从文件导入供应商配置"
+          />
           <IconButton
             icon={<PlusIcon />}
             text={Locale.CustomProvider.AddButton}

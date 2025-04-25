@@ -1844,6 +1844,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const formatModelItem = (model: Model) => ({
     title:
       model?.provider?.providerName?.toLowerCase() === "openai" ||
+      model?.provider?.providerType === "custom" ||
       model?.provider?.providerType === "custom-provider" ||
       model?.provider?.providerName === model.name
         ? `${model.displayName || model.name}`

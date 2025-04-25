@@ -476,13 +476,10 @@ export class ChatGPTApi implements LLMApi {
               responseText = await res.clone().text();
               return finish();
             }
-
             if (
               !res.ok ||
-              !res.headers
-                .get("content-type")
-                ?.startsWith(EventStreamContentType) ||
-              res.status !== 200
+              !contentType?.startsWith(EventStreamContentType) ||
+              (res.status !== 200 && res.status !== 201)
             ) {
               const responseTexts = [responseText];
               let extraInfo = await res.clone().text();

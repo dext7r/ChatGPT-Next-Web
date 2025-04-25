@@ -605,12 +605,32 @@ export function ProviderModal(props: ProviderModalProps) {
       }
 
       // 应用映射到模型
-      setModels(
-        models.map((model) => ({
-          ...model,
-          displayName: json[model.name] || model.displayName || model.name,
-        })),
-      );
+      const updatedModels = [...models];
+      for (const model of updatedModels) {
+        if (json[model.name]) {
+          // Update existing model's display name
+          model.displayName = json[model.name];
+        }
+      }
+      // 检查新模型
+      for (const modelName in json) {
+        if (!updatedModels.some((model) => model.name === modelName)) {
+          // Create a new model if it doesn't exist
+          updatedModels.push({
+            name: modelName,
+            displayName: json[modelName],
+            available: true, // Set default values as needed
+            isDefault: false,
+            provider: {
+              id: modelName,
+              providerName: modelName,
+              providerType: formData.type, // Adjust as necessary
+            },
+          });
+        }
+      }
+
+      setModels(updatedModels);
 
       showToast(Locale.CustomProvider.EditModel.SuccessJson);
       setIsJsonViewMode(false); // 应用后切回正常视图

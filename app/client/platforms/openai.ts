@@ -381,7 +381,6 @@ export class ChatGPTApi implements LLMApi {
         let searchContent = "";
         let thinkContent = "";
         let completionContent = "";
-        let citationsContent = "";
 
         let finished = false;
         let isInSearching = false;
@@ -439,7 +438,7 @@ export class ChatGPTApi implements LLMApi {
               totalReplyLatency = Date.now() - startRequestTime;
             }
 
-            let full_reply = responseText + remainText + citationsContent;
+            let full_reply = responseText + remainText;
             full_reply = wrapThinkingPart(full_reply);
             if (completionTokens == 0) {
               completionTokens = estimateTokenLengthInLLM(full_reply);
@@ -514,15 +513,12 @@ export class ChatGPTApi implements LLMApi {
                   content: string | null;
                   reasoning_content: string | null; // 兼容 deepseek 字段
                   reasoning: string | null; // 兼容 openRouter 字段
-                  citations: string[] | null; // 兼容 openRouter 字段
                 };
               }>;
               const reasoning =
                 choices[0]?.delta?.reasoning_content ||
                 choices[0]?.delta?.reasoning;
               const content = choices[0]?.delta?.content;
-              const citations = json?.citations;
-
               const textmoderation = json?.prompt_filter_results;
               completionTokens =
                 json?.usage?.total_tokens != null &&
@@ -535,12 +531,6 @@ export class ChatGPTApi implements LLMApi {
                 isFirstReply = true;
               } else {
                 isFirstReply = false;
-              }
-              if (citations && citations.length > 0 && !citationsContent) {
-                const formatted = citations
-                  .map((url, index) => `[${index + 1}] ${url}`)
-                  .join("\n");
-                citationsContent = "\n-------\n### citations\n" + formatted;
               }
               if (reasoning && reasoning.length > 0) {
                 // 存在非空的 reasoning_content => reasoningType

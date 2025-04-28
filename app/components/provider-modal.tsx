@@ -252,6 +252,17 @@ export function ProviderModal(props: ProviderModalProps) {
       if (props.provider.models) {
         setModels(props.provider.models);
       }
+
+      if (props.provider.apiKey) {
+        setKeyList(
+          props.provider.apiKey
+            .split(/[\s,]+/)
+            .map((key) => key.trim())
+            .filter(Boolean),
+        );
+      } else {
+        setKeyList([]); // Ensure keyList is empty if apiKey is empty
+      }
     } else {
       // 添加新提供商，初始化默认值
       setFormData({
@@ -265,8 +276,9 @@ export function ProviderModal(props: ProviderModalProps) {
         testModel: providerTypeDefaultTestModel["openai"],
       });
       setModels([]);
+      setKeyList([]);
     }
-  }, [props.provider, isKeyListViewMode]);
+  }, [props.provider]);
 
   const [rawInput, setRawInput] = useState("");
   const parseRawInput = () => {
@@ -682,7 +694,7 @@ export function ProviderModal(props: ProviderModalProps) {
       if (props.provider.apiKey) {
         setKeyList(
           props.provider.apiKey
-            .split(",")
+            .split(/[\s,]+/)
             .map((key) => key.trim())
             .filter(Boolean),
         );
@@ -1534,7 +1546,28 @@ export function ProviderModal(props: ProviderModalProps) {
                   ? Locale.CustomProvider.NormalView
                   : Locale.CustomProvider.KeyListView
               }
-              onClick={() => setIsKeyListViewMode(!isKeyListViewMode)}
+              onClick={() => {
+                if (!isKeyListViewMode) {
+                  // 切换到密钥列表视图时，将当前输入解析到keyList
+                  const newKeys = formData.apiKey
+                    .split(/[\s,]+/)
+                    .map((k) => k.trim())
+                    .filter(Boolean);
+                  setKeyList(newKeys);
+                  setFormData((prev) => ({
+                    ...prev,
+                    apiKey: newKeys.join(","),
+                  }));
+                } else {
+                  // 切换回普通视图时，将keyList合并为字符串
+                  const newApiKey = keyList.join(",");
+                  setFormData((prev) => ({
+                    ...prev,
+                    apiKey: newApiKey,
+                  }));
+                }
+                setIsKeyListViewMode(!isKeyListViewMode);
+              }}
               bordered
             />
           ),

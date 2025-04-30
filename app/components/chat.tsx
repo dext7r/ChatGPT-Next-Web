@@ -561,6 +561,15 @@ export function ChatActions(props: {
     }
 
     if (
+      originalPromptForImproving !== null &&
+      props.userInput.trim() !== optimizedPrompt?.trim()
+    ) {
+      // 如果当前输入与原始输入不同，则重置翻译的撤销状态
+      setOriginalPromptForImproving(null);
+      setOptimizedPrompt(null);
+    }
+
+    if (
       originalTextForPrivacy !== null &&
       props.userInput.trim() !== privacyProcessedText
     ) {

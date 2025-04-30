@@ -162,9 +162,9 @@
 | `SIDEBAR_TITLE`            | 设置侧边栏标题                                                                    | -                         |
 | `SIDEBAR_SUBTITLE`         | 设置侧边栏子标题，支持 HTML 解析                                                  | -                         |
 | `SITE_TITLE`               | 设置网站顶部标题                                                                  | -                         |
-| `COMPRESS_MODEL`           | 设置标题生成和历史压缩模型                                                        | `gpt-4o-mini`             |
-| `TRANSLATE_MODEL`          | 设置翻译模型                                                                      | `gpt-4o-mini`             |
-| `OCR_MODEL`                | 设置 OCR 模型                                                                     | `gpt-4o-mini`             |
+| `COMPRESS_MODEL`           | 设置标题生成和历史压缩模型                                                        | -             |
+| `TEXT_PROCESS_MODEL`       | 设置文本任务模型                                                                      | -             |
+| `OCR_MODEL`                | 设置 OCR 模型                                                                     | -             |
 | `CUSTOM_HELLO`             | 自定义招呼语，覆盖默认的 `bot_hello`                                              | -                         |
 | `UNAUTHORIZED_INFO`        | 自定义错误提示，覆盖默认的提示词                                                  | -                         |
 | `WHITE_WEBDEV_ENDPOINTS`   | 增加允许访问的 WebDAV 服务地址                                                    | -                         |

@@ -14,16 +14,17 @@ export function useAllModels() {
       [
         configStore.customModels,
         accessStore.customModels,
-        accessStore.defaultModel,
-        accessStore.compressModel,
-        accessStore.translateModel,
-        accessStore.ocrModel,
+        // accessStore.defaultModel,
+        // accessStore.compressModel,
+        // accessStore.translateModel,
+        // accessStore.textProcessModel,
+        // accessStore.ocrModel,
       ].join(","),
       accessStore,
     );
   }, [
     accessStore.customModels,
-    accessStore.defaultModel,
+    // accessStore.defaultModel,
     configStore.customModels,
     configStore.models,
     accessStore,

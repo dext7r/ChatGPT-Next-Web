@@ -443,20 +443,192 @@ export function showPrompt(content: any, value = "", rows = 3) {
   });
 }
 
-export function showImageModal(img: string) {
-  showModal({
-    title: Locale.Export.Image.Modal,
-    children: (
-      <div>
+function ImageModalContent({ img }: { img: string }) {
+  const [rotation, setRotation] = useState(0); // 旋转角度
+  const [scale, setScale] = useState(1); // 缩放比例
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleRotateLeft = () => {
+    setRotation((prev) => prev - 90); // 向左旋转 90 度
+  };
+
+  const handleRotateRight = () => {
+    setRotation((prev) => prev + 90); // 向右旋转 90 度
+  };
+
+  const handleZoomIn = () => {
+    setScale((prev) => Math.min(prev + 0.1, 3)); // 放大，最大 3 倍
+  };
+
+  const handleZoomOut = () => {
+    setScale((prev) => Math.max(prev - 0.1, 0.1)); // 缩小，最小 0.1 倍
+  };
+
+  const handleResetToOriginal = () => {
+    setScale(1);
+    setRotation(0);
+  };
+
+  const handleDownload = async () => {
+    try {
+      // 使用 fetch 获取图片数据
+      const response = await fetch(img);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      // 生成带时间戳的文件名
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/:/g, "-")
+        .replace(/\..+/, "")
+        .replace("T", "_");
+      const fileExt = getFileExtension(img) || "jpg";
+      const fileName = `image_${timestamp}.${fileExt}`;
+
+      // 创建一个临时的下载链接
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url); // 清理 URL 对象
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download the image.");
+    }
+  };
+
+  const getFileExtension = (url: string): string | null => {
+    const match = url.match(/\.([a-zA-Z0-9]+)($|\?|#)/);
+    return match ? match[1].toLowerCase() : null;
+  };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const preventScroll = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // 处理缩放逻辑
+      if (e.deltaY > 0) {
+        setScale((prev) => Math.max(prev - 0.1, 0.1));
+      } else {
+        setScale((prev) => Math.min(prev + 0.1, 3));
+      }
+    };
+
+    container.addEventListener("wheel", preventScroll, { passive: false });
+
+    return () => {
+      container.removeEventListener("wheel", preventScroll);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%", // 确保填充模态框高度
+        overflow: "hidden", // 防止内容溢出
+      }}
+    >
+      {/* 图片内容区域 */}
+      <div
+        style={{
+          flex: 1,
+          overflow: "auto",
+          textAlign: "center",
+          padding: "20px",
+          backgroundColor: "#f0f0f0",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+        // onWheel={handleWheel}
+      >
         <img
           src={img}
           alt="preview"
           style={{
             maxWidth: "100%",
+            transform: `rotate(${rotation}deg) scale(${scale})`,
+            transformOrigin: "center",
+            transition: "transform 0.3s ease",
           }}
-        ></img>
+        />
       </div>
-    ),
+
+      {/* 底部横栏 */}
+      <div
+        style={{
+          padding: "10px",
+          backgroundColor: "#fff",
+          borderTop: "1px solid #ddd",
+          display: "flex",
+          justifyContent: "center",
+          gap: "10px",
+          boxShadow: "0 -2px 4px rgba(0,0,0,0.1)", // 可选：添加阴影
+        }}
+      >
+        <div className={styles["image-buttons-container"]}>
+          <button
+            className={styles["image-button"]}
+            onClick={handleResetToOriginal}
+            title="Original Image"
+          >
+            1:1
+          </button>
+          <button
+            className={styles["image-button"]}
+            onClick={handleRotateLeft}
+            title="Rotate Left"
+          >
+            ↺
+          </button>
+          <button
+            className={styles["image-button"]}
+            onClick={handleRotateRight}
+            title="Rotate Right"
+          >
+            ↻
+          </button>
+          <button
+            className={styles["image-button"]}
+            onClick={handleZoomIn}
+            title="Zoom In"
+          >
+            ➕
+          </button>
+          <button
+            className={styles["image-button"]}
+            onClick={handleZoomOut}
+            title="Zoom Out"
+          >
+            ➖
+          </button>
+          <button
+            className={styles["image-button"]}
+            onClick={handleDownload}
+            title="Download Image"
+          >
+            💾
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function showImageModal(img: string) {
+  showModal({
+    title: Locale.Export.Image.Modal,
+    defaultMax: true,
+    children: <ImageModalContent img={img} />,
   });
 }
 export function SearchSelector<T>(props: {

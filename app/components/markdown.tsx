@@ -758,6 +758,29 @@ function tryWrapHtmlCode(text: string) {
     );
 }
 
+function ImagePreview({ src }: { src: string }) {
+  const handleClick = () => {
+    showImageModal(src); // 使用现有的 showImageModal 函数显示图片
+  };
+
+  return (
+    <img
+      src={src}
+      alt="Preview"
+      onClick={handleClick}
+      style={{
+        cursor: "zoom-in",
+        maxWidth: "200px",
+        maxHeight: "200px",
+        objectFit: "contain", // 保持图片比例
+        borderRadius: "8px", // 添加圆角
+        transition: "transform 0.2s ease",
+      }}
+      onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")} // 悬停时轻微放大
+      onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")} // 鼠标离开时恢复
+    />
+  );
+}
 function R_MarkDownContent(props: {
   content: string;
   searchingTime?: number;
@@ -840,6 +863,7 @@ function R_MarkDownContent(props: {
           },
           details: Details,
           summary: Summary,
+          img: ({ src, ...props }) => <ImagePreview src={src} />,
         } as any
       }
     >

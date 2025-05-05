@@ -20,6 +20,7 @@ import {
   MultimodalContent,
   SpeechOptions,
   RichMessage,
+  findProviderInLocalStorage,
 } from "../api";
 import Locale from "../../locales";
 import {
@@ -63,41 +64,57 @@ interface RequestPayload {
 
 export class ChatGPTApi implements LLMApi {
   private disableListModels = true;
+  private readonly baseUrl: string = "";
+  private readonly apiKey: string = "";
+
+  constructor(providerName: string = "") {
+    if (providerName) {
+      const CustomProviderConfig = findProviderInLocalStorage(providerName);
+      if (CustomProviderConfig) {
+        this.baseUrl = CustomProviderConfig.baseUrl;
+        this.apiKey = CustomProviderConfig.apiKey;
+      }
+    }
+  }
 
   path(path: string): string {
     const accessStore = useAccessStore.getState();
 
     let baseUrl = "";
-    if (accessStore.useCustomProvider) {
-      baseUrl = accessStore.customProvider_baseUrl;
-    } else if (accessStore.useCustomConfig) {
-      const isAzure = accessStore.provider === ServiceProvider.Azure;
+    if (this.baseUrl) {
+      baseUrl = this.baseUrl;
+    } else {
+      if (accessStore.useCustomProvider) {
+        baseUrl = accessStore.customProvider_baseUrl;
+      } else if (accessStore.useCustomConfig) {
+        const isAzure = accessStore.provider === ServiceProvider.Azure;
 
-      if (isAzure && !accessStore.isValidAzure()) {
-        throw Error(
-          "incomplete azure config, please check it in your settings page",
-        );
+        if (isAzure && !accessStore.isValidAzure()) {
+          throw Error(
+            "incomplete azure config, please check it in your settings page",
+          );
+        }
+
+        if (isAzure) {
+          path = makeAzurePath(path, accessStore.azureApiVersion);
+        }
+
+        baseUrl = isAzure ? accessStore.azureUrl : accessStore.openaiUrl;
       }
 
-      if (isAzure) {
-        path = makeAzurePath(path, accessStore.azureApiVersion);
+      if (baseUrl.length === 0) {
+        const isApp = !!getClientConfig()?.isApp;
+        baseUrl = isApp
+          ? DEFAULT_API_HOST + "/proxy" + ApiPath.OpenAI
+          : ApiPath.OpenAI;
       }
 
-      baseUrl = isAzure ? accessStore.azureUrl : accessStore.openaiUrl;
-    }
-
-    if (baseUrl.length === 0) {
-      const isApp = !!getClientConfig()?.isApp;
-      baseUrl = isApp
-        ? DEFAULT_API_HOST + "/proxy" + ApiPath.OpenAI
-        : ApiPath.OpenAI;
-    }
-
-    if (baseUrl.endsWith("/")) {
-      baseUrl = baseUrl.slice(0, baseUrl.length - 1);
-    }
-    if (!baseUrl.startsWith("http") && !baseUrl.startsWith(ApiPath.OpenAI)) {
-      baseUrl = "https://" + baseUrl;
+      if (baseUrl.endsWith("/")) {
+        baseUrl = baseUrl.slice(0, baseUrl.length - 1);
+      }
+      if (!baseUrl.startsWith("http") && !baseUrl.startsWith(ApiPath.OpenAI)) {
+        baseUrl = "https://" + baseUrl;
+      }
     }
 
     // console.log("[Proxy Endpoint] ", baseUrl, path);
@@ -160,7 +177,7 @@ export class ChatGPTApi implements LLMApi {
         method: "POST",
         body: JSON.stringify(requestPayload),
         signal: controller.signal,
-        headers: getHeaders(),
+        headers: getHeaders(false, this.apiKey),
       };
 
       // make a fetch request
@@ -366,7 +383,7 @@ export class ChatGPTApi implements LLMApi {
         method: "POST",
         body: JSON.stringify(requestPayload),
         signal: controller.signal,
-        headers: getHeaders(),
+        headers: getHeaders(false, this.apiKey),
       };
 
       // make a fetch request
@@ -732,12 +749,12 @@ export class ChatGPTApi implements LLMApi {
         ),
         {
           method: "GET",
-          headers: getHeaders(),
+          headers: getHeaders(false, this.apiKey),
         },
       ),
       fetch(this.path(OpenaiPath.SubsPath), {
         method: "GET",
-        headers: getHeaders(),
+        headers: getHeaders(false, this.apiKey),
       }),
     ]);
 
@@ -787,7 +804,7 @@ export class ChatGPTApi implements LLMApi {
     const res = await fetch(this.path(OpenaiPath.ListModelPath), {
       method: "GET",
       headers: {
-        ...getHeaders(),
+        ...getHeaders(false, this.apiKey),
       },
     });
 

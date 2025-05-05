@@ -4,11 +4,13 @@ import {
   ModelProvider,
   ServiceProvider,
   REPO_URL,
+  StoreKey,
 } from "../constant";
 import { ChatMessage, ModelType, useAccessStore, useChatStore } from "../store";
 import { ChatGPTApi } from "./platforms/openai";
 import { GeminiProApi } from "./platforms/google";
 import { ClaudeApi } from "./platforms/anthropic";
+import { safeLocalStorage } from "../utils";
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
 
@@ -160,9 +162,14 @@ export interface userCustomProvider {
 
 export class ClientApi {
   public llm: LLMApi;
+  public readonly providerName: string;
 
-  constructor(provider: ModelProvider = ModelProvider.GPT) {
+  constructor(
+    provider: ModelProvider = ModelProvider.GPT,
+    providerName: string = "",
+  ) {
     const clientConfig = getClientConfig();
+    this.providerName = providerName;
     switch (provider) {
       case ModelProvider.GeminiPro:
         this.llm = new GeminiProApi();
@@ -171,7 +178,7 @@ export class ClientApi {
         this.llm = new ClaudeApi();
         break;
       default:
-        this.llm = new ChatGPTApi();
+        this.llm = new ChatGPTApi(this.providerName);
     }
   }
 
@@ -220,6 +227,59 @@ export class ClientApi {
   }
 }
 
+/**
+ * Finds a custom provider configuration in localStorage by its name.
+ * @param providerName The name of the provider to find.
+ * @returns The provider configuration object if found and valid, otherwise null.
+ */
+interface CustomProviderConfig {
+  name: string;
+  baseUrl: string;
+  apiKey: string;
+  type?: string; // 可选，可能用于区分 Azure 等类型
+}
+export function findProviderInLocalStorage(
+  providerName: string,
+): CustomProviderConfig | null {
+  if (!providerName) {
+    return null; // No provider name to search for
+  }
+  try {
+    const storedProvidersData = safeLocalStorage().getItem(
+      StoreKey.CustomProvider,
+    );
+    if (!storedProvidersData) {
+      return null; // No data in localStorage
+    }
+
+    const providers: CustomProviderConfig[] = JSON.parse(storedProvidersData);
+
+    // Ensure it's an array before searching
+    if (!Array.isArray(providers)) {
+      console.warn(
+        `[LocalStorage Provider] Data for key ${StoreKey.CustomProvider} is not an array.`,
+      );
+      return null;
+    }
+
+    const provider = providers.find(
+      (p) =>
+        p.name === providerName && // Match name
+        typeof p.baseUrl === "string" && // Ensure baseUrl is a string
+        p.baseUrl.length > 0 && // Ensure baseUrl is not empty
+        typeof p.apiKey === "string" && // Ensure apiKey is a string
+        p.apiKey.length > 0, // Ensure apiKey is not empty
+    );
+
+    return provider || null; // Return found provider or null
+  } catch (error) {
+    console.error(
+      "[LocalStorage Provider] Error processing custom providers:",
+      error,
+    );
+    return null; // Return null on error
+  }
+}
 function selectApiKey(apiKeyString: string): string {
   if (!apiKeyString) return "";
   // Split the string into an array of keys, removing empty strings
@@ -233,7 +293,10 @@ function selectApiKey(apiKeyString: string): string {
   const randomIndex = Math.floor(Math.random() * keys.length);
   return keys[randomIndex];
 }
-export function getHeaders(ignoreHeaders: boolean = false) {
+export function getHeaders(
+  ignoreHeaders: boolean = false,
+  api_key: string = "",
+) {
   const accessStore = useAccessStore.getState();
   const chatStore = useChatStore.getState();
   let headers: Record<string, string> = {};
@@ -247,7 +310,9 @@ export function getHeaders(ignoreHeaders: boolean = false) {
   const isGoogle = modelConfig.providerName === ServiceProvider.Google;
   const isAzure = accessStore.provider === ServiceProvider.Azure;
   const authHeader = isAzure ? "api-key" : "Authorization";
-  const apiKey = isGoogle
+  const apiKey = api_key
+    ? selectApiKey(api_key)
+    : isGoogle
     ? accessStore.googleApiKey
     : isAzure
     ? accessStore.azureApiKey
@@ -283,6 +348,6 @@ export function getClientApi(provider: ServiceProvider): ClientApi {
     case ServiceProvider.Anthropic:
       return new ClientApi(ModelProvider.Claude);
     default:
-      return new ClientApi(ModelProvider.GPT);
+      return new ClientApi(ModelProvider.GPT, provider);
   }
 }

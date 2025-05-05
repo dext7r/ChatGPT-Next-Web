@@ -66,6 +66,10 @@ export class ChatGPTApi implements LLMApi {
   private disableListModels = true;
   private readonly baseUrl: string = "";
   private readonly apiKey: string = "";
+  private readonly chatPath: string = "";
+  private readonly imagePath: string = "";
+  private readonly speechPath: string = "";
+  private readonly listModelPath: string = "";
 
   constructor(providerName: string = "") {
     if (providerName) {
@@ -73,6 +77,10 @@ export class ChatGPTApi implements LLMApi {
       if (CustomProviderConfig) {
         this.baseUrl = CustomProviderConfig.baseUrl;
         this.apiKey = CustomProviderConfig.apiKey;
+        this.chatPath = CustomProviderConfig?.paths?.ChatPath || "";
+        this.imagePath = CustomProviderConfig?.paths?.ImagePath || "";
+        this.speechPath = CustomProviderConfig?.paths?.SpeechPath || "";
+        this.listModelPath = CustomProviderConfig?.paths?.ListModelPath || "";
       }
     }
   }
@@ -119,7 +127,7 @@ export class ChatGPTApi implements LLMApi {
 
     // console.log("[Proxy Endpoint] ", baseUrl, path);
 
-    return [baseUrl, path].join("/");
+    return new URL(path, baseUrl).toString();
   }
 
   async extractMessage(res: any) {
@@ -172,7 +180,7 @@ export class ChatGPTApi implements LLMApi {
     options.onController?.(controller);
 
     try {
-      const speechPath = this.path(OpenaiPath.SpeechPath);
+      const speechPath = this.path(this.speechPath || OpenaiPath.SpeechPath);
       const speechPayload = {
         method: "POST",
         body: JSON.stringify(requestPayload),
@@ -378,7 +386,7 @@ export class ChatGPTApi implements LLMApi {
     options.onController?.(controller);
 
     try {
-      const chatPath = this.path(OpenaiPath.ChatPath);
+      const chatPath = this.path(this.chatPath || OpenaiPath.ChatPath);
       const chatPayload = {
         method: "POST",
         body: JSON.stringify(requestPayload),
@@ -801,12 +809,15 @@ export class ChatGPTApi implements LLMApi {
       return DEFAULT_MODELS.slice();
     }
 
-    const res = await fetch(this.path(OpenaiPath.ListModelPath), {
-      method: "GET",
-      headers: {
-        ...getHeaders(false, this.apiKey),
+    const res = await fetch(
+      this.path(this.listModelPath || OpenaiPath.ListModelPath),
+      {
+        method: "GET",
+        headers: {
+          ...getHeaders(false, this.apiKey),
+        },
       },
-    });
+    );
 
     const resJson = (await res.json()) as OpenAIListModelResponse;
     const chatModels = resJson.data?.filter(

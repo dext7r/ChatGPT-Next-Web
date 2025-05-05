@@ -906,6 +906,26 @@ const cn = {
       ApplyJson: "应用 JSON 映射",
       EditJson: "编辑 JSON 映射, 格式：“模型: 模型别名” ",
     },
+    advancedSettings: {
+      title: "高级设置",
+      subtitle: "配置自定义API路径",
+    },
+    chatPath: {
+      title: "聊天路径",
+      subtitle: "自定义聊天完成请求的API端点路径",
+    },
+    speechPath: {
+      title: "语音路径",
+      subtitle: "自定义文本转语音请求的API端点路径",
+    },
+    imagePath: {
+      title: "图像路径",
+      subtitle: "自定义图像生成请求的API端点路径",
+    },
+    listModelPath: {
+      title: "模型列表路径",
+      subtitle: "自定义获取模型列表的API端点路径",
+    },
   },
 };
 

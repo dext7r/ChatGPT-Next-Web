@@ -169,6 +169,40 @@
   }
 }
 
+.image-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 0;
+  width: 100%;
+  background-color: var(--white);
+  border-top: var(--border-in-light);
+}
+.image-button {
+  padding: 8px 12px;
+  background-color: var(--white);
+  border: var(--border-in-light);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: var(--black);
+  font-family: inherit;
+  
+  &:hover {
+    background-color: var(--hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 @media screen and (max-width: 600px) {
   .modal-container {
     width: 100vw;

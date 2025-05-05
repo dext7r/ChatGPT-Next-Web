@@ -143,6 +143,13 @@ interface ChatProvider {
   usage: () => void;
 }
 
+export interface ApiPaths {
+  ChatPath?: string;
+  ImagePath?: string;
+  SpeechPath?: string;
+  ListModelPath?: string;
+}
+
 export interface userCustomProvider {
   id: string;
   name: string;
@@ -153,6 +160,7 @@ export interface userCustomProvider {
   models?: Model[];
   description?: string;
   testModel?: string;
+  paths?: ApiPaths;
   balance?: {
     amount: number;
     currency: string;
@@ -236,6 +244,7 @@ interface CustomProviderConfig {
   name: string;
   baseUrl: string;
   apiKey: string;
+  paths?: ApiPaths;
   type?: string; // 可选，可能用于区分 Azure 等类型
 }
 export function findProviderInLocalStorage(

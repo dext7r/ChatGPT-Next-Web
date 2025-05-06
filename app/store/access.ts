@@ -208,7 +208,10 @@ export const useAccessStore = createPersistStore(
     ): Promise<string> {
       // if (fetchState !== 0) return Promise.resolve(DEFAULT_ACCESS_STATE.customModels);
       fetchState = 1;
-      const endpoint = new URL(modelspath, url).toString();
+      const endpoint = [
+        url.replace(/\/$/, ""),
+        modelspath.replace(/^\//, ""),
+      ].join("/");
 
       return fetch(endpoint, {
         method: "GET",

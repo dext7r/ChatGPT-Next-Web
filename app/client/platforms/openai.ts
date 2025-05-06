@@ -125,9 +125,9 @@ export class ChatGPTApi implements LLMApi {
       }
     }
 
-    // console.log("[Proxy Endpoint] ", baseUrl, path);
+    console.log("[Proxy Endpoint] ", baseUrl, path);
 
-    return new URL(path, baseUrl).toString();
+    return [baseUrl.replace(/\/$/, ""), path.replace(/^\//, "")].join("/");
   }
 
   async extractMessage(res: any) {

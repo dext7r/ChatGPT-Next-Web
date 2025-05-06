@@ -781,6 +781,9 @@ function ImagePreview({ src }: { src: string }) {
     />
   );
 }
+type ImgProps = React.ImgHTMLAttributes<HTMLImageElement> & {
+  src: string; // 强制 src 为 string
+};
 function R_MarkDownContent(props: {
   content: string;
   searchingTime?: number;
@@ -863,7 +866,7 @@ function R_MarkDownContent(props: {
           },
           details: Details,
           summary: Summary,
-          img: ({ src, ...props }) => <ImagePreview src={src} />,
+          img: ({ src, ...props }: ImgProps) => <ImagePreview src={src} />,
         } as any
       }
     >

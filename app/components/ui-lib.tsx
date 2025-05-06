@@ -446,7 +446,9 @@ export function showPrompt(content: any, value = "", rows = 3) {
 function ImageModalContent({ img }: { img: string }) {
   const [rotation, setRotation] = useState(0); // 旋转角度
   const [scale, setScale] = useState(1); // 缩放比例
+  const [isAdaptive, setIsAdaptive] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const handleRotateLeft = () => {
     setRotation((prev) => prev - 90); // 向左旋转 90 度
@@ -467,7 +469,37 @@ function ImageModalContent({ img }: { img: string }) {
   const handleResetToOriginal = () => {
     setScale(1);
     setRotation(0);
+    setIsAdaptive(false);
   };
+
+  const handleToggleAdaptive = () => {
+    if (!isAdaptive) {
+      fitImageToContainer(); // Apply adaptive scaling
+      setIsAdaptive(true);
+    }
+  };
+
+  const fitImageToContainer = useCallback(() => {
+    if (!containerRef.current || !imageRef.current) return;
+
+    const container = containerRef.current;
+    const image = imageRef.current;
+
+    // Get natural dimensions of image
+    const imgWidth = image.naturalWidth;
+    const imgHeight = image.naturalHeight;
+
+    // Get available space (accounting for padding)
+    const availWidth = container.clientWidth - 40; // 20px padding on each side
+    const availHeight = container.clientHeight - 40;
+
+    // Calculate required scale to fit
+    const scaleX = availWidth / imgWidth;
+    const scaleY = availHeight / imgHeight;
+    const newScale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 1:1
+
+    setScale(newScale);
+  }, []);
 
   const handleDownload = async () => {
     try {
@@ -510,6 +542,23 @@ function ImageModalContent({ img }: { img: string }) {
   };
 
   useEffect(() => {
+    if (isAdaptive) {
+      fitImageToContainer();
+    }
+
+    const handleResize = () => {
+      if (isAdaptive) {
+        fitImageToContainer();
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isAdaptive, fitImageToContainer]);
+
+  useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
@@ -531,6 +580,7 @@ function ImageModalContent({ img }: { img: string }) {
       container.removeEventListener("wheel", preventScroll);
     };
   }, []);
+  const scalePercentage = Math.round(scale * 100);
 
   return (
     <div
@@ -557,6 +607,7 @@ function ImageModalContent({ img }: { img: string }) {
         // onWheel={handleWheel}
       >
         <img
+          ref={imageRef}
           src={img}
           alt="preview"
           style={{
@@ -564,6 +615,11 @@ function ImageModalContent({ img }: { img: string }) {
             transform: `rotate(${rotation}deg) scale(${scale})`,
             transformOrigin: "center",
             transition: "transform 0.3s ease",
+          }}
+          onLoad={() => {
+            if (isAdaptive) {
+              fitImageToContainer();
+            }
           }}
         />
       </div>
@@ -583,11 +639,42 @@ function ImageModalContent({ img }: { img: string }) {
         <div className={styles["image-buttons-container"]}>
           <button
             className={styles["image-button"]}
-            onClick={handleResetToOriginal}
-            title="Original Image"
+            onClick={handleZoomOut}
+            title="Zoom Out"
           >
-            1:1
+            ➖
           </button>
+          <span
+            className={styles["image-button"]}
+            style={{ cursor: "default" }}
+            title="Current Zoom Level"
+          >
+            {scalePercentage}%
+          </span>
+          <button
+            className={styles["image-button"]}
+            onClick={handleZoomIn}
+            title="Zoom In"
+          >
+            ➕
+          </button>
+          {!isAdaptive ? (
+            <button
+              className={styles["image-button"]}
+              onClick={handleToggleAdaptive}
+              title="Adaptive Scaling"
+            >
+              Fit
+            </button>
+          ) : (
+            <button
+              className={styles["image-button"]}
+              onClick={handleResetToOriginal}
+              title="Original Size"
+            >
+              1:1
+            </button>
+          )}
           <button
             className={styles["image-button"]}
             onClick={handleRotateLeft}
@@ -601,20 +688,6 @@ function ImageModalContent({ img }: { img: string }) {
             title="Rotate Right"
           >
             ↻
-          </button>
-          <button
-            className={styles["image-button"]}
-            onClick={handleZoomIn}
-            title="Zoom In"
-          >
-            ➕
-          </button>
-          <button
-            className={styles["image-button"]}
-            onClick={handleZoomOut}
-            title="Zoom Out"
-          >
-            ➖
           </button>
           <button
             className={styles["image-button"]}

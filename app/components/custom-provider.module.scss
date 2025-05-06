@@ -701,6 +701,8 @@
   border-radius: 8px;
   padding: 16px;
   min-height: 250px;
+  max-height: calc(70vh - 120px); // Add max-height for maximized view
+  overflow-y: auto;
   margin-bottom: 20px;
 }
 
@@ -708,8 +710,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 8px;
-  max-height: 300px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
   padding: 8px 0;
 }
 
@@ -885,7 +887,7 @@
 }
 .parsingTextarea {
   width: 100%;
-  min-height: 80px;
+  min-height: 100px;
   padding: 10px 16px 40px 16px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;

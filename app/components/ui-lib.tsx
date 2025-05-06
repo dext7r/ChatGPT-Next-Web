@@ -471,36 +471,41 @@ function ImageModalContent({ img }: { img: string }) {
 
   const handleDownload = async () => {
     try {
-      // 使用 fetch 获取图片数据
-      const response = await fetch(img);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
       // 生成带时间戳的文件名
       const timestamp = new Date()
         .toISOString()
         .replace(/:/g, "-")
         .replace(/\..+/, "")
         .replace("T", "_");
-      const fileExt = getFileExtension(img) || "jpg";
+      // 假设 img 是完整的 URL 字符串
+      const fileExt = getFileExtension(img) || "jpg"; // img 是你图片 URL 的变量
       const fileName = `image_${timestamp}.${fileExt}`;
 
       // 创建一个临时的下载链接
       const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
+      link.href = img; // 直接使用原始图片 URL
+      link.download = fileName; // 浏览器会尝试使用这个文件名
+
+      // 对于某些浏览器和服务器配置，可能需要设置 target="_blank" 来确保下载行为
+      // link.target = "_blank";
+      // link.rel = "noopener noreferrer"; // 安全考虑
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url); // 清理 URL 对象
     } catch (error) {
       console.error("Download failed:", error);
-      alert("Failed to download the image.");
+      alert(
+        "Failed to initiate download. The browser will handle the download. If it doesn't start, please check your browser settings or try right-clicking the image to save.",
+      );
     }
   };
 
+  // getFileExtension 函数保持不变
   const getFileExtension = (url: string): string | null => {
-    const match = url.match(/\.([a-zA-Z0-9]+)($|\?|#)/);
+    // 移除查询参数和哈希，以正确匹配扩展名
+    const pathname = new URL(url).pathname;
+    const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
     return match ? match[1].toLowerCase() : null;
   };
 

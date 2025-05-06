@@ -483,6 +483,7 @@ const en: LocaleType = {
       CustomEndpoint: {
         Title: "Custom Endpoint",
         SubTitle: "Use custom Azure or OpenAI service",
+        Advanced: "Click to configure advanced settings",
       },
       Provider: {
         Title: "Model Provider",

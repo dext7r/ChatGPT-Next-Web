@@ -467,6 +467,7 @@ const cn = {
       CustomEndpoint: {
         Title: "自定义接口",
         SubTitle: "是否使用自定义 Azure 或 OpenAI 服务",
+        Advanced: "点击前往高级自定义功能",
       },
       Provider: {
         Title: "模型服务商",

@@ -18,6 +18,7 @@ import ConfirmIcon from "../icons/confirm.svg";
 import ConnectionIcon from "../icons/connection.svg";
 import CloudSuccessIcon from "../icons/cloud-success.svg";
 import CloudFailIcon from "../icons/cloud-fail.svg";
+import CustomProviderIcon from "../icons/custom-models.svg";
 
 import {
   Input,
@@ -1093,17 +1094,27 @@ export function Settings() {
                     title={Locale.Settings.Access.CustomEndpoint.Title}
                     subTitle={Locale.Settings.Access.CustomEndpoint.SubTitle}
                   >
-                    <input
-                      aria-label={Locale.Settings.Access.CustomEndpoint.Title}
-                      type="checkbox"
-                      checked={accessStore.useCustomConfig}
-                      onChange={(e) =>
-                        accessStore.update(
-                          (access) =>
-                            (access.useCustomConfig = e.currentTarget.checked),
-                        )
-                      }
-                    ></input>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <IconButton
+                        text={Locale.Settings.Access.CustomEndpoint.Advanced}
+                        type="info"
+                        icon={<CustomProviderIcon />}
+                        onClick={() => navigate(Path.CustomProvider)}
+                        bordered
+                      />
+                      <input
+                        aria-label={Locale.Settings.Access.CustomEndpoint.Title}
+                        type="checkbox"
+                        checked={accessStore.useCustomConfig}
+                        onChange={(e) =>
+                          accessStore.update(
+                            (access) =>
+                              (access.useCustomConfig =
+                                e.currentTarget.checked),
+                          )
+                        }
+                      ></input>
+                    </div>
                   </ListItem>
                 )
               }

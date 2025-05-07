@@ -612,6 +612,18 @@
     margin-left: 6px;
     font-weight: bold;
     min-width: 40%;
+
+    &--clickable { // New modifier class for clickable model names
+      text-decoration: underline;
+      text-decoration-color: var(--primary); // Or a subtle color, or var(--primary)
+      cursor: pointer;
+  
+      &:hover {
+        // Optional: enhance underline or text color on hover for clickable items
+        text-decoration-color: var(--second);
+        color: var(--primary);
+      }
+    }
   }
 }
 // 模型选择器容器

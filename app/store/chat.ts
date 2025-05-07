@@ -42,6 +42,8 @@ export type ChatMessage = RequestMessage & {
   model?: ModelType;
   displayName?: string;
   providerName?: string;
+  providerId?: string;
+  providerType?: string;
   beClear?: boolean;
   isContinuePrompt?: boolean;
   isStreamRequest?: boolean;

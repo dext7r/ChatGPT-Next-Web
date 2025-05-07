@@ -234,7 +234,7 @@ export function ProviderModal(props: ProviderModalProps) {
   const [editedDescription, setEditedDescription] = useState("");
   const [editedEnableVision, setEditedEnableVision] = useState(false);
   // API Key 列表视图状态
-  const [isKeyListViewMode, setIsKeyListViewMode] = useState(false);
+  const [isKeyListViewMode, setIsKeyListViewMode] = useState(true);
   const [keyList, setKeyList] = useState<string[]>([]);
   const [newKey, setNewKey] = useState("");
 
@@ -1172,7 +1172,7 @@ export function ProviderModal(props: ProviderModalProps) {
             <label className={styles.testModelLabel}>Test Model:</label>
             <input
               type="text"
-              value={formData.testModel}
+              value={formData.testModel ?? ""}
               onChange={(e) => {
                 handleChange("testModel", e.target.value);
               }}

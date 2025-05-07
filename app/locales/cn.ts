@@ -197,6 +197,7 @@ const cn = {
     },
     Rename: "重命名对话",
     Typing: "正在输入…",
+    GoToCustomProviderConfig: "点击跳转对应的渠道配置",
     Input: (submitKey: string, isMobileScreen: boolean = false) => {
       if (isMobileScreen) {
         return "/ 触发预设，: 触发命令\n输入你的问题...";

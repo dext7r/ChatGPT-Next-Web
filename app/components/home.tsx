@@ -196,7 +196,10 @@ function Screen() {
               <Route path={Path.CloudBackup} element={<CloudBackup />} />
               <Route path={Path.Chat} element={<Chat />} />
               <Route path={Path.Settings} element={<Settings />} />
-              <Route path={Path.CustomProvider} element={<CustomProvider />} />
+              <Route
+                path={`${Path.CustomProvider}/:providerId?`}
+                element={<CustomProvider />}
+              />
             </Routes>
           </div>
         </>

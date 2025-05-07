@@ -212,6 +212,7 @@ const en: LocaleType = {
     },
     Rename: "Rename Chat",
     Typing: "Typing…",
+    GoToCustomProviderConfig: "Go to Custom AI Provider Config",
     Input: (submitKey: string, isMobileScreen: boolean = false) => {
       if (isMobileScreen) {
         return "/ to search prompts, : to use commands\nInput your question...";

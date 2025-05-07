@@ -2854,6 +2854,12 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     };
   }, [messages, chatStore, navigate]);
 
+  const handleModelNameClick = (providerId?: string) => {
+    if (providerId) {
+      // Only navigate if providerId is provided
+      navigate(`${Path.CustomProvider}/${providerId}`);
+    }
+  };
   const formatMessage = (message: RenderMessage) => {
     const mainInfo = `${message.date.toLocaleString()}${
       message.model ? ` - ${message.displayName || message.model}` : ""
@@ -3049,6 +3055,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           const showTyping = message.preview || message.streaming;
           const shouldShowClearContextDivider =
             i === clearContextIndex - 1 || message?.beClear === true;
+          const providerIdForClick =
+            message?.providerType && message.providerType === "custom-provider";
           return (
             <Fragment key={message.id}>
               <div
@@ -3154,7 +3162,19 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       )}
                     </div>
                     {!isUser && (
-                      <div className={styles["chat-model-name"]}>
+                      <div
+                        className={`${styles["chat-model-name"]} ${
+                          providerIdForClick
+                            ? styles["chat-model-name--clickable"]
+                            : ""
+                        }`}
+                        onClick={
+                          providerIdForClick
+                            ? () => handleModelNameClick(message.providerId)
+                            : undefined
+                        }
+                        title={Locale.Chat.GoToCustomProviderConfig}
+                      >
                         {message.displayName || message.model}
                       </div>
                     )}
@@ -3693,16 +3713,23 @@ export function Chat() {
     // 仅在 session 最后一条消息 id 变化时执行，即有新的消息进入队列
     for (let i = 0; i < session.messages.length; i++) {
       const message = session.messages[i];
-      if (message.role !== "user" && !message.displayName && message.model) {
-        const displayName = modelTable.find(
+      if (
+        message.role !== "user" &&
+        (!message.displayName ||
+          !message.providerId ||
+          !message.providerType) &&
+        message.model
+      ) {
+        const matchedModel = modelTable.find(
           (model) =>
             model.name === message.model &&
             model.provider?.providerName === message.providerName,
-        )?.displayName;
+        );
 
-        if (displayName !== message.displayName) {
-          // 仅当 displayName 发生变化时才更新
-          session.messages[i].displayName = displayName;
+        if (matchedModel) {
+          message.displayName = matchedModel.displayName;
+          message.providerId = matchedModel.provider?.id;
+          message.providerType = matchedModel.provider?.providerType;
         }
       }
     }

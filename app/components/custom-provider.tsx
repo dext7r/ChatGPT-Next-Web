@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { IconButton } from "./button";
 import styles from "./custom-provider.module.scss";
-import { useNavigate } from "react-router-dom";
+import { useMatch, useNavigate } from "react-router-dom";
 import { Path, StoreKey } from "../constant";
 import { safeLocalStorage, downloadAs, readFromFile } from "../utils";
 import Locale from "../locales";
@@ -37,6 +37,9 @@ function getAvailableModelsTooltip(provider: userCustomProvider) {
 }
 
 export function CustomProvider() {
+  const match = useMatch(`${Path.CustomProvider}/:providerId`);
+  const providerId = match?.params?.providerId;
+
   const [providers, setProviders] = useState<userCustomProvider[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,6 +56,17 @@ export function CustomProvider() {
   >({});
 
   const navigate = useNavigate();
+
+  // 导航到指定渠道编辑页
+  useEffect(() => {
+    if (providerId && providers.length > 0) {
+      const providerToEdit = providers.find((p) => p.id === providerId);
+      if (providerToEdit) {
+        setCurrentProvider(providerToEdit);
+        setIsModalOpen(true);
+      }
+    }
+  }, [providerId, providers]);
 
   // 从本地存储加载数据
   useEffect(() => {

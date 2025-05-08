@@ -64,6 +64,7 @@ import {
   BOT_HELLO,
   createMessage,
   useAccessStore,
+  useCustomProviderStore,
   Theme,
   useAppConfig,
   DEFAULT_TOPIC,
@@ -521,6 +522,7 @@ export function ChatActions(props: {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const access = useAccessStore();
+  const custom_provider = useCustomProviderStore();
 
   // translate
   const [isTranslating, setIsTranslating] = useState(false);
@@ -607,15 +609,15 @@ export function ChatActions(props: {
       providerName = providerNameStr as ServiceProvider;
     }
     try {
-      const storedProvidersData = safeLocalStorage().getItem(
-        StoreKey.CustomProvider,
-      );
-      const providers = storedProvidersData
-        ? JSON.parse(storedProvidersData)
-        : [];
-      const provider = Array.isArray(providers)
-        ? providers.find((provider) => provider.name === providerName)
-        : null;
+      // const storedProvidersData = safeLocalStorage().getItem(
+      //   StoreKey.CustomProvider,
+      // );
+      // const providers = storedProvidersData
+      //   ? JSON.parse(storedProvidersData)
+      //   : [];
+      // console.log("providers", providers);
+
+      const provider = custom_provider.getByName(providerName);
 
       if (provider?.baseUrl && provider?.apiKey) {
         // 使用解构赋值和可选链操作符
@@ -696,16 +698,15 @@ export function ChatActions(props: {
     }
 
     try {
-      const storedProvidersData = safeLocalStorage().getItem(
-        StoreKey.CustomProvider,
-      );
-      const providers = storedProvidersData
-        ? JSON.parse(storedProvidersData)
-        : [];
+      // const storedProvidersData = safeLocalStorage().getItem(
+      //   StoreKey.CustomProvider,
+      // );
+      // const providers = storedProvidersData
+      //   ? JSON.parse(storedProvidersData)
+      //   : [];
+      // const providers = custom_provider.providers;
 
-      const provider = Array.isArray(providers)
-        ? providers.find((provider) => provider.name === providerName)
-        : null;
+      const provider = custom_provider.getByName(providerName);
 
       if (provider?.baseUrl && provider?.apiKey) {
         // 使用解构赋值和可选链操作符
@@ -792,16 +793,15 @@ export function ChatActions(props: {
       providerName = providerNameStr as ServiceProvider;
     }
     try {
-      const storedProvidersData = safeLocalStorage().getItem(
-        StoreKey.CustomProvider,
-      );
-      const providers = storedProvidersData
-        ? JSON.parse(storedProvidersData)
-        : [];
-      const provider = Array.isArray(providers)
-        ? providers.find((provider) => provider.name === providerName)
-        : null;
+      // const storedProvidersData = safeLocalStorage().getItem(
+      //   StoreKey.CustomProvider,
+      // );
+      // const providers = storedProvidersData
+      //   ? JSON.parse(storedProvidersData)
+      //   : [];
+      // const providers = custom_provider.providers;
 
+      const provider = custom_provider.getByName(providerName);
       if (provider?.baseUrl && provider?.apiKey) {
         // 使用解构赋值和可选链操作符
         access.useCustomProvider = true;
@@ -1138,16 +1138,15 @@ export function ChatActions(props: {
       ) || null;
     setCurrentModelInfo(_currentModel);
     try {
-      const storedProvidersData = safeLocalStorage().getItem(
-        StoreKey.CustomProvider,
-      );
-      const providers = storedProvidersData
-        ? JSON.parse(storedProvidersData)
-        : [];
+      // const storedProvidersData = safeLocalStorage().getItem(
+      //   StoreKey.CustomProvider,
+      // );
+      // const providers = storedProvidersData
+      //   ? JSON.parse(storedProvidersData)
+      //   : [];
+      // const providers = custom_provider.providers;
 
-      const provider = Array.isArray(providers)
-        ? providers.find((provider) => provider.name === currentProviderName)
-        : null;
+      const provider = custom_provider.getByName(currentProviderName);
       if (provider?.baseUrl && provider?.apiKey) {
         // 使用解构赋值和可选链操作符
         access.useCustomProvider = true;

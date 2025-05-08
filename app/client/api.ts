@@ -4,13 +4,17 @@ import {
   ModelProvider,
   ServiceProvider,
   REPO_URL,
-  StoreKey,
 } from "../constant";
-import { ChatMessage, ModelType, useAccessStore, useChatStore } from "../store";
+import {
+  ChatMessage,
+  ModelType,
+  useAccessStore,
+  useChatStore,
+  useCustomProviderStore,
+} from "../store";
 import { ChatGPTApi } from "./platforms/openai";
 import { GeminiProApi } from "./platforms/google";
 import { ClaudeApi } from "./platforms/anthropic";
-import { safeLocalStorage } from "../utils";
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
 
@@ -254,22 +258,7 @@ export function findProviderInLocalStorage(
     return null; // No provider name to search for
   }
   try {
-    const storedProvidersData = safeLocalStorage().getItem(
-      StoreKey.CustomProvider,
-    );
-    if (!storedProvidersData) {
-      return null; // No data in localStorage
-    }
-
-    const providers: CustomProviderConfig[] = JSON.parse(storedProvidersData);
-
-    // Ensure it's an array before searching
-    if (!Array.isArray(providers)) {
-      console.warn(
-        `[LocalStorage Provider] Data for key ${StoreKey.CustomProvider} is not an array.`,
-      );
-      return null;
-    }
+    const providers = useCustomProviderStore.getState().providers;
 
     const provider = providers.find(
       (p) =>

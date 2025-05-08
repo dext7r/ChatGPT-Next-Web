@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
-import { useAccessStore, useAppConfig } from "../store";
+import { useAccessStore, useAppConfig, useCustomProviderStore } from "../store";
 import { collectModelsWithDefaultModel } from "./model";
-import { safeLocalStorage } from "../utils";
-import { StoreKey } from "../constant";
 import { Model, userCustomProvider } from "../client/api";
 
 export function useAllModels() {
@@ -35,14 +33,11 @@ export function useAllModels() {
 // New hook that combines built-in models with custom provider models
 export function useAllModelsWithCustomProviders() {
   const builtInModels = useAllModels();
+  const customProviderStore = useCustomProviderStore();
   const [customProviderModels, setCustomProviderModels] = useState<Model[]>(
     () => {
-      const storedProviders = safeLocalStorage().getItem(
-        StoreKey.CustomProvider,
-      );
-      if (!storedProviders) return [];
       try {
-        const providers = JSON.parse(storedProviders) as userCustomProvider[];
+        const providers = customProviderStore.providers;
         const activeProviders = providers.filter((p) => p.status === "active");
         return activeProviders.flatMap((provider) => {
           return (provider.models || [])

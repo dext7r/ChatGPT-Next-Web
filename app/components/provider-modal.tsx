@@ -195,8 +195,8 @@ export interface ProviderModalProps {
   onSave: (provider: userCustomProvider) => void;
   onClose: () => void;
   providers: userCustomProvider[];
-  setProviders: React.Dispatch<React.SetStateAction<userCustomProvider[]>>;
-  saveProvidersToStorage: (providers: userCustomProvider[]) => void;
+  // setProviders: React.Dispatch<React.SetStateAction<userCustomProvider[]>>;
+  // saveProvidersToStorage: (providers: userCustomProvider[]) => void;
 }
 
 // 提供商编辑模态框

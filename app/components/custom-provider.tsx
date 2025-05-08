@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import React, { useState, useEffect } from "react";
 import { IconButton } from "./button";
 import styles from "./custom-provider.module.scss";
@@ -14,6 +15,7 @@ import {
   providerTypeLabels,
   providerTypeDefaultUrls,
 } from "./provider-modal";
+import { useCustomProviderStore } from "../store/provider";
 // 导入图标
 import PlusIcon from "../icons/add.svg";
 import EditIcon from "../icons/edit.svg";
@@ -40,12 +42,20 @@ export function CustomProvider() {
   const match = useMatch(`${Path.CustomProvider}/:providerId`);
   const providerId = match?.params?.providerId;
 
-  const [providers, setProviders] = useState<userCustomProvider[]>([]);
+  // const [providers, setProviders] = useState<userCustomProvider[]>([]);
+  const providers = useCustomProviderStore((state) => state.providers);
+  const storeActions = useCustomProviderStore.getState();
+
+  // // 确保数据已从 localStorage 迁移
+  // useEffect(() => {
+  //   storeActions.migrateDataIfNeeded();
+  // }, []);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProvider, setCurrentProvider] =
     useState<userCustomProvider | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   // 在 CustomProvider 函数中添加状态
   const [providerBalances, setProviderBalances] = useState<
     Record<string, string>
@@ -68,40 +78,40 @@ export function CustomProvider() {
     }
   }, [providerId, providers]);
 
-  // 从本地存储加载数据
-  useEffect(() => {
-    const loadProviders = async () => {
-      setIsLoading(true);
-      // 从 localStorage 获取数据
-      const storedProviders = safeLocalStorage().getItem(
-        StoreKey.CustomProvider,
-      );
+  // // 从本地存储加载数据
+  // useEffect(() => {
+  //   const loadProviders = async () => {
+  //     setIsLoading(true);
+  //     // 从 localStorage 获取数据
+  //     const storedProviders = safeLocalStorage().getItem(
+  //       StoreKey.CustomProvider,
+  //     );
 
-      if (storedProviders) {
-        try {
-          setProviders(JSON.parse(storedProviders));
-        } catch (e) {
-          console.error("Failed to parse stored providers:", e);
-          setProviders([]);
-        }
-      } else {
-        setProviders([]);
-      }
+  //     if (storedProviders) {
+  //       try {
+  //         setProviders(JSON.parse(storedProviders));
+  //       } catch (e) {
+  //         console.error("Failed to parse stored providers:", e);
+  //         setProviders([]);
+  //       }
+  //     } else {
+  //       setProviders([]);
+  //     }
 
-      setIsLoading(false);
-    };
+  //     setIsLoading(false);
+  //   };
 
-    loadProviders();
-  }, []);
-  // 保存提供商到本地存储
-  const saveProvidersToStorage = (updatedProviders: userCustomProvider[]) => {
-    try {
-      const jsonString = JSON.stringify(updatedProviders);
-      safeLocalStorage().setItem(StoreKey.CustomProvider, jsonString);
-    } catch (error) {
-      console.error("保存到localStorage失败:", error);
-    }
-  };
+  //   loadProviders();
+  // }, []);
+  // // 保存提供商到本地存储
+  // const saveProvidersToStorage = (updatedProviders: userCustomProvider[]) => {
+  //   try {
+  //     const jsonString = JSON.stringify(updatedProviders);
+  //     safeLocalStorage().setItem(StoreKey.CustomProvider, jsonString);
+  //   } catch (error) {
+  //     console.error("保存到localStorage失败:", error);
+  //   }
+  // };
 
   // 导出服务提供商
   const handleExportProviders = () => {
@@ -233,19 +243,16 @@ export function CustomProvider() {
         // Process import based on selected mode
         if (importMode === "replace") {
           // Replace existing providers
-          setProviders(importedProviders);
-          saveProvidersToStorage(importedProviders);
+          // setProviders(importedProviders);
+          // saveProvidersToStorage(importedProviders);
+          storeActions.setProviders(importedProviders);
           showToast(`已替换为 ${importedProviders.length} 个导入的供应商`);
         } else {
           // Merge with existing providers
           // Add unique ID to imported providers if missing
           const processedImports = importedProviders.map((provider) => ({
             ...provider,
-            id:
-              provider.id ||
-              `provider-${Date.now()}-${Math.random()
-                .toString(36)
-                .substring(2, 9)}`,
+            id: provider.id || `provider-${Date.now()}-${nanoid(7)}`,
           }));
           // Track stats for user feedback
           let mergedCount = 0;
@@ -315,8 +322,9 @@ export function CustomProvider() {
               addedCount++;
             }
           });
-          setProviders(updatedProviders);
-          saveProvidersToStorage(updatedProviders);
+          // setProviders(updatedProviders);
+          // saveProvidersToStorage(updatedProviders);
+          storeActions.setProviders(updatedProviders);
           showToast(
             `导入完成: ${mergedCount}个合并, ${renamedCount}个重命名, ${addedCount}个新增`,
           );
@@ -413,9 +421,10 @@ export function CustomProvider() {
       const updatedProviders = providers.filter(
         (provider) => provider.id !== id,
       );
-      setProviders(updatedProviders);
-      // 保存到本地存储
-      saveProvidersToStorage(updatedProviders);
+      // setProviders(updatedProviders);
+      // // 保存到本地存储
+      // saveProvidersToStorage(updatedProviders);
+      storeActions.setProviders(updatedProviders);
     }
   };
 
@@ -454,15 +463,16 @@ export function CustomProvider() {
       updatedProviders = [...providers, newProvider];
     }
 
-    // 更新状态
-    setProviders(updatedProviders);
+    // // 更新状态
+    // setProviders(updatedProviders);
 
-    // 保存到本地存储
-    try {
-      saveProvidersToStorage(updatedProviders);
-    } catch (error) {
-      console.error("保存到本地存储失败:", error);
-    }
+    // // 保存到本地存储
+    // try {
+    //   saveProvidersToStorage(updatedProviders);
+    // } catch (error) {
+    //   console.error("保存到本地存储失败:", error);
+    // }
+    storeActions.setProviders(updatedProviders);
 
     // // 关闭模态框
     // setIsModalOpen(false);
@@ -566,8 +576,9 @@ export function CustomProvider() {
     if (await showConfirm(confirmContent)) {
       // 过滤掉禁用的供应商
       const updatedProviders = providers.filter((p) => p.status !== "inactive");
-      setProviders(updatedProviders);
-      saveProvidersToStorage(updatedProviders);
+      // setProviders(updatedProviders);
+      // saveProvidersToStorage(updatedProviders);
+      storeActions.setProviders(updatedProviders);
 
       showToast(`已成功移除 ${disabledProviders.length} 个禁用供应商`);
     }
@@ -685,8 +696,9 @@ export function CustomProvider() {
       const updatedProviders = providers.filter(
         (p) => !searchedProviderIds.has(p.id),
       );
-      setProviders(updatedProviders);
-      saveProvidersToStorage(updatedProviders);
+      // setProviders(updatedProviders);
+      // saveProvidersToStorage(updatedProviders);
+      storeActions.setProviders(updatedProviders);
 
       // 清空搜索框
       setSearchTerm("");
@@ -784,8 +796,9 @@ export function CustomProvider() {
       const updatedProviders = providers.map((p) =>
         p.status === "inactive" ? { ...p, status: "active" as const } : p,
       );
-      setProviders(updatedProviders);
-      saveProvidersToStorage(updatedProviders);
+      // setProviders(updatedProviders);
+      // saveProvidersToStorage(updatedProviders);
+      storeActions.setProviders(updatedProviders);
 
       showToast(`已成功启用 ${searchedProviders.length} 个供应商`);
     }
@@ -881,8 +894,9 @@ export function CustomProvider() {
       const updatedProviders = providers.map((p) =>
         p.status === "active" ? { ...p, status: "inactive" as const } : p,
       );
-      setProviders(updatedProviders);
-      saveProvidersToStorage(updatedProviders);
+      // setProviders(updatedProviders);
+      // saveProvidersToStorage(updatedProviders);
+      storeActions.setProviders(updatedProviders);
 
       showToast(`已成功禁用 ${searchedProviders.length} 个供应商`);
     }
@@ -989,8 +1003,9 @@ export function CustomProvider() {
             }
           : p,
       );
-      setProviders(updatedProviders);
-      saveProvidersToStorage(updatedProviders);
+      // setProviders(updatedProviders);
+      // saveProvidersToStorage(updatedProviders);
+      storeActions.setProviders(updatedProviders);
 
       // // 更新余额状态
       // setProviderBalances((prev) => ({
@@ -1189,8 +1204,9 @@ export function CustomProvider() {
                       const updatedProviders = providers.map((p) =>
                         p.id === provider.id ? { ...p, status: newStatus } : p,
                       );
-                      setProviders(updatedProviders);
-                      saveProvidersToStorage(updatedProviders);
+                      // setProviders(updatedProviders);
+                      // saveProvidersToStorage(updatedProviders);
+                      storeActions.setProviders(updatedProviders);
                       showToast(
                         newStatus === "active"
                           ? Locale.CustomProvider.ProviderEnabled
@@ -1268,8 +1284,8 @@ export function CustomProvider() {
           onSave={handleSaveProvider}
           onClose={() => setIsModalOpen(false)}
           providers={providers}
-          setProviders={setProviders}
-          saveProvidersToStorage={saveProvidersToStorage}
+          // setProviders={setProviders}
+          // saveProvidersToStorage={saveProvidersToStorage}
         />
       )}
     </div>

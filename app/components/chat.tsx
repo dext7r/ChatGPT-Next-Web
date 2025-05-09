@@ -608,30 +608,7 @@ export function ChatActions(props: {
       [textProcessModel, providerNameStr] = access.textProcessModel.split("@");
       providerName = providerNameStr as ServiceProvider;
     }
-    try {
-      // const storedProvidersData = safeLocalStorage().getItem(
-      //   StoreKey.CustomProvider,
-      // );
-      // const providers = storedProvidersData
-      //   ? JSON.parse(storedProvidersData)
-      //   : [];
-      // console.log("providers", providers);
 
-      const provider = custom_provider.getByName(providerName);
-
-      if (provider?.baseUrl && provider?.apiKey) {
-        // 使用解构赋值和可选链操作符
-        access.useCustomProvider = true;
-        access.customProvider_apiKey = provider.apiKey;
-        access.customProvider_baseUrl = provider.baseUrl;
-        access.customProvider_type = provider.type;
-      } else {
-        access.useCustomProvider = false;
-      }
-    } catch (error) {
-      console.error("Error processing custom providers:", error);
-      access.useCustomProvider = false;
-    }
     const api: ClientApi = getClientApi(providerName);
     api.llm.chat({
       messages: [
@@ -695,31 +672,6 @@ export function ChatActions(props: {
       let providerNameStr;
       [ocrModel, providerNameStr] = access.ocrModel.split("@");
       providerName = providerNameStr as ServiceProvider;
-    }
-
-    try {
-      // const storedProvidersData = safeLocalStorage().getItem(
-      //   StoreKey.CustomProvider,
-      // );
-      // const providers = storedProvidersData
-      //   ? JSON.parse(storedProvidersData)
-      //   : [];
-      // const providers = custom_provider.providers;
-
-      const provider = custom_provider.getByName(providerName);
-
-      if (provider?.baseUrl && provider?.apiKey) {
-        // 使用解构赋值和可选链操作符
-        access.useCustomProvider = true;
-        access.customProvider_apiKey = provider.apiKey;
-        access.customProvider_baseUrl = provider.baseUrl;
-        access.customProvider_type = provider.type;
-      } else {
-        access.useCustomProvider = false;
-      }
-    } catch (error) {
-      console.error("Error processing custom providers:", error);
-      access.useCustomProvider = false;
     }
 
     const api: ClientApi = getClientApi(providerName);
@@ -792,29 +744,7 @@ export function ChatActions(props: {
       [textProcessModel, providerNameStr] = access.textProcessModel.split("@");
       providerName = providerNameStr as ServiceProvider;
     }
-    try {
-      // const storedProvidersData = safeLocalStorage().getItem(
-      //   StoreKey.CustomProvider,
-      // );
-      // const providers = storedProvidersData
-      //   ? JSON.parse(storedProvidersData)
-      //   : [];
-      // const providers = custom_provider.providers;
 
-      const provider = custom_provider.getByName(providerName);
-      if (provider?.baseUrl && provider?.apiKey) {
-        // 使用解构赋值和可选链操作符
-        access.useCustomProvider = true;
-        access.customProvider_apiKey = provider.apiKey;
-        access.customProvider_baseUrl = provider.baseUrl;
-        access.customProvider_type = provider.type;
-      } else {
-        access.useCustomProvider = false;
-      }
-    } catch (error) {
-      console.error("Error processing custom providers:", error);
-      access.useCustomProvider = false;
-    }
     const api: ClientApi = getClientApi(providerName);
     api.llm.chat({
       messages: [
@@ -1137,29 +1067,6 @@ export function ChatActions(props: {
           m.provider?.providerName === currentProviderName,
       ) || null;
     setCurrentModelInfo(_currentModel);
-    try {
-      // const storedProvidersData = safeLocalStorage().getItem(
-      //   StoreKey.CustomProvider,
-      // );
-      // const providers = storedProvidersData
-      //   ? JSON.parse(storedProvidersData)
-      //   : [];
-      // const providers = custom_provider.providers;
-
-      const provider = custom_provider.getByName(currentProviderName);
-      if (provider?.baseUrl && provider?.apiKey) {
-        // 使用解构赋值和可选链操作符
-        access.useCustomProvider = true;
-        access.customProvider_apiKey = provider.apiKey;
-        access.customProvider_baseUrl = provider.baseUrl;
-        access.customProvider_type = provider.type;
-      } else {
-        access.useCustomProvider = false;
-      }
-    } catch (error) {
-      console.error("Error processing custom providers:", error);
-      access.useCustomProvider = false;
-    }
   }, [
     models,
     session.mask.modelConfig.model,
@@ -3747,6 +3654,7 @@ export function Chat() {
         access.defaultModel.split(/@(?=[^@]*$)/);
       modelConfig.model = modelName;
       modelConfig.providerName = providerName as ServiceProvider;
+      console.log("chatModel not set, using default", modelName, providerName);
     }
     if (!storedConfigs.compressModel) {
       saveModelConfig("compressModel", access.compressModel);
@@ -3754,12 +3662,18 @@ export function Chat() {
         access.compressModel.split(/@(?=[^@]*$)/);
       modelConfig.compressModel = modelName;
       modelConfig.compressProviderName = providerName as ServiceProvider;
+      console.log(
+        "compressModel not set, using default",
+        modelName,
+        providerName,
+      );
     }
     if (!storedConfigs.ocrModel) {
       saveModelConfig("ocrModel", access.ocrModel);
       const [modelName, providerName] = access.ocrModel.split(/@(?=[^@]*$)/);
       modelConfig.ocrModel = modelName;
       modelConfig.ocrProviderName = providerName as ServiceProvider;
+      console.log("ocrModel not set, using default", modelName, providerName);
     }
     if (!storedConfigs.textProcessModel) {
       saveModelConfig("textProcessModel", access.textProcessModel);
@@ -3767,6 +3681,11 @@ export function Chat() {
         access.textProcessModel.split(/@(?=[^@]*$)/);
       modelConfig.textProcessModel = modelName;
       modelConfig.textProcessProviderName = providerName as ServiceProvider;
+      console.log(
+        "textProcessModel not set, using default",
+        modelName,
+        providerName,
+      );
     }
     chatStore.updateTargetSession(
       session,

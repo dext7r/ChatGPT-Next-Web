@@ -820,30 +820,6 @@ export const useChatStore = createPersistStore(
           providerName = providerNameStr as ServiceProvider;
         }
 
-        try {
-          // const storedProvidersData = safeLocalStorage().getItem(
-          //   StoreKey.CustomProvider,
-          // );
-          // const providers = storedProvidersData
-          //   ? JSON.parse(storedProvidersData)
-          //   : [];
-          const providers = useCustomProviderStore.getState().providers;
-          const provider = Array.isArray(providers)
-            ? providers.find((provider) => provider.name === providerName)
-            : null;
-          if (provider?.baseUrl && provider?.apiKey) {
-            // 使用解构赋值和可选链操作符
-            access.useCustomProvider = true;
-            access.customProvider_apiKey = provider.apiKey;
-            access.customProvider_baseUrl = provider.baseUrl;
-            access.customProvider_type = provider.type;
-          } else {
-            access.useCustomProvider = false;
-          }
-        } catch (error) {
-          console.error("Error processing custom providers:", error);
-          access.useCustomProvider = false;
-        }
         const api: ClientApi = getClientApi(providerName);
 
         // remove error messages if any

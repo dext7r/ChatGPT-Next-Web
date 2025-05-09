@@ -43,84 +43,101 @@
 ### 🤖 应用功能增强
 - **基于 AI 模型的中英互译**
 
-<div align="center">
-  <table>
-    <tr>
-      <td><img src="./docs/images/translate-1.png" width="100%" alt="翻译前"></td>
-      <td><img src="./docs/images/translate-2.png" width="100%" alt="翻译后"></td>
-    </tr>
-    <tr>
-      <td align="center">翻译前</td>
-      <td align="center">翻译后</td>
-    </tr>
-  </table>
-</div>
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/translate-1.png" width="100%" alt="翻译前">
+    <p align="center">翻译前</p>
+    <img src="./docs/images/translate-2.png" width="100%" alt="翻译后">
+    <p align="center">翻译后</p>
+  </div>
+</details>
 
 - **基于 AI 模型的 OCR 功能**
 
-<div align="center">
-  <table>
-    <tr>
-      <td><img src="./docs/images/ocr-1.png" width="100%" alt="OCR前"></td>
-      <td><img src="./docs/images/ocr-2.png" width="100%" alt="OCR后"></td>
-    </tr>
-    <tr>
-      <td align="center">OCR 前</td>
-      <td align="center">OCR 后</td>
-    </tr>
-  </table>
-</div>
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/ocr-1.png" width="100%" alt="OCR前">
+    <p align="center">OCR 前</p>
+    <img src="./docs/images/ocr-2.png" width="100%" alt="OCR后">
+    <p align="center">OCR 后</p>
+  </div>
+</details>
+
+- **基于 AI 模型的 提示词增强功能**
+
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/improve-1.png" width="100%" alt="优化前">
+    <p align="center">优化前</p>
+    <img src="./docs/images/improve-2.png" width="100%" alt="优化后">
+    <p align="center">优化后</p>
+  </div>
+</details>
 
 ### 🔒 隐私与安全
 - **基于正则匹配的隐私打码**（注：所有基于 AI 模型的功能的信息安全请自行把握）
 
-<div align="center">
-  <table>
-    <tr>
-      <td><img src="./docs/images/privacy-1.png" width="100%" alt="打码前"></td>
-      <td><img src="./docs/images/privacy-2.png" width="100%" alt="打码后"></td>
-    </tr>
-    <tr>
-      <td align="center">打码前</td>
-      <td align="center">打码后</td>
-    </tr>
-  </table>
-</div>
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/privacy-1.png" width="100%" alt="打码前">
+    <p align="center">打码前</p>
+    <img src="./docs/images/privacy-2.png" width="100%" alt="打码后">
+    <p align="center">打码后</p>
+  </div>
+</details>
 
 ### 📊 交互与展示优化
 - **支持 details/summary 标签渲染** - 增强页面整洁度与交互性
 
-<div align="center">
-  <img src="./docs/images/details%20标签渲染.png" width="50%" alt="details标签渲染">
-</div>
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/details%20标签渲染.png" width="50%" alt="details标签渲染">
+  </div>
+</details>
 
 - **思考过程可视化** - 适配 `<think>` 标签和 reasoning_content 参数
 
-<div align="center">
-  <table>
-    <tr>
-      <td><img src="./docs/images/thinking.png" width="100%" alt="思考中"></td>
-      <td><img src="./docs/images/think.png" width="100%" alt="思考结束"></td>
-    </tr>
-    <tr>
-      <td align="center">思考中</td>
-      <td align="center">思考结束（已增加思考计时）</td>
-    </tr>
-  </table>
-</div>
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/thinking.png" width="100%" alt="思考中">
+    <p align="center">思考中</p>
+    <img src="./docs/images/think.png" width="100%" alt="思考结束">
+    <p align="center">思考结束（已增加思考计时）</p>
+  </div>
+</details>
 
 - **回复 token 统计** - API 若未包含相关用量则以 gpt-3.5-turbo 为模型编码器计算
 
-<div align="center">
-  <img src="./docs/images/completions-stat.png" width="50%" alt="Token统计">
-</div>
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/completions-stat.png" width="50%" alt="Token统计">
+  </div>
+</details>
 
 ### 模型自定义功能增强
 - **OpenAI 类型支持前端配置** - 一键拉取可用模型 （已停更，建议使用更加完备的【自定义 AI 提供商】功能）
 
-<div align="center">
-  <img src="./docs/images/getModels.png" width="50%" alt="获取模型功能">
-</div>
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/getModels.png" width="50%" alt="获取模型功能">
+  </div>
+</details>
 
 - **自定义 AI 提供商** - 支持 OpenAI/DeepSeek/SiliconFlow 类型
   - 单渠道配置多密钥
@@ -129,14 +146,20 @@
   - 移除测试无效 key
   - 拉取模型、模型测试
   - 配置模型别名和视觉支持
+  - 支持配置聊天补全等路径
+  - 数据集成进 store，支持云备份
 
-<div align="center">
-  <img src="./docs/images/customProvider_1.png" width="60%" alt="自定义提供商配置1">
-  <br><br>
-  <img src="./docs/images/customProvider_2.png" width="60%" alt="自定义提供商配置2">
-  <br><br>
-  <img src="./docs/images/customProvider_3.png" width="60%" alt="自定义提供商配置3">
-</div>
+<details>
+  <summary>点击展开查看截图</summary>
+
+  <div align="center">
+    <img src="./docs/images/customProvider_1.png" width="60%" alt="自定义提供商配置1">
+    <br><br>
+    <img src="./docs/images/customProvider_2.png" width="60%" alt="自定义提供商配置2">
+    <br><br>
+    <img src="./docs/images/customProvider_3.png" width="60%" alt="自定义提供商配置3">
+  </div>
+</details>
 
 
 ## 环境变量

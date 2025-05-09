@@ -41,6 +41,7 @@ import {
   useUpdateStore,
   useAccessStore,
   useAppConfig,
+  useCustomProviderStore,
 } from "../store";
 
 import Locale, {
@@ -527,6 +528,7 @@ function SyncItems() {
   const chatStore = useChatStore();
   const promptStore = usePromptStore();
   const maskStore = useMaskStore();
+  const providerStore = useCustomProviderStore();
   const couldSync = useMemo(() => {
     return syncStore.cloudSync();
   }, [syncStore]);
@@ -542,8 +544,14 @@ function SyncItems() {
       message: messageCount,
       prompt: Object.keys(promptStore.prompts).length,
       mask: Object.keys(maskStore.masks).length,
+      provider: providerStore.providers.length,
     };
-  }, [chatStore.sessions, maskStore.masks, promptStore.prompts]);
+  }, [
+    chatStore.sessions,
+    maskStore.masks,
+    promptStore.prompts,
+    providerStore.providers,
+  ]);
 
   return (
     <>

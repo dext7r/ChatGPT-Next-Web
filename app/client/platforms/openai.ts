@@ -87,28 +87,28 @@ export class ChatGPTApi implements LLMApi {
 
   path(path: string): string {
     const accessStore = useAccessStore.getState();
-
+    // console.log("[openai.ts] access: ", accessStore);
     let baseUrl = "";
     if (this.baseUrl) {
       baseUrl = this.baseUrl;
     } else {
-      if (accessStore.useCustomProvider) {
-        baseUrl = accessStore.customProvider_baseUrl;
-      } else if (accessStore.useCustomConfig) {
-        const isAzure = accessStore.provider === ServiceProvider.Azure;
+      // if (accessStore.useCustomProvider) {
+      //   baseUrl = accessStore.customProvider_baseUrl;
+      // } else if (accessStore.useCustomConfig) {
+      const isAzure = accessStore.provider === ServiceProvider.Azure;
 
-        if (isAzure && !accessStore.isValidAzure()) {
-          throw Error(
-            "incomplete azure config, please check it in your settings page",
-          );
-        }
-
-        if (isAzure) {
-          path = makeAzurePath(path, accessStore.azureApiVersion);
-        }
-
-        baseUrl = isAzure ? accessStore.azureUrl : accessStore.openaiUrl;
+      if (isAzure && !accessStore.isValidAzure()) {
+        throw Error(
+          "incomplete azure config, please check it in your settings page",
+        );
       }
+
+      if (isAzure) {
+        path = makeAzurePath(path, accessStore.azureApiVersion);
+      }
+
+      baseUrl = isAzure ? accessStore.azureUrl : accessStore.openaiUrl;
+      // }
 
       if (baseUrl.length === 0) {
         const isApp = !!getClientConfig()?.isApp;

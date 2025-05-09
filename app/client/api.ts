@@ -268,7 +268,6 @@ export function findProviderInLocalStorage(
         typeof p.apiKey === "string" && // Ensure apiKey is a string
         p.apiKey.length > 0, // Ensure apiKey is not empty
     );
-
     return provider || null; // Return found provider or null
   } catch (error) {
     console.error(
@@ -314,8 +313,6 @@ export function getHeaders(
     ? accessStore.googleApiKey
     : isAzure
     ? accessStore.azureApiKey
-    : accessStore.useCustomProvider
-    ? selectApiKey(accessStore.customProvider_apiKey)
     : accessStore.openaiApiKey;
   const clientConfig = getClientConfig();
   const makeBearer = (s: string) => `${isAzure ? "" : "Bearer "}${s.trim()}`;

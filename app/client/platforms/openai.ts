@@ -204,7 +204,7 @@ export class ChatGPTApi implements LLMApi {
   }
 
   async chat(options: ChatOptions) {
-    const visionModel = isVisionModel(options.config.model);
+    // const visionModel = isVisionModel(options.config.model);
     const model_name = options.config.model.toLowerCase();
     const isPureGPT =
       model_name.startsWith("gpt-") || model_name.startsWith("chatgpt-");
@@ -213,9 +213,9 @@ export class ChatGPTApi implements LLMApi {
     const isO1orO3 = isO1 || isO3;
     const isGPT = isPureGPT || isO1 || isO3;
     const isClaude = model_name.startsWith("claude");
-    const isGlm4v = model_name.startsWith("glm-4v");
+    // const isGlm4v = model_name.startsWith("glm-4v");
     const isMistral = model_name.startsWith("mistral");
-    const isMiniMax = model_name.startsWith("aabb");
+    // const isMiniMax = model_name.startsWith("aabb");
     const isDeepseekReasoner =
       model_name.includes("deepseek-reasoner") ||
       model_name.includes("deepseek-r1");
@@ -234,7 +234,7 @@ export class ChatGPTApi implements LLMApi {
     }
 
     // For claude model: roles must alternate between "user" and "assistant" in claude, so add a fake assistant message between two user messages
-    const keys = ["system", "user"];
+    // const keys = ["system", "user"];
     if (isClaude) {
       // 新的处理方式
       // 忽略所有不是 user 或 system 的开头消息
@@ -290,6 +290,7 @@ export class ChatGPTApi implements LLMApi {
         model: options.config.model,
       },
     };
+    const requestTimeoutMS = (modelConfig.requestTimeout || 300) * 1000;
 
     // O1 not support image, tools (plugin in ChatGPTNextWeb) and system, stream, logprobs, temperature, top_p, n, presence_penalty, frequency_penalty yet.
     let requestPayload: RequestPayload;
@@ -397,7 +398,7 @@ export class ChatGPTApi implements LLMApi {
       // make a fetch request
       const requestTimeoutId = setTimeout(
         () => controller.abort(),
-        thinkingModel ? REQUEST_TIMEOUT_MS * 10 : REQUEST_TIMEOUT_MS,
+        thinkingModel ? requestTimeoutMS * 10 : requestTimeoutMS,
       );
 
       if (shouldStream) {

@@ -627,6 +627,15 @@ const en: LocaleType = {
         tip: "Modified model inference effort program, currently only grok",
       },
     },
+    EnableStream: {
+      Title: "Enable Stream",
+      SubTitle:
+        "Non-streaming output will return all content in the final request.",
+    },
+    RequestTimeout: {
+      Title: "Request Timeout",
+      SubTitle: "Request timeout duration in seconds",
+    },
     Temperature: {
       Title: "Temperature",
       SubTitle: "A larger value makes the more random output",

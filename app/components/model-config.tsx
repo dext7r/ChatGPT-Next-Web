@@ -517,6 +517,40 @@ export function ModelConfigList(props: {
           }
         ></input>
       </ListItem>
+      {/* <ListItem
+        title={Locale.Settings.EnableStream.Title}
+        subTitle={Locale.Settings.EnableStream.SubTitle}
+      >
+        <input
+          aria-label={Locale.Settings.EnableStream.Title}
+          type="checkbox"
+          checked={props.modelConfig.enableStream}
+          onChange={(e) =>
+            props.updateConfig(
+              (config) =>
+                (config.enableStream = e.currentTarget.checked),
+            )
+          }
+        ></input>
+      </ListItem> */}
+      <ListItem
+        title={Locale.Settings.RequestTimeout.Title}
+        subTitle={Locale.Settings.RequestTimeout.SubTitle}
+      >
+        <input
+          aria-label={Locale.Settings.RequestTimeout.Title}
+          type="number"
+          min={5}
+          max={4000}
+          value={props.modelConfig.requestTimeout || 300}
+          onChange={(e) =>
+            props.updateConfig(
+              (config) =>
+                (config.requestTimeout = e.currentTarget.valueAsNumber),
+            )
+          }
+        ></input>
+      </ListItem>
       <ListItem
         title={Locale.Settings.Temperature.Title}
         subTitle={Locale.Settings.Temperature.SubTitle}

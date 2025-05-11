@@ -6,7 +6,6 @@ import { InputRange } from "./input-range";
 import { ListItem, Select } from "./ui-lib";
 import { useAllModelsWithCustomProviders } from "../utils/hooks";
 import { groupBy } from "lodash-es";
-import { getStoredModelConfigs, saveModelConfig } from "../utils";
 import { useState, useEffect } from "react";
 import { Model } from "../client/api";
 
@@ -68,243 +67,311 @@ export function ModelConfigList(props: {
 
   const accessStore = useAccessStore();
   // 创建状态变量来存储模型值
-  const [chatModelValue, setChatModelValue] = useState<string>("");
-  const [compressModelValue, setCompressModelValue] = useState<string>("");
-  const [textProcessModelValue, setTextProcessModelValue] =
-    useState<string>("");
-  const [ocrModelValue, setOcrModelValue] = useState<string>("");
+  const [chatModelValue, setChatModelValue] = useState<string>(
+    props.modelConfig.model,
+  );
+  const [compressModelValue, setCompressModelValue] = useState<string>(
+    props.modelConfig.compressModel,
+  );
+  const [textProcessModelValue, setTextProcessModelValue] = useState<string>(
+    props.modelConfig.textProcessModel,
+  );
+  const [ocrModelValue, setOcrModelValue] = useState<string>(
+    props.modelConfig.ocrModel,
+  );
 
-  // 在组件挂载时初始化
   useEffect(() => {
-    // 获取存储的配置
-    const storedConfigs = getStoredModelConfigs();
-    // 处理聊天模型
-    let useStoreChatModel = false;
-    if (storedConfigs.chatModel) {
-      // 如果已有存储的值，使用它
-      // setChatModelValue(storedConfigs.chatModel);
-      const [model, providerName] = storedConfigs.chatModel.split("@");
-      if (!isModelAvailable(model, providerName, allModels)) {
-        console.warn(
-          `chatModel ${model} with provider ${providerName} is not available.`,
-        );
-      } else {
-        useStoreChatModel = true;
-      }
-    }
-    if (useStoreChatModel) {
-      const [model, providerName] = storedConfigs.chatModel.split("@");
-      const matchedProviderName = findMatchingProvider(
-        model,
-        providerName,
-        groupModels,
-      );
-      props.updateConfig((config) => {
-        config.model = ModalConfigValidator.model(model);
-        config.providerName = matchedProviderName as ServiceProvider;
-      });
-      setChatModelValue(`${model}@${matchedProviderName}`);
-    } else {
-      // 否则使用props中的默认值
-      const model = props.modelConfig.model;
-      const providername = props.modelConfig.providerName;
+    const [chatModel, chatProviderName] = chatModelValue.split(/@(?=[^@]*$)/);
+    const matchedChatProviderName = findMatchingProvider(
+      chatModel,
+      chatProviderName,
+      groupModels,
+    );
+    props.updateConfig((config) => {
+      config.model = ModalConfigValidator.model(chatModel);
+      config.providerName = matchedChatProviderName as ServiceProvider;
+    });
+    setChatModelValue(`${chatModel}@${matchedChatProviderName}`);
 
-      // 使用辅助函数查找匹配的providername
-      const matchedProviderName = findMatchingProvider(
-        model,
-        providername,
-        groupModels,
-      );
+    const [compressModel, compressProviderName] =
+      compressModelValue.split(/@(?=[^@]*$)/);
+    const matchedCompressProviderName = findMatchingProvider(
+      compressModel,
+      compressProviderName,
+      groupModels,
+    );
+    props.updateConfig((config) => {
+      config.compressModel = ModalConfigValidator.model(compressModel);
+      config.compressProviderName =
+        matchedCompressProviderName as ServiceProvider;
+    });
+    setCompressModelValue(`${compressModel}@${matchedCompressProviderName}`);
 
-      const value = `${model}@${matchedProviderName}`;
-      setChatModelValue(value);
-      saveModelConfig("chatModel", value);
-      console.log("[model-config] change chatModel: ", value);
+    const [ocrModel, ocrProviderName] = ocrModelValue.split(/@(?=[^@]*$)/);
+    const matchedOcrProviderName = findMatchingProvider(
+      ocrModel,
+      ocrProviderName,
+      groupModels,
+    );
+    props.updateConfig((config) => {
+      config.ocrModel = ModalConfigValidator.model(ocrModel);
+      config.ocrProviderName = matchedOcrProviderName as ServiceProvider;
+    });
+    setOcrModelValue(`${ocrModel}@${matchedOcrProviderName}`);
 
-      // 如果匹配的providername与原始不同，更新配置
-      if (matchedProviderName !== providername) {
-        props.updateConfig((config) => {
-          config.providerName = matchedProviderName as ServiceProvider;
-        });
-      }
-    }
-
-    // 处理压缩模型
-    let useStoreCompressModel = false;
-    if (storedConfigs.compressModel) {
-      // setCompressModelValue(storedConfigs.compressModel);
-      const [model, providerName] = storedConfigs.compressModel.split("@");
-      if (!isModelAvailable(model, providerName, allModels)) {
-        console.warn(
-          `compressModel ${model} with provider ${providerName} is not available.`,
-        );
-      } else {
-        useStoreCompressModel = true;
-      }
-    }
-    if (useStoreCompressModel) {
-      const [model, providerName] = storedConfigs.compressModel.split("@");
-      const matchedProviderName = findMatchingProvider(
-        model,
-        providerName,
-        groupModels,
-      );
-      props.updateConfig((config) => {
-        config.compressModel = ModalConfigValidator.model(model);
-        config.compressProviderName = matchedProviderName as ServiceProvider;
-      });
-      setCompressModelValue(`${model}@${matchedProviderName}`);
-    } else {
-      // 使用accessStore中的值或props中的默认值
-      let model = props.modelConfig.compressModel;
-      let providerName = props.modelConfig.compressProviderName;
-
-      // 如果accessStore中有值，优先使用
-      if (accessStore.compressModel) {
-        const parts = accessStore.compressModel.split("@");
-        if (parts.length > 0) {
-          model = parts[0];
-          if (parts.length > 1) {
-            providerName = parts[1] as ServiceProvider;
-          }
-        }
-      }
-      const matchedProviderName = findMatchingProvider(
-        model,
-        providerName,
-        groupModels,
-      );
-
-      const value = `${model}@${matchedProviderName}`;
-      setCompressModelValue(value);
-      saveModelConfig("compressModel", value);
-      console.log("[model-config] change compressModel: ", value);
-
-      // 更新配置
-      props.updateConfig((config) => {
-        config.compressModel = ModalConfigValidator.model(model);
-        config.compressProviderName = matchedProviderName as ServiceProvider;
-      });
-    }
-
-    // 处理翻译模型
-    let useStoreTextProcessModel = false;
-    if (storedConfigs.textProcessModel) {
-      // setTranslateModelValue(storedConfigs.translateModel);
-      const [model, providerName] = storedConfigs.textProcessModel.split("@");
-      if (!isModelAvailable(model, providerName, allModels)) {
-        console.warn(
-          `textProcessModel ${model} with provider ${providerName} is not available.`,
-        );
-      } else {
-        useStoreTextProcessModel = true;
-      }
-    }
-    if (useStoreTextProcessModel) {
-      const [model, providerName] = storedConfigs.textProcessModel.split("@");
-      const matchedProviderName = findMatchingProvider(
-        model,
-        providerName,
-        groupModels,
-      );
-      props.updateConfig((config) => {
-        config.textProcessModel = ModalConfigValidator.model(model);
-        config.textProcessProviderName = matchedProviderName as ServiceProvider;
-      });
-      setTextProcessModelValue(`${model}@${matchedProviderName}`);
-    } else {
-      // 使用accessStore中的值或props中的默认值
-      let model = props.modelConfig.textProcessModel;
-      let providerName = props.modelConfig.textProcessProviderName;
-
-      // 如果accessStore中有值，优先使用
-      if (accessStore.textProcessModel) {
-        const parts = accessStore.textProcessModel.split("@");
-        if (parts.length > 0) {
-          model = parts[0];
-          if (parts.length > 1) {
-            providerName = parts[1] as ServiceProvider;
-          }
-        }
-        console.log(
-          "[model-config] accessStore textProcessModel: ",
-          accessStore.textProcessModel,
-        );
-      }
-      const matchedProviderName = findMatchingProvider(
-        model,
-        providerName,
-        groupModels,
-      );
-      const value = `${model}@${matchedProviderName}`;
-      setTextProcessModelValue(value);
-      saveModelConfig("textProcessModel", value);
-      console.log("[model-config] change textProcessModel: ", value);
-
-      // 更新配置
-      props.updateConfig((config) => {
-        config.textProcessModel = ModalConfigValidator.model(model);
-        config.textProcessProviderName = matchedProviderName as ServiceProvider;
-      });
-    }
-
-    // 处理OCR模型
-    let useStoreOcrModel = false;
-    if (storedConfigs.ocrModel) {
-      // setOcrModelValue(storedConfigs.ocrModel);
-      const [model, providerName] = storedConfigs.ocrModel.split("@");
-      if (!isModelAvailable(model, providerName, allModels)) {
-        console.warn(
-          `ocrModel ${model} with provider ${providerName} is not available.`,
-        );
-      } else {
-        useStoreOcrModel = true;
-      }
-    }
-    if (useStoreOcrModel) {
-      const [model, providerName] = storedConfigs.ocrModel.split("@");
-      const matchedProviderName = findMatchingProvider(
-        model,
-        providerName,
-        groupModels,
-      );
-      props.updateConfig((config) => {
-        config.ocrModel = ModalConfigValidator.model(model);
-        config.ocrProviderName = matchedProviderName as ServiceProvider;
-      });
-      setOcrModelValue(`${model}@${matchedProviderName}`);
-    } else {
-      // 使用accessStore中的值或props中的默认值
-      let model = props.modelConfig.ocrModel;
-      let providerName = props.modelConfig.ocrProviderName;
-
-      // 如果accessStore中有值，优先使用
-      if (accessStore.ocrModel) {
-        const parts = accessStore.ocrModel.split("@");
-        if (parts.length > 0) {
-          model = parts[0];
-          if (parts.length > 1) {
-            providerName = parts[1] as ServiceProvider;
-          }
-        }
-      }
-      const matchedProviderName = findMatchingProvider(
-        model,
-        providerName,
-        groupModels,
-      );
-      const value = `${model}@${matchedProviderName}`;
-      setOcrModelValue(value);
-      saveModelConfig("ocrModel", value);
-      console.log("[model-config] change ocrModel: ", value);
-
-      // 更新配置
-      props.updateConfig((config) => {
-        config.ocrModel = ModalConfigValidator.model(model);
-        config.ocrProviderName = matchedProviderName as ServiceProvider;
-      });
-    }
+    const [textProcessModel, textProcessProviderName] =
+      textProcessModelValue.split(/@(?=[^@]*$)/);
+    const matchedTextProcessProviderName = findMatchingProvider(
+      textProcessModel,
+      textProcessProviderName,
+      groupModels,
+    );
+    props.updateConfig((config) => {
+      config.textProcessModel = ModalConfigValidator.model(textProcessModel);
+      config.textProcessProviderName =
+        matchedTextProcessProviderName as ServiceProvider;
+    });
+    setTextProcessModelValue(
+      `${textProcessModel}@${matchedTextProcessProviderName}`,
+    );
   }, []);
+  // 在组件挂载时初始化
+  // useEffect(() => {
+  //   // 获取存储的配置
+  //   const storedConfigs = getStoredModelConfigs();
+  //   // 处理聊天模型
+  //   let useStoreChatModel = false;
+  //   if (storedConfigs.chatModel) {
+  //     // 如果已有存储的值，使用它
+  //     // setChatModelValue(storedConfigs.chatModel);
+  //     const [model, providerName] = storedConfigs.chatModel.split("@");
+  //     if (!isModelAvailable(model, providerName, allModels)) {
+  //       console.warn(
+  //         `chatModel ${model} with provider ${providerName} is not available.`,
+  //       );
+  //     } else {
+  //       useStoreChatModel = true;
+  //     }
+  //   }
+  //   if (useStoreChatModel) {
+  //     const [model, providerName] = storedConfigs.chatModel.split("@");
+  //     const matchedProviderName = findMatchingProvider(
+  //       model,
+  //       providerName,
+  //       groupModels,
+  //     );
+  //     props.updateConfig((config) => {
+  //       config.model = ModalConfigValidator.model(model);
+  //       config.providerName = matchedProviderName as ServiceProvider;
+  //     });
+  //     setChatModelValue(`${model}@${matchedProviderName}`);
+  //   } else {
+  //     // 否则使用props中的默认值
+  //     const model = props.modelConfig.model;
+  //     const providername = props.modelConfig.providerName;
+
+  //     // 使用辅助函数查找匹配的providername
+  //     const matchedProviderName = findMatchingProvider(
+  //       model,
+  //       providername,
+  //       groupModels,
+  //     );
+
+  //     const value = `${model}@${matchedProviderName}`;
+  //     setChatModelValue(value);
+  //     saveModelConfig("chatModel", value);
+  //     console.log("[model-config] change chatModel: ", value);
+
+  //     // 如果匹配的providername与原始不同，更新配置
+  //     if (matchedProviderName !== providername) {
+  //       props.updateConfig((config) => {
+  //         config.providerName = matchedProviderName as ServiceProvider;
+  //       });
+  //     }
+  //   }
+
+  //   // 处理压缩模型
+  //   let useStoreCompressModel = false;
+  //   if (storedConfigs.compressModel) {
+  //     // setCompressModelValue(storedConfigs.compressModel);
+  //     const [model, providerName] = storedConfigs.compressModel.split("@");
+  //     if (!isModelAvailable(model, providerName, allModels)) {
+  //       console.warn(
+  //         `compressModel ${model} with provider ${providerName} is not available.`,
+  //       );
+  //     } else {
+  //       useStoreCompressModel = true;
+  //     }
+  //   }
+  //   if (useStoreCompressModel) {
+  //     const [model, providerName] = storedConfigs.compressModel.split("@");
+  //     const matchedProviderName = findMatchingProvider(
+  //       model,
+  //       providerName,
+  //       groupModels,
+  //     );
+  //     props.updateConfig((config) => {
+  //       config.compressModel = ModalConfigValidator.model(model);
+  //       config.compressProviderName = matchedProviderName as ServiceProvider;
+  //     });
+  //     setCompressModelValue(`${model}@${matchedProviderName}`);
+  //   } else {
+  //     // 使用accessStore中的值或props中的默认值
+  //     let model = props.modelConfig.compressModel;
+  //     let providerName = props.modelConfig.compressProviderName;
+
+  //     // 如果accessStore中有值，优先使用
+  //     if (accessStore.compressModel) {
+  //       const parts = accessStore.compressModel.split("@");
+  //       if (parts.length > 0) {
+  //         model = parts[0];
+  //         if (parts.length > 1) {
+  //           providerName = parts[1] as ServiceProvider;
+  //         }
+  //       }
+  //     }
+  //     const matchedProviderName = findMatchingProvider(
+  //       model,
+  //       providerName,
+  //       groupModels,
+  //     );
+
+  //     const value = `${model}@${matchedProviderName}`;
+  //     setCompressModelValue(value);
+  //     saveModelConfig("compressModel", value);
+  //     console.log("[model-config] change compressModel: ", value);
+
+  //     // 更新配置
+  //     props.updateConfig((config) => {
+  //       config.compressModel = ModalConfigValidator.model(model);
+  //       config.compressProviderName = matchedProviderName as ServiceProvider;
+  //     });
+  //   }
+
+  //   // 处理翻译模型
+  //   let useStoreTextProcessModel = false;
+  //   if (storedConfigs.textProcessModel) {
+  //     // setTranslateModelValue(storedConfigs.translateModel);
+  //     const [model, providerName] = storedConfigs.textProcessModel.split("@");
+  //     if (!isModelAvailable(model, providerName, allModels)) {
+  //       console.warn(
+  //         `textProcessModel ${model} with provider ${providerName} is not available.`,
+  //       );
+  //     } else {
+  //       useStoreTextProcessModel = true;
+  //     }
+  //   }
+  //   if (useStoreTextProcessModel) {
+  //     const [model, providerName] = storedConfigs.textProcessModel.split("@");
+  //     const matchedProviderName = findMatchingProvider(
+  //       model,
+  //       providerName,
+  //       groupModels,
+  //     );
+  //     props.updateConfig((config) => {
+  //       config.textProcessModel = ModalConfigValidator.model(model);
+  //       config.textProcessProviderName = matchedProviderName as ServiceProvider;
+  //     });
+  //     setTextProcessModelValue(`${model}@${matchedProviderName}`);
+  //   } else {
+  //     // 使用accessStore中的值或props中的默认值
+  //     let model = props.modelConfig.textProcessModel;
+  //     let providerName = props.modelConfig.textProcessProviderName;
+
+  //     // 如果accessStore中有值，优先使用
+  //     if (accessStore.textProcessModel) {
+  //       const parts = accessStore.textProcessModel.split("@");
+  //       if (parts.length > 0) {
+  //         model = parts[0];
+  //         if (parts.length > 1) {
+  //           providerName = parts[1] as ServiceProvider;
+  //         }
+  //       }
+  //       console.log(
+  //         "[model-config] accessStore textProcessModel: ",
+  //         accessStore.textProcessModel,
+  //       );
+  //     }
+  //     const matchedProviderName = findMatchingProvider(
+  //       model,
+  //       providerName,
+  //       groupModels,
+  //     );
+  //     const value = `${model}@${matchedProviderName}`;
+  //     setTextProcessModelValue(value);
+  //     saveModelConfig("textProcessModel", value);
+  //     console.log("[model-config] change textProcessModel: ", value);
+
+  //     // 更新配置
+  //     props.updateConfig((config) => {
+  //       config.textProcessModel = ModalConfigValidator.model(model);
+  //       config.textProcessProviderName = matchedProviderName as ServiceProvider;
+  //     });
+  //   }
+
+  //   // 处理OCR模型
+  //   let useStoreOcrModel = false;
+  //   if (storedConfigs.ocrModel) {
+  //     // setOcrModelValue(storedConfigs.ocrModel);
+  //     const [model, providerName] = storedConfigs.ocrModel.split("@");
+  //     if (!isModelAvailable(model, providerName, allModels)) {
+  //       console.warn(
+  //         `ocrModel ${model} with provider ${providerName} is not available.`,
+  //       );
+  //     } else {
+  //       useStoreOcrModel = true;
+  //     }
+  //   }
+  //   if (useStoreOcrModel) {
+  //     const [model, providerName] = storedConfigs.ocrModel.split("@");
+  //     const matchedProviderName = findMatchingProvider(
+  //       model,
+  //       providerName,
+  //       groupModels,
+  //     );
+  //     props.updateConfig((config) => {
+  //       config.ocrModel = ModalConfigValidator.model(model);
+  //       config.ocrProviderName = matchedProviderName as ServiceProvider;
+  //     });
+  //     setOcrModelValue(`${model}@${matchedProviderName}`);
+  //   } else {
+  //     // 使用accessStore中的值或props中的默认值
+  //     let model = props.modelConfig.ocrModel;
+  //     let providerName = props.modelConfig.ocrProviderName;
+
+  //     // 如果accessStore中有值，优先使用
+  //     if (accessStore.ocrModel) {
+  //       const parts = accessStore.ocrModel.split("@");
+  //       if (parts.length > 0) {
+  //         model = parts[0];
+  //         if (parts.length > 1) {
+  //           providerName = parts[1] as ServiceProvider;
+  //         }
+  //       }
+  //     }
+  //     const matchedProviderName = findMatchingProvider(
+  //       model,
+  //       providerName,
+  //       groupModels,
+  //     );
+  //     const value = `${model}@${matchedProviderName}`;
+  //     setOcrModelValue(value);
+  //     saveModelConfig("ocrModel", value);
+  //     console.log("[model-config] change ocrModel: ", value);
+
+  //     // 更新配置
+  //     props.updateConfig((config) => {
+  //       config.ocrModel = ModalConfigValidator.model(model);
+  //       config.ocrProviderName = matchedProviderName as ServiceProvider;
+  //     });
+  //   }
+  // }, []);
+  // console.log("allModels:", allModels);
+  // console.log("groupModels:" , groupModels);
+  // console.log("chatModelValue:" , chatModelValue);
+  // console.log("compressModelValue:" , compressModelValue);
+  // console.log("textProcessModelValue:" , textProcessModelValue);
+  // console.log("ocrModelValue:" , ocrModelValue);
   return (
     <>
       <ListItem title={Locale.Settings.Model}>
@@ -315,9 +382,9 @@ export function ModelConfigList(props: {
           onChange={(e) => {
             const value = e.currentTarget.value;
             setChatModelValue(value);
-            saveModelConfig("chatModel", value);
+            // saveModelConfig("chatModel", value);
 
-            const [model, providerName] = value.split("@");
+            const [model, providerName] = value.split(/@(?=[^@]*$)/);
             props.updateConfig((config) => {
               config.model = ModalConfigValidator.model(model);
               config.providerName = providerName as ServiceProvider;
@@ -346,9 +413,10 @@ export function ModelConfigList(props: {
           onChange={(e) => {
             const value = e.currentTarget.value;
             setCompressModelValue(value);
-            saveModelConfig("compressModel", value);
+            // saveModelConfig("compressModel", value);
 
-            const [model, providerName] = value.split("@");
+            const [model, providerName] = value.split(/@(?=[^@]*$)/);
+
             props.updateConfig((config) => {
               config.compressModel = ModalConfigValidator.model(model);
               config.compressProviderName = providerName as ServiceProvider;
@@ -379,9 +447,9 @@ export function ModelConfigList(props: {
           onChange={(e) => {
             const value = e.currentTarget.value;
             setTextProcessModelValue(value);
-            saveModelConfig("textProcessModel", value);
+            // saveModelConfig("textProcessModel", value);
 
-            const [model, providerName] = value.split("@");
+            const [model, providerName] = value.split(/@(?=[^@]*$)/);
             props.updateConfig((config) => {
               config.textProcessModel = ModalConfigValidator.model(model);
               config.textProcessProviderName = providerName as ServiceProvider;
@@ -412,9 +480,9 @@ export function ModelConfigList(props: {
           onChange={(e) => {
             const value = e.currentTarget.value;
             setOcrModelValue(value);
-            saveModelConfig("ocrModel", value);
+            // saveModelConfig("ocrModel", value);
 
-            const [model, providerName] = value.split("@");
+            const [model, providerName] = value.split(/@(?=[^@]*$)/);
             props.updateConfig((config) => {
               config.ocrModel = ModalConfigValidator.model(model);
               config.ocrProviderName = providerName as ServiceProvider;

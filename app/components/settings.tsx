@@ -649,6 +649,19 @@ export function Settings() {
   }
 
   const accessStore = useAccessStore();
+  if (config.modelConfig.model === "") {
+    config.modelConfig.model = accessStore.defaultModel;
+  }
+  if (config.modelConfig.compressModel === "") {
+    config.modelConfig.compressModel = accessStore.compressModel;
+  }
+  if (config.modelConfig.ocrModel === "") {
+    config.modelConfig.ocrModel = accessStore.ocrModel;
+  }
+  if (config.modelConfig.textProcessModel === "") {
+    config.modelConfig.textProcessModel = accessStore.textProcessModel;
+  }
+
   const shouldHideBalanceQuery = useMemo(() => {
     const isOpenAiUrl = accessStore.openaiUrl.includes(OPENAI_BASE_URL);
 

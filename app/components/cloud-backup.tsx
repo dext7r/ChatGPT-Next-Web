@@ -42,6 +42,7 @@ export function CloudBackupPage() {
   };
   const [uploadProgress, setUploadProgress] = useState(0);
   const [files, setFiles] = useState<FileInfo[]>([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
   const [importingFileNames, setImportingFileNames] = useState<Set<string>>(
     new Set(),
   );
@@ -51,6 +52,15 @@ export function CloudBackupPage() {
   const [renameInputs, setRenameInputs] = useState<{ [key: string]: string }>(
     {},
   );
+  // 添加文件名搜索处理函数
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchKeyword(e.target.value);
+  };
+  // 过滤显示的文件列表
+  const filteredFiles = files.filter((file) =>
+    file.name.toLowerCase().includes(searchKeyword.toLowerCase()),
+  );
+
   const accessStore = useAccessStore();
   const chatStore = useChatStore();
   var collisionString = "";
@@ -545,8 +555,17 @@ export function CloudBackupPage() {
       {files.length > 0 && (
         <div className={styles["file-list-container"]}>
           <h3 className={styles.subtitle}>文件列表</h3>
+          <div className={styles.searchContainer}>
+            <input
+              type="text"
+              value={searchKeyword}
+              onChange={handleSearchChange}
+              placeholder="搜索文件名..."
+              className={styles.searchInput}
+            />
+          </div>
           <ul className={styles.list}>
-            {files.map((file) => (
+            {filteredFiles.map((file) => (
               <li key={file.name} className={styles.listItem}>
                 {/* 文件名显示或编辑 */}
                 <div className={styles.fileInfo}>
@@ -612,6 +631,9 @@ export function CloudBackupPage() {
               </li>
             ))}
           </ul>
+          {filteredFiles.length === 0 && searchKeyword && (
+            <div className={styles.noResults}>没有找到匹配的文件</div>
+          )}
         </div>
       )}
     </div>

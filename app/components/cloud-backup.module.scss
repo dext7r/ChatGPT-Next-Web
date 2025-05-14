@@ -143,6 +143,35 @@
     text-align: center;
   }
 
+  /* 添加搜索框样式 */
+  .searchContainer {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+  }
+  .searchInput {
+    width: 90%;
+    padding: 8px 12px;
+    border: var(--border-in-light);
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: var(--white);
+    color: var(--black);
+    transition: border-color 0.3s ease;
+    &:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+  }
+  
+  /* 无搜索结果提示样式 */
+  .noResults {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-color-secondary);
+    font-style: italic;
+  }
+
   .list {
     list-style: none;
     padding-bottom: 20px;
@@ -246,6 +275,13 @@
     padding: 10px;
     max-height: 60vh; /* 限制列表区域高度，确保文件可以滚动到底部 */
 
+    .searchContainer {
+      margin-bottom: 10px;
+    }
+    .searchInput {
+      width: 100%;
+    }
+    
     .listItem {
       flex-direction: column;
       align-items: flex-start;

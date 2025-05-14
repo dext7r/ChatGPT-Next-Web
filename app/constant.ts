@@ -60,6 +60,7 @@ export enum StoreKey {
   Sync = "sync",
   CustomProvider = "custom-providers-store",
   TaskModelConfig = "task-model-config",
+  ExpansionRules = "expansion-rules",
 }
 
 export const DEFAULT_SIDEBAR_WIDTH = 300;

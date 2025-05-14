@@ -65,6 +65,10 @@ import {
   UPDATE_URL,
 } from "../constant";
 import { Prompt, SearchService, usePromptStore } from "../store/prompt";
+import {
+  TextExpansionRule,
+  useExpansionRulesStore,
+} from "../store/expansionRules";
 import { ErrorBoundary } from "./error";
 import { InputRange } from "./input-range";
 import { useNavigate } from "react-router-dom";
@@ -123,6 +127,334 @@ function EditPromptModal(props: { id: string; onClose: () => void }) {
       </Modal>
     </div>
   ) : null;
+}
+function ExpansionRulesModal(props: { onClose: () => void }) {
+  const [editingRule, setEditingRule] =
+    useState<Partial<TextExpansionRule> | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const rulesStore = useExpansionRulesStore();
+  const userRules = rulesStore.getUserRules();
+  const builtinRules = rulesStore.builtinRules;
+
+  // 全选/取消全选用户规则
+  const toggleAllUserRules = (enable: boolean) => {
+    userRules.forEach((rule) => {
+      rulesStore.updateRule(rule.id, (r) => {
+        r.enable = enable;
+      });
+    });
+  };
+
+  // 全选/取消全选内置规则
+  const toggleAllBuiltinRules = (enable: boolean) => {
+    // 创建一个新的内置规则数组副本
+    const newBuiltinRules = [...builtinRules];
+
+    // 更新每个内置规则的启用状态
+    newBuiltinRules.forEach((rule, index) => {
+      newBuiltinRules[index] = { ...rule, enable: enable };
+    });
+
+    // 设置更新后的内置规则
+    rulesStore.setBuiltinRules(newBuiltinRules);
+  };
+
+  const createOrUpdateRule = () => {
+    if (!editingRule || !editingRule.trigger || !editingRule.replacement)
+      return;
+
+    if (editingRule.id) {
+      // 更新规则
+      rulesStore.updateRule(editingRule.id, (rule) => {
+        rule.trigger = editingRule.trigger || rule.trigger;
+        rule.replacement = editingRule.replacement || rule.replacement;
+        rule.description = editingRule.description || rule.description;
+        rule.enable =
+          editingRule.enable !== undefined ? editingRule.enable : rule.enable;
+      });
+    } else {
+      // 创建新规则
+      rulesStore.addRule({
+        trigger: editingRule.trigger,
+        replacement: editingRule.replacement,
+        description: editingRule.description || "",
+        enable: editingRule.enable !== undefined ? editingRule.enable : true,
+      });
+    }
+
+    setEditingRule(null);
+    setIsCreating(false);
+  };
+
+  const toggleRuleStatus = (rule: TextExpansionRule) => {
+    if (rule.isUser) {
+      rulesStore.updateRule(rule.id, (r) => {
+        r.enable = !r.enable;
+      });
+    } else {
+      // 内置规则 - 更新内置规则数组
+      const newBuiltinRules = [...rulesStore.builtinRules];
+      const ruleIndex = newBuiltinRules.findIndex((r) => r.id === rule.id);
+      if (ruleIndex >= 0) {
+        newBuiltinRules[ruleIndex] = {
+          ...newBuiltinRules[ruleIndex],
+          enable: !rule.enable,
+        };
+        rulesStore.setBuiltinRules(newBuiltinRules);
+      }
+    }
+  };
+
+  const deleteRule = (rule: TextExpansionRule) => {
+    if (rule.isUser) {
+      rulesStore.removeRule(rule.id);
+    }
+  };
+
+  return (
+    <div className="modal-mask">
+      <Modal
+        title={Locale.Settings.Expansion.Rules}
+        onClose={props.onClose}
+        actions={[
+          <IconButton
+            key="add"
+            onClick={() => {
+              setEditingRule({
+                trigger: "",
+                replacement: "",
+                description: "",
+                enable: true,
+                isUser: true,
+              });
+              setIsCreating(true);
+            }}
+            icon={<AddIcon />}
+            bordered
+            text={Locale.Settings.Expansion.AddRule}
+          />,
+          <IconButton
+            key="confirm"
+            onClick={props.onClose}
+            icon={<ConfirmIcon />}
+            bordered
+            text={Locale.UI.Confirm}
+          />,
+        ]}
+      >
+        <div className={styles["expansion-rules-container"]}>
+          <div className={styles["expansion-rules-section"]}>
+            <div className={styles["expansion-section-header"]}>
+              <div className={styles["expansion-section-title"]}>
+                {Locale.Settings.Expansion.UserRules}
+              </div>
+              <div className={styles["expansion-section-actions"]}>
+                <button
+                  onClick={() => toggleAllUserRules(true)}
+                  className={styles["expansion-select-all"]}
+                >
+                  {Locale.Settings.Expansion.SelectAll}
+                </button>
+                <button
+                  onClick={() => toggleAllUserRules(false)}
+                  className={styles["expansion-deselect-all"]}
+                >
+                  {Locale.Settings.Expansion.UnselectAll}
+                </button>
+              </div>
+            </div>
+
+            {userRules.length === 0 ? (
+              <div className={styles["expansion-empty"]}>
+                {Locale.Settings.Expansion.NoUserRules}
+              </div>
+            ) : (
+              <div className={styles["expansion-rules-list"]}>
+                {userRules.map((rule) => (
+                  <div
+                    key={rule.id}
+                    className={`${styles["list-item"]} ${
+                      !rule.enable ? styles["disabled-rule"] : ""
+                    }`}
+                  >
+                    <div className={styles["expansion-rule-content"]}>
+                      <div className={styles["expansion-rule-title"]}>
+                        {rule.trigger}
+                      </div>
+                      <div className={styles["expansion-rule-desc"]}>
+                        {rule.description || rule.replacement}
+                      </div>
+                    </div>
+                    <div className={styles["expansion-rule-actions"]}>
+                      <input
+                        type="checkbox"
+                        checked={rule.enable}
+                        onChange={() => toggleRuleStatus(rule)}
+                      />
+                      <IconButton
+                        icon={<EditIcon />}
+                        onClick={() => setEditingRule({ ...rule })}
+                      />
+                      <IconButton
+                        icon={<ClearIcon />}
+                        onClick={() => deleteRule(rule)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className={styles["expansion-rules-section"]}>
+            <div className={styles["expansion-section-header"]}>
+              <div className={styles["expansion-section-title"]}>
+                {Locale.Settings.Expansion.BuiltinRules}
+              </div>
+              <div className={styles["expansion-section-actions"]}>
+                <button
+                  onClick={() => toggleAllBuiltinRules(true)}
+                  className={styles["expansion-select-all"]}
+                >
+                  {Locale.Settings.Expansion.SelectAll}
+                </button>
+                <button
+                  onClick={() => toggleAllBuiltinRules(false)}
+                  className={styles["expansion-deselect-all"]}
+                >
+                  {Locale.Settings.Expansion.UnselectAll}
+                </button>
+              </div>
+            </div>
+
+            <div className={styles["expansion-rules-list"]}>
+              {builtinRules.map((rule) => (
+                <div
+                  key={rule.id}
+                  className={`${styles["list-item"]} ${
+                    !rule.enable ? styles["disabled-rule"] : ""
+                  }`}
+                >
+                  <div className={styles["expansion-rule-content"]}>
+                    <div className={styles["expansion-rule-title"]}>
+                      {rule.trigger}
+                    </div>
+                    <div className={styles["expansion-rule-desc"]}>
+                      {rule.description || rule.replacement}
+                    </div>
+                  </div>
+                  <div className={styles["expansion-rule-actions"]}>
+                    <input
+                      type="checkbox"
+                      checked={rule.enable}
+                      onChange={() => toggleRuleStatus(rule)}
+                    />
+                    <IconButton
+                      icon={<EyeIcon />}
+                      onClick={() =>
+                        setEditingRule({
+                          ...rule,
+                          id: undefined,
+                          isUser: false,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {(editingRule || isCreating) && (
+          <div className="modal-mask">
+            <Modal
+              title={
+                isCreating
+                  ? Locale.Settings.Expansion.AddRule
+                  : Locale.Settings.Expansion.EditRule
+              }
+              onClose={() => {
+                setEditingRule(null);
+                setIsCreating(false);
+              }}
+              actions={[
+                <IconButton
+                  key="cancel"
+                  text={Locale.UI.Cancel}
+                  onClick={() => {
+                    setEditingRule(null);
+                    setIsCreating(false);
+                  }}
+                  bordered
+                />,
+                <IconButton
+                  key="confirm"
+                  text={Locale.UI.Confirm}
+                  type="primary"
+                  onClick={createOrUpdateRule}
+                />,
+              ]}
+            >
+              <List>
+                <ListItem title={Locale.Settings.Expansion.Trigger}>
+                  <Input
+                    style={{ width: "300px" }}
+                    // readOnly={!editingRule?.isUser}
+                    value={editingRule?.trigger || ""}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      setEditingRule((prev) =>
+                        prev ? { ...prev, trigger: e.target.value } : null,
+                      )
+                    }
+                  />
+                </ListItem>
+                <ListItem
+                  title={Locale.Settings.Expansion.Replacement}
+                  subTitle={Locale.Settings.Expansion.ReplacementHint}
+                >
+                  <Input
+                    rows={4}
+                    style={{ width: "300px" }}
+                    // readOnly={!editingRule?.isUser}
+                    value={editingRule?.replacement || ""}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      setEditingRule((prev) =>
+                        prev ? { ...prev, replacement: e.target.value } : null,
+                      )
+                    }
+                  />
+                </ListItem>
+                <ListItem title={Locale.Settings.Expansion.Description}>
+                  <Input
+                    style={{ width: "300px" }}
+                    // readOnly={!editingRule?.isUser}
+                    value={editingRule?.description || ""}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      setEditingRule((prev) =>
+                        prev ? { ...prev, description: e.target.value } : null,
+                      )
+                    }
+                  />
+                </ListItem>
+                <ListItem title={Locale.Settings.Expansion.Enabled}>
+                  <input
+                    type="checkbox"
+                    checked={editingRule?.enable}
+                    onChange={(e) =>
+                      setEditingRule((prev) =>
+                        prev ? { ...prev, enable: e.target.checked } : null,
+                      )
+                    }
+                  />
+                </ListItem>
+              </List>
+            </Modal>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
 }
 function CustomUserContinuePromptModal(props: { onClose?: () => void }) {
   const config = useAppConfig();
@@ -637,6 +969,8 @@ export function Settings() {
   const remoteId = updateStore.formatVersion(updateStore.remoteVersion);
   const hasNewVersion = currentVersion !== remoteId;
   const updateUrl = getClientConfig()?.isApp ? RELEASE_URL : UPDATE_URL;
+
+  const [showExpansionRules, setShowExpansionRules] = useState(false);
 
   function checkUpdate(force = false) {
     setCheckingUpdate(true);
@@ -1540,7 +1874,37 @@ export function Settings() {
             onClose={() => setShowCustomContinuePromptModal(false)}
           />
         )}
+        <List>
+          <ListItem
+            title={Locale.Settings.Expansion.EnabledTitle}
+            subTitle={Locale.Settings.Expansion.EnabledSubTitle}
+          >
+            <input
+              type="checkbox"
+              checked={config.enableTextExpansion}
+              onChange={(e) =>
+                config.update(
+                  (config) =>
+                    (config.enableTextExpansion = e.currentTarget.checked),
+                )
+              }
+            />
+          </ListItem>
+          <ListItem
+            title={Locale.Settings.Expansion.Title}
+            subTitle={Locale.Settings.Expansion.SubTitle}
+          >
+            <IconButton
+              icon={<EditIcon />}
+              text={Locale.Settings.Expansion.Manage}
+              onClick={() => setShowExpansionRules(true)}
+            />
+          </ListItem>
+        </List>
 
+        {showExpansionRules && (
+          <ExpansionRulesModal onClose={() => setShowExpansionRules(false)} />
+        )}
         <List>
           <TTSConfigList
             ttsConfig={config.ttsConfig}

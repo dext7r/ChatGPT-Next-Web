@@ -910,7 +910,17 @@ function SyncItems() {
             {couldSync && (
               <IconButton
                 icon={<ResetIcon />}
-                text={Locale.UI.Sync}
+                text={
+                  syncStore.syncState === "fetching"
+                    ? Locale.Settings.Sync.Fetching
+                    : syncStore.syncState === "merging"
+                    ? Locale.Settings.Sync.Merging
+                    : syncStore.syncState === "uploading"
+                    ? Locale.Settings.Sync.Uploading
+                    : syncStore.syncState === "error"
+                    ? Locale.Settings.Sync.Fail
+                    : Locale.UI.Sync
+                }
                 onClick={async () => {
                   try {
                     await syncStore.sync();
@@ -919,6 +929,7 @@ function SyncItems() {
                     showToast(Locale.Settings.Sync.Fail);
                     console.error("[Sync]", e);
                   }
+                  setTimeout(() => syncStore.resetSyncState(), 10000);
                 }}
               />
             )}

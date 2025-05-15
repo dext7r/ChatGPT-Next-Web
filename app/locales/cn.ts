@@ -365,10 +365,13 @@ const cn = {
       NotSyncYet: "还没有进行过同步",
       Success: "同步成功",
       Fail: "同步失败",
+      Fetching: "正在获取云端数据...",
+      Merging: "合并本地数据",
+      Uploading: "正在上传云端...",
 
       Config: {
         Modal: {
-          Title: "配置云同步",
+          Title: "配置云同步(检查可用性有bug，可尝试直接同步)",
           Check: "检查可用性",
         },
         SyncType: {

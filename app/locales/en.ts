@@ -379,6 +379,9 @@ const en: LocaleType = {
       NotSyncYet: "Not sync yet",
       Success: "Sync Success",
       Fail: "Sync Fail",
+      Fetching: "Fetching CloudState ...",
+      Merging: "Merging LocalState",
+      Uploading: "Uploading CloudState...",
 
       Config: {
         Modal: {

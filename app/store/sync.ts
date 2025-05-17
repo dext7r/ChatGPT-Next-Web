@@ -1,5 +1,4 @@
 import { getClientConfig } from "../config/client";
-import { Updater } from "../typing";
 import { ApiPath, STORAGE_KEY, StoreKey } from "../constant";
 import { createPersistStore } from "../utils/store";
 import {
@@ -45,6 +44,7 @@ const DEFAULT_SYNC_STATE = {
   lastSyncTime: 0,
   lastProvider: "",
   syncState: "idle", // 同步状态: idle, fetching, merging, uploading, success, error
+  syncStateSize: -1,
 };
 
 export const useSyncStore = createPersistStore(
@@ -110,7 +110,8 @@ export const useSyncStore = createPersistStore(
             "[Sync] Remote state is empty, using local state instead.",
           );
           set({ syncState: "success" });
-          return;
+          // setTimeout(() => this.resetSyncState(), 10000);
+          // return;
         } else {
           const parsedRemoteState = JSON.parse(remoteState) as AppState;
           // 合并数据
@@ -133,6 +134,7 @@ export const useSyncStore = createPersistStore(
             );
             set({ syncState: "success" });
             this.markSyncTime();
+            setTimeout(() => this.resetSyncState(), 10000);
             return;
           }
         }
@@ -143,9 +145,12 @@ export const useSyncStore = createPersistStore(
       }
 
       // 第二阶段：上传合并后的状态
-      set({ syncState: "uploading" });
       try {
-        await client.set(config.username, JSON.stringify(localState));
+        const localStateStr = JSON.stringify(localState);
+        const localSize = new Blob([localStateStr]).size;
+        set({ syncState: "uploading", syncStateSize: localSize });
+
+        await client.set(config.username, localStateStr);
         set({ syncState: "success" }); // Set status to success
         this.markSyncTime();
       } catch (e) {
@@ -153,9 +158,10 @@ export const useSyncStore = createPersistStore(
         set({ syncState: "error" }); // Set status to error
         throw e;
       }
+      setTimeout(() => this.resetSyncState(), 10000);
     },
     resetSyncState() {
-      set({ syncState: "idle" });
+      set({ syncState: "idle", syncStateSize: -1 });
     },
 
     async check() {

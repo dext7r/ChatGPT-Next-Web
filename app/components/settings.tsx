@@ -910,7 +910,7 @@ function SyncItems() {
             {couldSync && (
               <IconButton
                 icon={<ResetIcon />}
-                text={
+                text={`${
                   syncStore.syncState === "fetching"
                     ? Locale.Settings.Sync.Fetching
                     : syncStore.syncState === "merging"
@@ -919,8 +919,16 @@ function SyncItems() {
                     ? Locale.Settings.Sync.Uploading
                     : syncStore.syncState === "error"
                     ? Locale.Settings.Sync.Fail
+                    : syncStore.syncState === "success"
+                    ? Locale.Settings.Sync.Success
                     : Locale.UI.Sync
-                }
+                }${
+                  syncStore.syncStateSize >= 0
+                    ? ` (${(syncStore.syncStateSize / 1024 / 1024).toFixed(
+                        2,
+                      )} MB)`
+                    : ""
+                }`}
                 onClick={async () => {
                   try {
                     await syncStore.sync();
@@ -929,7 +937,6 @@ function SyncItems() {
                     showToast(Locale.Settings.Sync.Fail);
                     console.error("[Sync]", e);
                   }
-                  setTimeout(() => syncStore.resetSyncState(), 10000);
                 }}
               />
             )}

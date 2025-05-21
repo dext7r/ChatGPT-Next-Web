@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { IconButton } from "./button";
 import styles from "./custom-provider.module.scss";
 import { useAccessStore } from "../store";
@@ -625,7 +625,7 @@ export function ProviderModal(props: ProviderModalProps) {
     setEditingModel(null);
   };
   // 生成显示名称映射JSON字符串的函数
-  const generateDisplayNameMapView = () => {
+  const generateDisplayNameMapView = useCallback(() => {
     const displayNameMap: Record<string, string> = {};
     models.forEach((model) => {
       if (model.displayName && model.displayName !== model.name) {
@@ -634,7 +634,8 @@ export function ProviderModal(props: ProviderModalProps) {
     });
 
     return JSON.stringify(displayNameMap, null, 2);
-  };
+  }, [models]);
+
   // 解析并应用显示名称映射的函数
   const applyDisplayNameMap = () => {
     try {
@@ -685,7 +686,7 @@ export function ProviderModal(props: ProviderModalProps) {
     if (isJsonViewMode) {
       setDisplayNameMapText(generateDisplayNameMapView());
     }
-  }, [isJsonViewMode]);
+  }, [isJsonViewMode, generateDisplayNameMapView]);
 
   // 切换模型选中状态
   const toggleModelSelection = (modelName: string) => {
@@ -1174,6 +1175,83 @@ export function ProviderModal(props: ProviderModalProps) {
     }
   };
 
+  // 使用 useMemo 缓存过滤后的键列表，并优化空输入情况
+  const filteredKeys = useMemo(() => {
+    // 如果搜索输入为空，直接返回所有键，避免不必要的遍历
+    if (!newKey.trim()) {
+      return keyList;
+    }
+    // 只有当有搜索条件时才执行过滤
+    const lowerSearchTerm = newKey.toLowerCase();
+    return keyList.filter((key) => {
+      const lowerKey = key.toLowerCase();
+
+      // 匹配键本身
+      if (lowerKey.includes(lowerSearchTerm)) return true;
+
+      // 匹配测试结果
+      const testResult = testResults[key];
+      if (testResult) {
+        const resultText = `${testResult.message} ${
+          testResult.fullError || ""
+        }`.toLowerCase();
+        if (resultText.includes(lowerSearchTerm)) return true;
+      }
+
+      return false;
+    });
+  }, [keyList, newKey, testResults]);
+
+  // 添加批量删除过滤后密钥的函数
+  const removeFilteredKeys = async () => {
+    // 如果没有过滤条件或没有匹配项，不执行任何操作
+    if (!newKey.trim() || filteredKeys.length === 0) return;
+
+    // 构建确认对话框内容
+    const confirmContent = (
+      <div>
+        <div>
+          {`确定要删除所有匹配"${newKey}"的 ${filteredKeys.length} 个密钥吗？`}
+        </div>
+        <div
+          style={{
+            marginTop: "10px",
+            padding: "8px 12px",
+            backgroundColor: "#fff1f0",
+            borderRadius: "4px",
+            borderLeft: "3px solid #ff4d4f",
+          }}
+        >
+          <div style={{ fontWeight: "500", color: "#cf1322" }}>
+            此操作不可撤销
+          </div>
+          <div style={{ marginTop: "4px", color: "#ff4d4f" }}>
+            {filteredKeys.length > 3
+              ? `将删除 ${filteredKeys.length} 个密钥，包括: ${filteredKeys
+                  .slice(0, 3)
+                  .join(", ")}... 等`
+              : `将删除: ${filteredKeys.join(", ")}`}
+          </div>
+        </div>
+      </div>
+    );
+
+    // 显示确认对话框
+    if (await showConfirm(confirmContent)) {
+      // 用户确认后，创建一个新的密钥列表，排除所有匹配的密钥
+      const remainingKeys = keyList.filter(
+        (key) => !filteredKeys.includes(key),
+      );
+      setKeyList(remainingKeys);
+
+      // 清空搜索输入
+      setNewKey("");
+
+      // 显示成功消息
+      showToast(`已删除 ${filteredKeys.length} 个密钥`);
+    }
+  };
+
   const renderApiKeysSection = () => {
     if (isKeyListViewMode) {
       return (
@@ -1187,9 +1265,6 @@ export function ProviderModal(props: ProviderModalProps) {
               onChange={(e) => {
                 handleChange("testModel", e.target.value);
               }}
-              // placeholder={
-              //   providerTypeDefaultTestModel[formData.type] || "gpt-4o-mini"
-              // }
               className={styles.testModelInput}
             />
             <IconButton
@@ -1223,6 +1298,14 @@ export function ProviderModal(props: ProviderModalProps) {
                 text={Locale.CustomProvider.ClearInput}
                 onClick={() => setNewKey("")}
                 bordered
+              />
+              <IconButton
+                text={Locale.CustomProvider.ClearSelectKeys}
+                onClick={removeFilteredKeys}
+                bordered
+                title="删除所有匹配的密钥"
+                disabled={!newKey.trim() || filteredKeys.length === 0}
+                className={styles.deleteMatchedButton}
               />
               <IconButton
                 text={Locale.CustomProvider.RefreshBalance}
@@ -1347,17 +1430,19 @@ export function ProviderModal(props: ProviderModalProps) {
           </div>
 
           <div className={styles.keyListScroll}>
-            {keyList.length === 0 ? (
+            {filteredKeys.length === 0 ? (
               <div className={styles.emptyKeys}>
-                No API keys added. Add your first key above.
+                {keyList.length === 0
+                  ? "No API keys added. Add your first key above."
+                  : `No keys matching "${newKey}"`}
               </div>
             ) : (
               <div className={styles.keyList}>
-                {keyList.map((key, index) => (
+                {filteredKeys.map((key, index) => (
                   <KeyItem
                     key={index}
                     onDelete={removeKeyFromList}
-                    index={index}
+                    index={keyList.indexOf(key)}
                     apiKey={key}
                     baseUrl={formData.baseUrl}
                     type={formData.type}

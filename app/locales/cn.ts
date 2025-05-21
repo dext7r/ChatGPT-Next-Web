@@ -865,7 +865,8 @@ const cn = {
     Type: "类型",
     CustomAPI: "自定义 API",
     DescriptionPlaceholder: "添加描述（可选）",
-    ApiKeyPlaceholder: "输入您的 API Key，可以逗号或空格分隔多个密钥",
+    ApiKeyPlaceholder:
+      "输入 API Key，支持逗号或空格分隔多个密钥；支持用于过滤匹配（包括响应错误）",
     Show: "显示",
     Hide: "隐藏",
     Previous: "上一步",
@@ -920,6 +921,7 @@ const cn = {
     NormalView: "密钥：普通视图",
     AddKey: "添加密钥",
     ClearInput: "清除输入",
+    ClearSelectKeys: "清除选中密钥",
     RefreshBalance: "刷新余额",
     RemoveInvalidKey: "删除无效密钥",
     NoKeysAdded: "尚未添加任何API密钥",

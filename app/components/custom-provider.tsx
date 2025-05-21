@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { IconButton } from "./button";
 import styles from "./custom-provider.module.scss";
 import { useMatch, useNavigate } from "react-router-dom";
-import { Path, StoreKey } from "../constant";
-import { safeLocalStorage, downloadAs, readFromFile } from "../utils";
+import { Path } from "../constant";
+import { downloadAs, readFromFile } from "../utils";
 import Locale from "../locales";
 import { showToast, showConfirm } from "./ui-lib";
 import { useAccessStore } from "../store";
@@ -1282,7 +1282,10 @@ export function CustomProvider() {
         <ProviderModal
           provider={currentProvider}
           onSave={handleSaveProvider}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            navigate(Path.CustomProvider);
+          }}
           providers={providers}
           // setProviders={setProviders}
           // saveProvidersToStorage={saveProvidersToStorage}

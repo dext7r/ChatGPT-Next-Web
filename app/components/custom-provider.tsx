@@ -11,6 +11,7 @@ import { useAccessStore } from "../store";
 import { userCustomProvider } from "../client/api";
 import { getClientConfig } from "../config/client";
 import {
+  API_CONCURRENCY_LIMIT,
   ProviderModal,
   providerTypeLabels,
   providerTypeDefaultUrls,
@@ -921,15 +922,6 @@ export function CustomProvider() {
       return;
     }
 
-    // if (provider.balance) {
-    //   const updatedProviders = providers.map((p) =>
-    //     p.id === provider.id ? { ...p, balance: undefined } : p,
-    //   );
-    //   setProviders(updatedProviders);
-    //   saveProvidersToStorage(updatedProviders);
-    //   return;
-    // }
-
     const keys = apiKey
       .split(",")
       .map((k) => k.trim())
@@ -939,57 +931,73 @@ export function CustomProvider() {
       return;
     }
 
-    // if (providerBalances[id]) {
-    //   setProviderBalances((prev) => {
-    //     const newBalances = { ...prev };
-    //     delete newBalances[id];
-    //     return newBalances;
-    //   });
-    //   return;
-    // }
-
     // 设置当前提供商的加载状态
     setLoadingBalances((prev) => ({ ...prev, [id]: true }));
 
     try {
       let totalBalance = 0;
       let currency = "";
+      const allKeyBalances: number[] = [];
 
-      // 使用 Promise.all 来并行获取所有 key 的余额
-      const balancePromises = keys.map(async (key) => {
-        try {
-          let result = null;
-          if (type === "openrouter") {
-            result = await accessStore.checkOpenRouterBalance(key, baseUrl);
-          } else if (type === "siliconflow") {
-            result = await accessStore.checkSiliconFlowBalance(key, baseUrl);
-          } else if (type === "deepseek") {
-            result = await accessStore.checkDeepSeekBalance(key, baseUrl);
-          } else if (
-            type === "openai" &&
-            baseUrl !== providerTypeDefaultUrls[type]
-          ) {
-            result = await accessStore.checkCustomOpenaiBalance(key, baseUrl);
-          }
+      for (let i = 0; i < keys.length; i += API_CONCURRENCY_LIMIT) {
+        // 1. 获取当前批次的 keys
+        const batchKeys = keys.slice(i, i + API_CONCURRENCY_LIMIT);
 
-          if (result && result.isValid && result.totalBalance) {
-            if (!currency && result.currency) {
-              currency = result.currency;
+        // 2. (可选) 进度提示 - 如果 keys 数量很大，可以考虑添加
+        showToast(
+          `正在查询第 ${i + 1} - ${Math.min(
+            i + API_CONCURRENCY_LIMIT,
+            keys.length,
+          )} 个Key的余额...`,
+        );
+
+        // 3. 并行执行当前批次的余额查询
+        const balancePromisesInBatch = batchKeys.map(async (key) => {
+          try {
+            let result = null;
+            if (type === "openrouter") {
+              result = await accessStore.checkOpenRouterBalance(key, baseUrl);
+            } else if (type === "siliconflow") {
+              result = await accessStore.checkSiliconFlowBalance(key, baseUrl);
+            } else if (type === "deepseek") {
+              result = await accessStore.checkDeepSeekBalance(key, baseUrl);
+            } else if (
+              type === "openai" &&
+              baseUrl !== providerTypeDefaultUrls[type] // providerTypeDefaultUrls 也需要在此作用域可用
+            ) {
+              result = await accessStore.checkCustomOpenaiBalance(key, baseUrl);
             }
-            return typeof result.totalBalance === "string"
-              ? parseFloat(result.totalBalance) || 0
-              : Number(result.totalBalance) || 0;
-          } else {
-            throw new Error(result?.error || "查询失败或不支持查询");
-          }
-        } catch (error) {
-          console.error(`API Key ${key} 余额查询失败:`, error);
-          return 0;
-        }
-      });
 
-      const balances = await Promise.all(balancePromises);
-      totalBalance = balances.reduce((acc, curr) => acc + curr, 0);
+            if (result && result.isValid && result.totalBalance) {
+              if (!currency && result.currency) {
+                // 只设置一次 currency
+                currency = result.currency;
+              }
+              return typeof result.totalBalance === "string"
+                ? parseFloat(result.totalBalance) || 0
+                : Number(result.totalBalance) || 0;
+            } else {
+              // 对于查询失败或不支持的情况，我们不抛出错误，而是返回0，避免中断整个批处理
+              // 错误信息已在API调用层或单个查询中处理
+              console.warn(
+                `API Key ${key} 余额查询失败或不支持: ${
+                  result?.error || "未知原因"
+                }`,
+              );
+              return 0;
+            }
+          } catch (error) {
+            console.error(`API Key ${key} 余额查询异常:`, error);
+            return 0; // 确保即使单个key查询出错，Promise.all也能继续
+          }
+        });
+
+        // 4. 等待当前批次的所有余额查询完成
+        const balancesFromBatch = await Promise.all(balancePromisesInBatch);
+        allKeyBalances.push(...balancesFromBatch); // 将当前批次的余额添加到总列表中
+      }
+
+      totalBalance = allKeyBalances.reduce((acc, curr) => acc + curr, 0);
 
       const updatedProviders = providers.map((p) =>
         p.id === provider.id
@@ -1003,15 +1011,7 @@ export function CustomProvider() {
             }
           : p,
       );
-      // setProviders(updatedProviders);
-      // saveProvidersToStorage(updatedProviders);
       storeActions.setProviders(updatedProviders);
-
-      // // 更新余额状态
-      // setProviderBalances((prev) => ({
-      //   ...prev,
-      //   [id]: `${currency} ${totalBalance.toFixed(2)}`,
-      // }));
 
       showToast(`总余额: ${currency} ${totalBalance.toFixed(2)}`);
     } catch (error) {

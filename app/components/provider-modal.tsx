@@ -199,6 +199,7 @@ export interface ProviderModalProps {
   // saveProvidersToStorage: (providers: userCustomProvider[]) => void;
 }
 
+export const API_CONCURRENCY_LIMIT = 10;
 // 提供商编辑模态框
 export function ProviderModal(props: ProviderModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -861,12 +862,15 @@ export function ProviderModal(props: ProviderModalProps) {
   useEffect(() => {
     // This will run when formData.type changes
     // if (!formData.testModel) {
-    const defaultTestModel =
-      providerTypeDefaultTestModel[formData.type] || "gpt-4o-mini";
-    setFormData((prev) => ({
-      ...prev,
-      testModel: defaultTestModel,
-    }));
+    if (!props.provider) {
+      // 仅在添加新 Provider 时，根据 type 设置默认 testModel
+      const defaultTestModel =
+        providerTypeDefaultTestModel[formData.type] || "gpt-4o-mini";
+      setFormData((prev) => ({
+        ...prev,
+        testModel: defaultTestModel,
+      }));
+    }
     // }
   }, [formData.type]);
 
@@ -929,7 +933,7 @@ export function ProviderModal(props: ProviderModalProps) {
         result = {
           ...result,
           success: false,
-          message: "✗ Error",
+          message: `✗ Error (${response.status})`,
           fullError: fullError,
         };
       }
@@ -965,10 +969,20 @@ export function ProviderModal(props: ProviderModalProps) {
       );
       return;
     }
-    for (const key of keyList) {
-      await testKeyConnectivity(key);
+    let testedCount = 0;
+    const totalKeys = keyList.length;
+    for (let i = 0; i < totalKeys; i += API_CONCURRENCY_LIMIT) {
+      const batch = keyList.slice(i, i + API_CONCURRENCY_LIMIT);
+      showToast(
+        `Testing keys ${i + 1}-${Math.min(
+          i + API_CONCURRENCY_LIMIT,
+          totalKeys,
+        )} of ${totalKeys}...`,
+      );
+      await Promise.all(batch.map((key) => testKeyConnectivity(key)));
+      testedCount += batch.length;
     }
-    showToast("All keys tested");
+    showToast(`All ${totalKeys} keys tested.`);
   };
 
   const removeInvalidKeys = async () => {
@@ -1125,8 +1139,8 @@ export function ProviderModal(props: ProviderModalProps) {
       };
 
       // Process with a reasonable batch size (adjust as needed)
-      const BATCH_SIZE = 10; // Test 10 keys at a time
-      await processBatch(untestedKeys, BATCH_SIZE);
+      // const BATCH_SIZE = 10; // Test 10 keys at a time
+      await processBatch(untestedKeys, API_CONCURRENCY_LIMIT);
     }
 
     // Use our local results collection for filtering
@@ -1216,20 +1230,37 @@ export function ProviderModal(props: ProviderModalProps) {
                   if (formData.baseUrl.endsWith("#")) {
                     showToast("当前渠道不支持余额查询");
                     return;
-                  } else {
-                    setKeyBalances({});
-                    // 刷新所有Key的余额
-                    const loadingState: Record<string, boolean> = {};
-                    keyList.forEach((key) => {
-                      loadingState[key] = true;
-                    });
-                    setLoadingKeyBalances(loadingState);
-                    let totalBalance = 0;
-                    let currency = "";
-                    let hasValidBalance = false;
+                  }
+                  setKeyBalances({});
+                  const loadingState: Record<string, boolean> = {};
+                  keyList.forEach((key) => {
+                    loadingState[key] = true;
+                  });
+                  setLoadingKeyBalances(loadingState);
 
-                    // 并行查询所有key的余额
-                    const promises = keyList.map(async (key) => {
+                  let totalBalance = 0;
+                  let currency = "";
+                  let hasValidBalanceOverall = false;
+                  let processedCount = 0;
+                  const totalKeysToRefresh = keyList.length;
+
+                  for (
+                    let i = 0;
+                    i < totalKeysToRefresh;
+                    i += API_CONCURRENCY_LIMIT
+                  ) {
+                    const batchKeys = keyList.slice(
+                      i,
+                      i + API_CONCURRENCY_LIMIT,
+                    );
+                    showToast(
+                      `Refreshing balances for keys ${i + 1}-${Math.min(
+                        i + API_CONCURRENCY_LIMIT,
+                        totalKeysToRefresh,
+                      )} of ${totalKeysToRefresh}...`,
+                    );
+
+                    const batchPromises = batchKeys.map(async (key) => {
                       try {
                         let result: any = null;
                         if (formData.type === "openrouter") {
@@ -1254,13 +1285,14 @@ export function ProviderModal(props: ProviderModalProps) {
                             .checkCustomOpenaiBalance(key, formData.baseUrl);
                         }
 
-                        // 更新该key的余额信息
                         if (result && result.isValid && result.totalBalance) {
                           const balance = Number(result.totalBalance);
                           if (!isNaN(balance)) {
-                            totalBalance += balance;
-                            currency = result.currency || currency;
-                            hasValidBalance = true;
+                            totalBalance += balance; // Accumulate total balance
+                            if (!currency && result.currency) {
+                              currency = result.currency; // Set currency from the first valid result
+                            }
+                            hasValidBalanceOverall = true;
                           }
                           setKeyBalances((prev) => ({
                             ...prev,
@@ -1269,18 +1301,11 @@ export function ProviderModal(props: ProviderModalProps) {
                             ).toFixed(2)}`,
                           }));
                         } else {
-                          setKeyBalances((prev) => ({
-                            ...prev,
-                            [key]: null,
-                          }));
+                          setKeyBalances((prev) => ({ ...prev, [key]: null }));
                         }
                       } catch (error) {
-                        setKeyBalances((prev) => ({
-                          ...prev,
-                          [key]: null,
-                        }));
+                        setKeyBalances((prev) => ({ ...prev, [key]: null }));
                       } finally {
-                        // 标记该key加载完成
                         setLoadingKeyBalances((prev) => ({
                           ...prev,
                           [key]: false,
@@ -1288,29 +1313,27 @@ export function ProviderModal(props: ProviderModalProps) {
                       }
                     });
 
-                    await Promise.all(promises);
-                    // 更新渠道总余额
-                    if (hasValidBalance) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        balance: {
-                          amount: totalBalance,
-                          currency: currency,
-                          lastUpdated: new Date().toISOString(),
-                        },
-                      }));
-                    } else {
-                      // 如果没有有效的余额，清除总余额
-                      setFormData((prev) => ({
-                        ...prev,
-                        balance: undefined,
-                      }));
-                    }
+                    await Promise.all(batchPromises);
+                    processedCount += batchKeys.length;
+                  }
+
+                  if (hasValidBalanceOverall) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      balance: {
+                        amount: totalBalance,
+                        currency: currency,
+                        lastUpdated: new Date().toISOString(),
+                      },
+                    }));
                     showToast(
                       `所有余额刷新完成，当前渠道总额度：${currency} ${totalBalance.toFixed(
                         2,
                       )}`,
                     );
+                  } else {
+                    setFormData((prev) => ({ ...prev, balance: undefined }));
+                    showToast("所有余额刷新完成，未查询到有效额度信息。");
                   }
                 }}
                 bordered

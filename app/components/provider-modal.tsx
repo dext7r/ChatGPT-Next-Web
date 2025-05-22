@@ -554,7 +554,7 @@ export function ProviderModal(props: ProviderModalProps) {
 
     // 支持逗号和换行符分割多个模型名称
     const modelNames = searchModel
-      .split(/[,，\n]/)
+      .split(/[,，\s\n]/)
       .map((name) => name.trim())
       .filter(Boolean);
 

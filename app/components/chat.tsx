@@ -85,7 +85,6 @@ import {
   wrapThinkingPart,
   countTokens,
   saveModelConfig,
-  getStoredModelConfigs,
 } from "../utils";
 import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
@@ -128,7 +127,6 @@ import {
   textFileExtensions,
   maxFileSizeInKB,
   minTokensForPastingAsFile,
-  StoreKey,
 } from "../constant";
 import { Avatar } from "./emoji";
 import { ContextPrompts, MaskAvatar, MaskConfig } from "./mask";
@@ -1925,6 +1923,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     setPromptHints([]);
     if (!isMobileScreen) inputRef.current?.focus();
     setAutoScroll(true);
+    setLastExpansion(null);
   };
 
   const onPromptSelect = (prompt: RenderPompt) => {

@@ -120,8 +120,16 @@ const en: LocaleType = {
         Undo: "Undo Translate",
         UndoToast: "Undo Translate Success",
         SystemPrompt:
-          "Please act as a professional Chinese-English interpreter. First, identify the language of the input text and then accurately translate it into the other language (translate Chinese into English and English into Chinese). Ensure the translation is natural, fluent, idiomatic, and uses beautiful and elegant expressions. The text may contain redundant line breaks within paragraphs or pagination issues due to copying problems; please intelligently remove these based on context to produce a coherent and smooth translation. Regardless of the content you receive, you should only provide the translated text—do not include the original text, any explanations, or any other information.",
-        UserPrompt: "Translate the following text: \n",
+          "You are a professional Chinese-English interpreter. Please strictly follow these rules for Chinese-English translation:\n\
+1. Automatically detect the language of the input text (Chinese or English)\n\
+2. If the text is Chinese, translate it to English\n\
+3. If the text is in English or any other language, translate it to Chinese\n\
+4. Ensure translations are accurate, natural, fluent and idiomatic using elegant expressions\n\
+5. Intelligently filter out in-paragraph line breaks, headers, footers, page numbers, line numbers, etc. based on context\n\
+6. Only output the translated content without any explanations, comments or additional text\n\
+7. If the input text is already in the target language (e.g., input in English and the request is to translate to English), output the original text directly",
+        UserPrompt:
+          "Translate the following content (strictly follow language detection rules): \n",
       },
       OCR: {
         Title: "OCR",
@@ -932,6 +940,7 @@ const en: LocaleType = {
     NoModels: "No models available",
     NoSelectedModels: "No selected models",
     ModelsCount: "{count} models",
+    IncompleteData: "Provider data is incomplete",
     ProviderUpdated: "Provider updated",
     ProviderAdded: "Provider added",
     ProviderEnabled: "Provider enabled",

@@ -31,7 +31,6 @@ import { safeLocalStorage, readFileContent } from "../utils";
 import { indexedDBStorage } from "@/app/utils/indexedDB-storage";
 import { useAccessStore } from "./access";
 import { ServiceProvider } from "../constant";
-import { useCustomProviderStore } from "./provider";
 
 const localStorage = safeLocalStorage();
 

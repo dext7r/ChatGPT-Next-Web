@@ -431,6 +431,11 @@ export function CustomProvider() {
 
   // 更新保存提供商函数
   const handleSaveProvider = (provider: userCustomProvider) => {
+    // 检查数据完整性
+    if (!provider.name || !provider.baseUrl || !provider.type) {
+      showToast(Locale.CustomProvider.IncompleteData);
+      return;
+    }
     // 检查是否有重名
     const isDuplicate = providers.some(
       (p) => p.name === provider.name && p.id !== provider.id,
@@ -449,12 +454,14 @@ export function CustomProvider() {
     }
 
     let updatedProviders;
+    let newProviderId;
 
     if (currentProvider) {
       // 更新现有提供商
       updatedProviders = providers.map((p) =>
         p.id === provider.id ? provider : p,
       );
+      newProviderId = provider.id;
     } else {
       // 添加新提供商
       const newProvider = {
@@ -462,28 +469,16 @@ export function CustomProvider() {
         id: provider.id || `provider-${Date.now()}`, // 确保有ID
       };
       updatedProviders = [...providers, newProvider];
+      newProviderId = newProvider.id;
     }
-
-    // // 更新状态
-    // setProviders(updatedProviders);
-
-    // // 保存到本地存储
-    // try {
-    //   saveProvidersToStorage(updatedProviders);
-    // } catch (error) {
-    //   console.error("保存到本地存储失败:", error);
-    // }
     storeActions.setProviders(updatedProviders);
-
-    // // 关闭模态框
-    // setIsModalOpen(false);
-
     // 显示成功消息
     showToast(
       currentProvider
         ? Locale.CustomProvider.ProviderUpdated
         : Locale.CustomProvider.ProviderAdded,
     );
+    return newProviderId; // 返回新提供商的ID
   };
   // 移除禁用渠道函数
   const handleRemoveDisabledProviders = async () => {
@@ -1144,12 +1139,38 @@ export function CustomProvider() {
                     <span
                       className={styles.metaItem}
                       style={{ backgroundColor: "#D9E8FE", color: "#003D8F" }}
+                      onClick={() => {
+                        const modelNames = (
+                          provider.models
+                            ?.filter((m) => m.available)
+                            .map((m) => m.name) || []
+                        ).join(", ");
+                        if (modelNames) {
+                          navigator.clipboard
+                            .writeText(modelNames)
+                            .then(() => showToast("模型列表已复制到剪贴板"))
+                            .catch(() => showToast("复制失败"));
+                        } else {
+                          showToast("无可复制的模型");
+                        }
+                      }}
                     >
                       {getModelCountText(provider)}
                     </span>
                     <span
                       className={`${styles.metaItem} ${styles.keyCountItem}`}
                       style={{ backgroundColor: "#FFEDD5", color: "#C2410C" }}
+                      onClick={() => {
+                        const keys = provider.apiKey;
+                        if (keys) {
+                          navigator.clipboard
+                            .writeText(keys)
+                            .then(() => showToast("密钥已复制到剪贴板"))
+                            .catch(() => showToast("复制失败"));
+                        } else {
+                          showToast("无可复制的密钥");
+                        }
+                      }}
                     >
                       {getKeyCountText(provider)}
                     </span>
@@ -1184,6 +1205,12 @@ export function CustomProvider() {
                       <span
                         className={styles.metaItem}
                         style={{ backgroundColor: "#F0E6FF", color: "#5B21B6" }}
+                        onClick={() => {
+                          navigator.clipboard
+                            .writeText(provider.baseUrl)
+                            .then(() => showToast("URL 已复制到剪贴板"))
+                            .catch(() => showToast("复制失败"));
+                        }}
                       >
                         {provider.baseUrl}
                       </span>
@@ -1281,14 +1308,18 @@ export function CustomProvider() {
       {isModalOpen && (
         <ProviderModal
           provider={currentProvider}
-          onSave={handleSaveProvider}
+          onSave={(provider) => {
+            const newProviderId = handleSaveProvider(provider);
+            if (newProviderId) {
+              // 导航到新添加的 Provider 的详情页
+              navigate(`${Path.CustomProvider}/${newProviderId}`);
+            }
+          }}
           onClose={() => {
             setIsModalOpen(false);
             navigate(Path.CustomProvider);
           }}
           providers={providers}
-          // setProviders={setProviders}
-          // saveProvidersToStorage={saveProvidersToStorage}
         />
       )}
     </div>

@@ -239,7 +239,7 @@
       justify-content: space-between;
 
       button {
-        flex: 1;
+        flex: 1 1 auto;
       }
     }
   }
@@ -887,7 +887,7 @@
 }
 .parsingTextarea {
   width: 100%;
-  min-height: 100px;
+  min-height: 200px;
   padding: 10px 16px 40px 16px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;

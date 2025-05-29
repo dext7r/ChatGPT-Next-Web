@@ -119,7 +119,7 @@
   scrollbar-color: #3298eb #f1f1f1; /* Firefox */
 
   .fileListContainer::-webkit-scrollbar {
-    width: 16px;
+    width: 20px;
   }
 
   .fileListContainer::-webkit-scrollbar-track {
@@ -229,7 +229,7 @@
       transition: background-color 0.3s ease;
 
       &:hover:not(:disabled) {
-        background-color: var(--primary-hover);
+        opacity: 0.8;
       }
 
       &:disabled {

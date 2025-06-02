@@ -103,6 +103,7 @@ const en: LocaleType = {
         "Current model does not support image uploads.",
       RenameFile: "Rename this file",
       CloudBackup: "Backup by Cloud",
+      Tools: "Tools",
       Continue: {
         Title: "Complete Chat",
         isContinueToast: "Currently completing chat...",
@@ -200,6 +201,26 @@ const en: LocaleType = {
           "This privacy mosaic has been completed and replaced the input content.",
         Undo: "Undo Privatize",
         UndoToast: "Undo Privatize Success",
+      },
+      ClearInput: {
+        Title: "Clear Input",
+        BlankToast: "Input is empty",
+        SuccessClearChatToast: "Input cleared. Click undo to restore text",
+        Undo: "Undo Clear",
+        UndoToast: "Input clear undone",
+      },
+      ReplaceText: {
+        Title: "Replace Text",
+        BlankToast: "Input is empty",
+        SearchText: "Search Text",
+        SearchPlaceholder: "Text to search for",
+        ReplaceText: "Replacement Text",
+        ReplacePlaceholder: "Text to replace with, e.g.: ***",
+        EmptySearchToast: "Search text cannot be empty",
+        isReplacingToast: "Replacing...",
+        SuccessClearChatToast: "Input cleared. Click undo to restore text",
+        Undo: "Undo Replace",
+        UndoToast: "Text replacement undone",
       },
       UploadFile: {
         Title: ((canUploadImage: boolean = false) =>
@@ -873,6 +894,7 @@ const en: LocaleType = {
     SearchModel: "Search Model",
     SelectALL: "All Models",
     NoPresetRule: "No preset rules",
+    Replace: "Replace",
   },
   Exporter: {
     Description: {

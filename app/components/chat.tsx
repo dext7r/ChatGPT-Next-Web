@@ -9,6 +9,7 @@ import React, {
   RefObject,
   useLayoutEffect,
 } from "react";
+import clsx from "clsx";
 
 import SendWhiteIcon from "../icons/send-white.svg";
 import BrainIcon from "../icons/brain.svg";
@@ -56,6 +57,8 @@ import ImprovePromptIcon from "../icons/lightOn.svg";
 import CollapseIcon from "../icons/collapse.svg";
 import ExpandIcon from "../icons/expand.svg";
 import AttachmentIcon from "../icons/paperclip.svg";
+import ToolboxIcon from "../icons/toolbox.svg";
+import EraserIcon from "../icons/eraser.svg";
 
 import {
   ChatMessage,
@@ -64,7 +67,6 @@ import {
   BOT_HELLO,
   createMessage,
   useAccessStore,
-  useCustomProviderStore,
   Theme,
   useAppConfig,
   DEFAULT_TOPIC,
@@ -498,6 +500,76 @@ function useScrollToBottom(
   };
 }
 
+const ReplaceTextModal = ({
+  onClose,
+  onReplace,
+}: {
+  onClose: () => void;
+  onReplace: (search: string, replace: string) => void;
+}) => {
+  const [searchText, setSearchText] = useState("");
+  const [replaceText, setReplaceText] = useState("");
+
+  return (
+    <div className="modal-mask">
+      <Modal
+        title={Locale.Chat.InputActions.ReplaceText.Title}
+        onClose={onClose}
+        actions={[
+          <IconButton
+            key="cancel"
+            icon={<CancelIcon />}
+            type="info"
+            text={Locale.UI.Cancel}
+            onClick={onClose}
+          />,
+          <IconButton
+            key="confirm"
+            icon={<ConfirmIcon />}
+            type="primary"
+            text={Locale.UI.Replace}
+            onClick={() => {
+              if (!searchText.trim()) {
+                showToast(
+                  Locale.Chat.InputActions.ReplaceText.EmptySearchToast,
+                );
+                return;
+              }
+              onReplace(searchText, replaceText);
+            }}
+          />,
+        ]}
+      >
+        <List>
+          <ListItem title={Locale.Chat.InputActions.ReplaceText.SearchText}>
+            <input
+              type="text"
+              className={styles["replace-text-input"]}
+              value={searchText}
+              placeholder={
+                Locale.Chat.InputActions.ReplaceText.SearchPlaceholder
+              }
+              onChange={(e) => setSearchText(e.target.value)}
+              autoFocus
+            />
+          </ListItem>
+          <ListItem title={Locale.Chat.InputActions.ReplaceText.ReplaceText}>
+            <input
+              type="text"
+              className={styles["replace-text-input"]}
+              value={replaceText}
+              placeholder={
+                Locale.Chat.InputActions.ReplaceText.ReplacePlaceholder
+              }
+              onChange={(e) => setReplaceText(e.target.value)}
+            />
+          </ListItem>
+        </List>
+      </Modal>
+    </div>
+  );
+};
+
 export function ChatActions(props: {
   uploadDocument: () => void;
   uploadImage: () => Promise<string[]>;
@@ -521,7 +593,20 @@ export function ChatActions(props: {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const access = useAccessStore();
-  const custom_provider = useCustomProviderStore();
+
+  const [showTools, setShowTools] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showTools) return; // 菜单没开时不监听，省一次注册
+    const handle = (e: MouseEvent) => {
+      // 如果点击点不在 toolsRef 的 DOM 树里，则关闭
+      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+        setShowTools(false);
+      }
+    };
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [showTools]);
 
   // translate
   const [isTranslating, setIsTranslating] = useState(false);
@@ -545,6 +630,15 @@ export function ChatActions(props: {
   const [privacyProcessedText, setPrivacyProcessedText] = useState<
     string | null
   >(null);
+  const [originalTextForClear, setOriginalTextForClear] = React.useState<
+    string | null
+  >(null);
+  const [isReplacing, setIsReplacing] = useState(false);
+  const [originalTextForReplace, setOriginalTextForReplace] = useState<
+    string | null
+  >(null);
+  const [replacedText, setReplacedText] = useState<string | null>(null);
+  const [showReplaceModal, setShowReplaceModal] = useState(false);
   // continue chat
   const [isContinue, setIsContinue] = useState(false);
   // model
@@ -815,6 +909,79 @@ export function ChatActions(props: {
     showToast(Locale.Chat.InputActions.Privacy.SuccessPrivacyToast);
     setIsPrivacying(false);
   };
+  const handleClearInput = async () => {
+    if (originalTextForClear !== null) {
+      // 撤销清空
+      props.setUserInput(originalTextForClear);
+      setOriginalTextForClear(null);
+      showToast(Locale.Chat.InputActions.ClearInput.UndoToast);
+      return;
+    }
+    if (props.userInput.trim() === "") {
+      showToast(Locale.Chat.InputActions.ClearInput.BlankToast);
+      return;
+    }
+    // 保存当前输入用于撤销
+    setOriginalTextForClear(props.userInput);
+    props.setUserInput("");
+    showToast(Locale.Chat.InputActions.ClearInput.SuccessClearChatToast);
+  };
+  const handleReplaceText = async () => {
+    if (originalTextForReplace !== null) {
+      // Execute undo operation
+      props.setUserInput(originalTextForReplace);
+      setOriginalTextForReplace(null);
+      setReplacedText(null);
+      showToast(Locale.Chat.InputActions.ReplaceText.UndoToast);
+      return;
+    }
+
+    if (props.userInput.trim() === "") {
+      showToast(Locale.Chat.InputActions.ReplaceText.BlankToast);
+      return;
+    }
+
+    setShowReplaceModal(true);
+  };
+  const handleReplaceOperation = (searchText: string, replaceText: string) => {
+    setIsReplacing(true);
+    showToast(Locale.Chat.InputActions.ReplaceText.isReplacingToast);
+
+    try {
+      // 保存原始文本以便可能的撤销
+      setOriginalTextForReplace(props.userInput);
+
+      // 执行替换
+      const newText = props.userInput.split(searchText).join(replaceText);
+
+      if (newText === props.userInput) {
+        showToast(`未找到"${searchText}"，无法替换`);
+        setOriginalTextForReplace(null);
+      } else {
+        setReplacedText(newText);
+        props.setUserInput(newText);
+        showToast(`替换完成：${searchText} → ${replaceText}`);
+      }
+    } catch (error) {
+      console.error("Text replacement error:", error);
+      showToast("替换时出错");
+    } finally {
+      setIsReplacing(false);
+      setShowReplaceModal(false);
+    }
+  };
+  // Add this to the useEffect monitoring userInput
+  useEffect(() => {
+    // When user input changes, check if we need to reset replacement state
+    if (
+      originalTextForReplace !== null &&
+      props.userInput.trim() !== replacedText?.trim()
+    ) {
+      // If current input is different from the replaced text, reset replacement state
+      setOriginalTextForReplace(null);
+      setReplacedText(null);
+    }
+  }, [props.userInput]);
   function maskSensitiveInfo(text: string): string {
     // 手机号: 保留前3位和后4位
     const maskPhone = (match: string): string => {
@@ -1138,35 +1305,6 @@ export function ChatActions(props: {
           text={Locale.Chat.InputActions.UploadFile.Title(canUploadImage)}
           icon={props.uploading ? <LoadingButtonIcon /> : <AttachmentIcon />}
         />
-        {/* {showUploadImage && (
-          <ChatAction
-            onClick={props.uploadImage}
-            text={Locale.Chat.InputActions.UploadImage}
-            icon={props.uploading ? <LoadingButtonIcon /> : <ImageIcon />}
-          />
-        )}
-        <ChatAction
-          onClick={props.uploadDocument}
-          text={Locale.Chat.InputActions.UploadFile.Title}
-          icon={props.uploading ? <LoadingButtonIcon /> : <UploadDocIcon />}
-        /> */}
-        {/* {!isMobileScreen && (
-          <ChatAction
-            onClick={nextTheme}
-            text={Locale.Chat.InputActions.Theme[theme]}
-            icon={
-              <>
-                {theme === Theme.Auto ? (
-                  <AutoIcon />
-                ) : theme === Theme.Light ? (
-                  <LightIcon />
-                ) : theme === Theme.Dark ? (
-                  <DarkIcon />
-                ) : null}
-              </>
-            }
-          />
-        )} */}
 
         {!isMobileScreen && (
           <ChatAction
@@ -1175,16 +1313,6 @@ export function ChatActions(props: {
             icon={<PromptIcon />}
           />
         )}
-
-        {/* {!isMobileScreen && (
-          <ChatAction
-            onClick={() => {
-              navigate(Path.Masks);
-            }}
-            text={Locale.Chat.InputActions.Masks}
-            icon={<MaskIcon />}
-          />
-        )} */}
 
         <ChatAction
           text={Locale.Chat.InputActions.Clear}
@@ -1299,57 +1427,145 @@ export function ChatActions(props: {
           text={Locale.Chat.InputActions.CloudBackup}
           icon={<FileExpressIcon />}
         />
-        <ChatAction
-          onClick={handleTranslate}
-          text={
-            originalTextForTranslate !== null
-              ? Locale.Chat.InputActions.Translate.Undo
-              : isTranslating
-              ? Locale.Chat.InputActions.Translate.isTranslatingToast
-              : Locale.Chat.InputActions.Translate.Title
-          }
-          alwaysShowText={isTranslating || originalTextForTranslate !== null}
-          icon={<TranslateIcon />}
-        />
-        {/* {!isMobileScreen && ( */}
-        <ChatAction
-          onClick={handleOCR}
-          text={
-            isOCRing
-              ? Locale.Chat.InputActions.OCR.isDetectingToast
-              : Locale.Chat.InputActions.OCR.Title
-          }
-          alwaysShowText={isOCRing}
-          icon={<OcrIcon />}
-        />
-        {/* )} */}
-
-        <ChatAction
-          onClick={handleImprovePrompt}
-          text={
-            originalPromptForImproving !== null
-              ? Locale.Chat.InputActions.ImprovePrompt.Undo
-              : isImprovingPrompt
-              ? Locale.Chat.InputActions.ImprovePrompt.isImprovingToast
-              : Locale.Chat.InputActions.ImprovePrompt.Title
-          }
-          alwaysShowText={
-            isImprovingPrompt || originalPromptForImproving !== null
-          }
-          icon={<ImprovePromptIcon />}
-        />
-        <ChatAction
-          onClick={handlePrivacy}
-          text={
-            originalTextForPrivacy !== null
-              ? Locale.Chat.InputActions.Privacy.Undo
-              : isPrivacying
-              ? Locale.Chat.InputActions.Privacy.isPrivacyToast
-              : Locale.Chat.InputActions.Privacy.Title
-          }
-          alwaysShowText={isPrivacying || originalTextForPrivacy !== null}
-          icon={<PrivacyIcon />}
-        />
+        <div
+          ref={toolsRef}
+          className={clsx(styles["desktop-only"], styles["tool-wrapper"])}
+        >
+          <ChatAction
+            onClick={() => setShowTools((v) => !v)}
+            text={Locale.Chat.InputActions.Tools}
+            icon={<ToolboxIcon />}
+            alwaysShowText={true}
+          />
+          {showReplaceModal && (
+            <ReplaceTextModal
+              onClose={() => setShowReplaceModal(false)}
+              onReplace={handleReplaceOperation}
+            />
+          )}
+          {showTools && (
+            <div className={styles["tools-menu"]}>
+              <ChatAction
+                onClick={handleTranslate}
+                text={
+                  originalTextForTranslate !== null
+                    ? Locale.Chat.InputActions.Translate.Undo
+                    : isTranslating
+                    ? Locale.Chat.InputActions.Translate.isTranslatingToast
+                    : Locale.Chat.InputActions.Translate.Title
+                }
+                alwaysShowText={true} //{isTranslating || originalTextForTranslate !== null}
+                icon={<TranslateIcon />}
+              />
+              <ChatAction
+                onClick={handleOCR}
+                text={
+                  isOCRing
+                    ? Locale.Chat.InputActions.OCR.isDetectingToast
+                    : Locale.Chat.InputActions.OCR.Title
+                }
+                alwaysShowText={true} //{isOCRing}
+                icon={<OcrIcon />}
+              />
+              <ChatAction
+                onClick={handleImprovePrompt}
+                text={
+                  originalPromptForImproving !== null
+                    ? Locale.Chat.InputActions.ImprovePrompt.Undo
+                    : isImprovingPrompt
+                    ? Locale.Chat.InputActions.ImprovePrompt.isImprovingToast
+                    : Locale.Chat.InputActions.ImprovePrompt.Title
+                }
+                alwaysShowText={true} // { isImprovingPrompt || originalPromptForImproving !== null }
+                icon={<ImprovePromptIcon />}
+              />
+              <ChatAction
+                onClick={handlePrivacy}
+                text={
+                  originalTextForPrivacy !== null
+                    ? Locale.Chat.InputActions.Privacy.Undo
+                    : isPrivacying
+                    ? Locale.Chat.InputActions.Privacy.isPrivacyToast
+                    : Locale.Chat.InputActions.Privacy.Title
+                }
+                alwaysShowText={true} //{isPrivacying || originalTextForPrivacy !== null}
+                icon={<PrivacyIcon />}
+              />
+              <ChatAction
+                onClick={handleClearInput}
+                text={
+                  originalTextForClear !== null
+                    ? Locale.Chat.InputActions.ClearInput.Undo
+                    : Locale.Chat.InputActions.ClearInput.Title
+                }
+                alwaysShowText={true}
+                icon={<EraserIcon />}
+              />
+              <ChatAction
+                onClick={handleReplaceText}
+                text={
+                  originalTextForReplace !== null
+                    ? Locale.Chat.InputActions.ReplaceText.Undo
+                    : isReplacing
+                    ? Locale.Chat.InputActions.ReplaceText.isReplacingToast
+                    : Locale.Chat.InputActions.ReplaceText.Title
+                }
+                alwaysShowText={true}
+                icon={<EditIcon />}
+              />
+            </div>
+          )}
+        </div>
+        <div className={styles["mobile-only"]}>
+          <ChatAction
+            onClick={handleTranslate}
+            text={
+              originalTextForTranslate !== null
+                ? Locale.Chat.InputActions.Translate.Undo
+                : isTranslating
+                ? Locale.Chat.InputActions.Translate.isTranslatingToast
+                : Locale.Chat.InputActions.Translate.Title
+            }
+            alwaysShowText={isTranslating || originalTextForTranslate !== null}
+            icon={<TranslateIcon />}
+          />
+          <ChatAction
+            onClick={handleOCR}
+            text={
+              isOCRing
+                ? Locale.Chat.InputActions.OCR.isDetectingToast
+                : Locale.Chat.InputActions.OCR.Title
+            }
+            alwaysShowText={isOCRing}
+            icon={<OcrIcon />}
+          />
+          <ChatAction
+            onClick={handleImprovePrompt}
+            text={
+              originalPromptForImproving !== null
+                ? Locale.Chat.InputActions.ImprovePrompt.Undo
+                : isImprovingPrompt
+                ? Locale.Chat.InputActions.ImprovePrompt.isImprovingToast
+                : Locale.Chat.InputActions.ImprovePrompt.Title
+            }
+            alwaysShowText={
+              isImprovingPrompt || originalPromptForImproving !== null
+            }
+            icon={<ImprovePromptIcon />}
+          />
+          <ChatAction
+            onClick={handlePrivacy}
+            text={
+              originalTextForPrivacy !== null
+                ? Locale.Chat.InputActions.Privacy.Undo
+                : isPrivacying
+                ? Locale.Chat.InputActions.Privacy.isPrivacyToast
+                : Locale.Chat.InputActions.Privacy.Title
+            }
+            alwaysShowText={isPrivacying || originalTextForPrivacy !== null}
+            icon={<PrivacyIcon />}
+          />
+        </div>
         {isMobileScreen && showMobileActions && (
           <ChatAction
             onClick={toggleMobileActions}

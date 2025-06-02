@@ -98,6 +98,7 @@ const cn = {
       UnsupportedModelForUploadImage: "当前模型不支持上传图片",
       RenameFile: "重命名文件",
       CloudBackup: "云备份",
+      Tools: "工具箱",
       Continue: {
         Title: "继续补全",
         isContinueToast: "正在补全中...",
@@ -124,7 +125,7 @@ const cn = {
         UserPrompt: "请翻译以下内容（严格遵守语言识别规则）: \n",
       },
       OCR: {
-        Title: "图片文字识别",
+        Title: "提取文字",
         Screenshot: "截图 OCR",
         ImportImage: "图片文件 OCR",
         BlankToast: "未检测到图片输入，不执行本次图文识别。",
@@ -147,7 +148,7 @@ const cn = {
           "请帮我识别这张图片中的文字内容,按照上述规则输出结果，确保输出结果的准确性且没有多余内容。",
       },
       ImprovePrompt: {
-        Title: "优化输入提示",
+        Title: "优化输入",
         BlankToast: "输入内容为空，不执行本次优化",
         isImprovingToast: "正在优化中...",
         FailImprovingToast: "本次优化失败，无权限或请检查模型设置后再次尝试",
@@ -185,6 +186,26 @@ const cn = {
         SuccessPrivacyToast: "本次打码已结束并替换输入内容",
         Undo: "撤销隐私处理",
         UndoToast: "已撤销隐私处理",
+      },
+      ClearInput: {
+        Title: "清空输入",
+        BlankToast: "输入内容为空",
+        SuccessClearChatToast: "已清空输入，点击撤销并恢复文本",
+        Undo: "撤销清空",
+        UndoToast: "已撤销清空输入",
+      },
+      ReplaceText: {
+        Title: "替换文本",
+        BlankToast: "输入内容为空",
+        SearchText: "查找文本",
+        SearchPlaceholder: "要查找的文本",
+        ReplaceText: "替换文本",
+        ReplacePlaceholder: "要替换成的文本，如：***",
+        EmptySearchToast: "查找文本不能为空",
+        isReplacingToast: "正在替换中...",
+        SuccessClearChatToast: "已清空输入，点击撤销并恢复文本",
+        Undo: "撤销替换",
+        UndoToast: "已撤销替换操作",
       },
       UploadFile: {
         Title: (canUploadImage: boolean = false) =>
@@ -839,6 +860,7 @@ const cn = {
     SearchModel: "搜索模型",
     SelectALL: "所有模型",
     NoPresetRule: "未预置规则",
+    Replace: "替换",
   },
   Exporter: {
     Description: {

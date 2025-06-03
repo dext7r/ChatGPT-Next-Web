@@ -696,9 +696,10 @@ export function ChatActions(props: {
     let textProcessModel = modelConfig.textProcessModel;
     let providerName = modelConfig.textProcessProviderName;
 
-    if (!providerName && access.textProcessModel) {
+    if ((!textProcessModel || !providerName) && access.textProcessModel) {
       let providerNameStr;
-      [textProcessModel, providerNameStr] = access.textProcessModel.split("@");
+      [textProcessModel, providerNameStr] =
+        access.textProcessModel.split(/@(?=[^@]*$)/);
       providerName = providerNameStr as ServiceProvider;
     }
 
@@ -761,9 +762,9 @@ export function ChatActions(props: {
     const modelConfig = session.mask.modelConfig;
     let ocrModel = modelConfig.ocrModel;
     let providerName = modelConfig.ocrProviderName;
-    if (!providerName && access.ocrModel) {
+    if ((!ocrModel || !providerName) && access.ocrModel) {
       let providerNameStr;
-      [ocrModel, providerNameStr] = access.ocrModel.split("@");
+      [ocrModel, providerNameStr] = access.ocrModel.split(/@(?=[^@]*$)/);
       providerName = providerNameStr as ServiceProvider;
     }
 
@@ -832,9 +833,10 @@ export function ChatActions(props: {
     const modelConfig = session.mask.modelConfig;
     let textProcessModel = modelConfig.textProcessModel;
     let providerName = modelConfig.textProcessProviderName;
-    if (!providerName && access.textProcessModel) {
+    if ((!textProcessModel || !providerName) && access.textProcessModel) {
       let providerNameStr;
-      [textProcessModel, providerNameStr] = access.textProcessModel.split("@");
+      [textProcessModel, providerNameStr] =
+        access.textProcessModel.split(/@(?=[^@]*$)/);
       providerName = providerNameStr as ServiceProvider;
     }
 

@@ -813,9 +813,10 @@ export const useChatStore = createPersistStore(
         const modelConfig = session.mask.modelConfig;
         let compressModel = modelConfig.compressModel;
         let providerName = modelConfig.compressProviderName;
-        if (!providerName && access.compressModel) {
+        if ((!compressModel || !providerName) && access.compressModel) {
           let providerNameStr;
-          [compressModel, providerNameStr] = access.compressModel.split("@");
+          [compressModel, providerNameStr] =
+            access.compressModel.split(/@(?=[^@]*$)/);
           providerName = providerNameStr as ServiceProvider;
         }
 

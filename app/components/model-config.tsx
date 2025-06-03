@@ -391,6 +391,9 @@ export function ModelConfigList(props: {
             });
           }}
         >
+          <option value={accessStore.defaultModel}>
+            【Default】{accessStore.defaultModel}
+          </option>
           {Object.keys(groupModels).map((providerName, index) => (
             <optgroup label={providerName} key={index}>
               {groupModels[providerName].map((v, i) => (
@@ -423,6 +426,9 @@ export function ModelConfigList(props: {
             });
           }}
         >
+          <option value={accessStore.compressModel}>
+            【Default】{accessStore.compressModel}
+          </option>
           {Object.keys(groupModels).map((providerName, index) => (
             <optgroup label={providerName} key={index}>
               {groupModels[providerName].map((v, i) => (
@@ -456,6 +462,9 @@ export function ModelConfigList(props: {
             });
           }}
         >
+          <option value={accessStore.textProcessModel}>
+            【Default】{accessStore.textProcessModel}
+          </option>
           {Object.keys(groupModels).map((providerName, index) => (
             <optgroup label={providerName} key={index}>
               {groupModels[providerName].map((v, i) => (
@@ -489,6 +498,9 @@ export function ModelConfigList(props: {
             });
           }}
         >
+          <option value={accessStore.ocrModel}>
+            【Default】{accessStore.ocrModel}
+          </option>
           {Object.keys(groupModels).map((providerName, index) => (
             <optgroup label={providerName} key={index}>
               {groupModels[providerName].map((v, i) => (
@@ -871,7 +883,7 @@ export function ModelConfigList(props: {
             }}
           >
             <textarea
-              placeholder='{"stream_options": null, "temperature": 0.8}'
+              placeholder='{"stream": false, "temperature": 0.8}'
               value={props.modelConfig.paramOverrideContent || ""}
               rows={3}
               style={{

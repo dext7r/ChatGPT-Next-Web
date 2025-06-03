@@ -457,7 +457,7 @@ export function ProviderModal(props: ProviderModalProps) {
           .filter(Boolean);
 
         fetchedModels = modelNames.map((modelName) => {
-          const [id, provider] = modelName.split("@");
+          const [id, provider] = modelName.split(/@(?=[^@]*$)/);
           return {
             name: id,
             displayName: existingModelsMap.get(id),

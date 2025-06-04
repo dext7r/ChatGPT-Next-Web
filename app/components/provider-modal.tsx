@@ -1502,6 +1502,7 @@ export function ProviderModal(props: ProviderModalProps) {
             <label className={styles.testModelLabel}>Test Model:</label>
             <input
               type="text"
+              placeholder={providerTypeDefaultTestModel[formData.type]}
               value={formData.testModel ?? ""}
               onChange={(e) => {
                 handleChange("testModel", e.target.value);

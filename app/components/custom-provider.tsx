@@ -8,7 +8,7 @@ import { downloadAs, readFromFile } from "../utils";
 import Locale from "../locales";
 import { showToast, showConfirm } from "./ui-lib";
 import { useAccessStore } from "../store";
-import { userCustomProvider } from "../client/api";
+import { Model, userCustomProvider } from "../client/api";
 import { getClientConfig } from "../config/client";
 import {
   API_CONCURRENCY_LIMIT,
@@ -899,12 +899,23 @@ export function CustomProvider() {
   };
   // 获取模型数量展示文本
   const getModelCountText = (provider: userCustomProvider) => {
-    const count = provider.models?.filter((m) => m.available).length || 0;
+    const count =
+      provider.models?.filter((m: Model) => m.available).length || 0;
     return `${count} 个模型`;
   };
   const getKeyCountText = (provider: userCustomProvider) => {
-    const count = provider.apiKey.split(",").filter((k) => k.trim()).length;
-    return `key: ${count}`;
+    const allKeys = provider.apiKey
+      .split(",")
+      .map((k) => k.trim())
+      .filter((k) => k);
+    const total = allKeys.length;
+
+    const enabledKeys = provider.enableKeyList?.length
+      ? provider.enableKeyList.map((k) => k.trim()).filter((k) => k)
+      : allKeys;
+    const enabled = enabledKeys.length;
+
+    return `key: ${enabled}/${total}`;
   };
 
   // 新增的统计余额函数

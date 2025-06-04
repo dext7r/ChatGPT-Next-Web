@@ -161,6 +161,8 @@ export interface userCustomProvider {
   baseUrl: string;
   type: string;
   status: "active" | "inactive";
+  enableKeyList?: string[];
+  disableKeyList?: string[];
   models?: Model[];
   description?: string;
   testModel?: string;
@@ -248,6 +250,7 @@ interface CustomProviderConfig {
   name: string;
   baseUrl: string;
   apiKey: string;
+  enableKeyList?: string[]; // 可选，启用的 API Key 列表
   paths?: ApiPaths;
   type?: string; // 可选，可能用于区分 Azure 等类型
 }
@@ -290,9 +293,23 @@ function selectApiKey(apiKeyString: string): string {
   const randomIndex = Math.floor(Math.random() * keys.length);
   return keys[randomIndex];
 }
+function selectApiKeyFromList(keyList: string[]): string {
+  if (!Array.isArray(keyList)) return "";
+
+  // 如果没有可用 key，返回空字符串
+  if (keyList.length === 0) return "";
+
+  // 如果只有一个 key，直接返回
+  if (keyList.length === 1) return keyList[0];
+
+  // 随机选择一个 key 返回
+  const randomIndex = Math.floor(Math.random() * keyList.length);
+  return keyList[randomIndex];
+}
 export function getHeaders(
   ignoreHeaders: boolean = false,
   api_key: string = "",
+  enableKeyList: string[] = [],
 ) {
   const accessStore = useAccessStore.getState();
   const chatStore = useChatStore.getState();
@@ -307,13 +324,16 @@ export function getHeaders(
   const isGoogle = modelConfig.providerName === ServiceProvider.Google;
   const isAzure = accessStore.provider === ServiceProvider.Azure;
   const authHeader = isAzure ? "api-key" : "Authorization";
-  const apiKey = api_key
-    ? selectApiKey(api_key)
-    : isGoogle
-    ? accessStore.googleApiKey
-    : isAzure
-    ? accessStore.azureApiKey
-    : accessStore.openaiApiKey;
+  const apiKey =
+    enableKeyList.length > 0
+      ? selectApiKeyFromList(enableKeyList)
+      : api_key
+      ? selectApiKey(api_key)
+      : isGoogle
+      ? accessStore.googleApiKey
+      : isAzure
+      ? accessStore.azureApiKey
+      : accessStore.openaiApiKey;
   const clientConfig = getClientConfig();
   const makeBearer = (s: string) => `${isAzure ? "" : "Bearer "}${s.trim()}`;
   const validString = (x: string) => x && x.length > 0;

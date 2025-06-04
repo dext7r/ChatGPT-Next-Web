@@ -66,6 +66,7 @@ export class ChatGPTApi implements LLMApi {
   private disableListModels = true;
   private readonly baseUrl: string = "";
   private readonly apiKey: string = "";
+  private readonly enableKeyList: string[] = [];
   private readonly chatPath: string = "";
   private readonly imagePath: string = "";
   private readonly speechPath: string = "";
@@ -77,6 +78,7 @@ export class ChatGPTApi implements LLMApi {
       if (CustomProviderConfig) {
         this.baseUrl = CustomProviderConfig.baseUrl;
         this.apiKey = CustomProviderConfig.apiKey;
+        this.enableKeyList = CustomProviderConfig.enableKeyList || [];
         this.chatPath = CustomProviderConfig?.paths?.ChatPath || "";
         this.imagePath = CustomProviderConfig?.paths?.ImagePath || "";
         this.speechPath = CustomProviderConfig?.paths?.SpeechPath || "";
@@ -185,7 +187,7 @@ export class ChatGPTApi implements LLMApi {
         method: "POST",
         body: JSON.stringify(requestPayload),
         signal: controller.signal,
-        headers: getHeaders(false, this.apiKey),
+        headers: getHeaders(false, this.apiKey, this.enableKeyList),
       };
 
       // make a fetch request
@@ -392,7 +394,7 @@ export class ChatGPTApi implements LLMApi {
         method: "POST",
         body: JSON.stringify(requestPayload),
         signal: controller.signal,
-        headers: getHeaders(false, this.apiKey),
+        headers: getHeaders(false, this.apiKey, this.enableKeyList),
       };
 
       // make a fetch request
@@ -758,12 +760,12 @@ export class ChatGPTApi implements LLMApi {
         ),
         {
           method: "GET",
-          headers: getHeaders(false, this.apiKey),
+          headers: getHeaders(false, this.apiKey, this.enableKeyList),
         },
       ),
       fetch(this.path(OpenaiPath.SubsPath), {
         method: "GET",
-        headers: getHeaders(false, this.apiKey),
+        headers: getHeaders(false, this.apiKey, this.enableKeyList),
       }),
     ]);
 
@@ -815,7 +817,7 @@ export class ChatGPTApi implements LLMApi {
       {
         method: "GET",
         headers: {
-          ...getHeaders(false, this.apiKey),
+          ...getHeaders(false, this.apiKey, this.enableKeyList),
         },
       },
     );

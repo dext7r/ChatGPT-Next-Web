@@ -983,6 +983,7 @@ const en: LocaleType = {
     NormalView: "Normal View",
     AddKey: "Add Key",
     ClearInput: "Clear Input",
+    ClearDisabledKeys: "Clear Disabled Keys",
     ClearSelectKeys: "Clear Selected Key",
     RefreshBalance: "Refresh Balance",
     RemoveInvalidKey: "Remove Invalid Key",

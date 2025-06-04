@@ -1279,6 +1279,42 @@
     margin-right: 8px;
   }
 }
+/* 修改禁用状态的密钥样式 */
+.disabledKey {
+  opacity: 0.85;
+  background-color: var(--button);
+  
+  /* 使用较轻的边框颜色 */
+  border-left: 3px solid #fecaca;
+}
+
+/* 修改禁用标签样式 */
+.disabledBadge {
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 6px;
+  margin-left: 8px;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-radius: 4px;
+  white-space: nowrap;
+  align-items: center;
+}
+
+/* 滑块开关容器 */
+.statusToggleContainer {
+  display: flex;
+  align-items: center;
+  margin-right: 6px;
+}
+
+/* 确保滑块开关和其他组件在同一个行内 */
+.keyActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 // Add animation for key items
 @keyframes slideIn {
   from {

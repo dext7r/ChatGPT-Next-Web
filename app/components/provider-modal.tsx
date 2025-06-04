@@ -65,6 +65,8 @@ const KeyItem = ({
   testResult,
   isTesting,
   onTest,
+  isDisabled,
+  onToggleDisable,
 }: {
   onDelete: (index: number) => void;
   index: number;
@@ -81,6 +83,8 @@ const KeyItem = ({
   };
   isTesting?: boolean;
   onTest?: () => void;
+  isDisabled?: boolean;
+  onToggleDisable?: () => void;
 }) => {
   const accessStore = useAccessStore.getState();
   const [loading, setLoading] = useState(false);
@@ -132,10 +136,33 @@ const KeyItem = ({
     }
   };
 
+  const handleCopyApiKey = async () => {
+    try {
+      await navigator.clipboard.writeText(apiKey);
+      showToast("API密钥已复制到剪贴板");
+    } catch (error) {
+      console.error("复制失败:", error);
+      showToast("复制失败");
+    }
+  };
+
   return (
-    <div className={styles.keyItem}>
+    <div
+      className={`${styles.keyItem} ${isDisabled ? styles.disabledKey : ""}`}
+    >
       <div className={styles.keyContent}>
-        <div className={styles.keyText}>{apiKey}</div>
+        <div
+          className={styles.keyText}
+          onClick={handleCopyApiKey}
+          title="copy the key"
+        >
+          {apiKey}
+        </div>
+        {isDisabled && (
+          <div className={styles.disabledBadge}>
+            {Locale.CustomProvider.Status.Disabled}
+          </div>
+        )}
         {testResult && (
           <div
             className={`${styles.testResult} ${
@@ -185,6 +212,21 @@ const KeyItem = ({
           onClick={() => onDelete(index)}
           title="删除密钥"
         />
+        {onToggleDisable && (
+          <div
+            className={styles.statusToggleContainer}
+            title={isDisabled ? "启用此密钥" : "禁用此密钥"}
+          >
+            <div
+              className={`${styles.toggleSwitch} ${
+                !isDisabled ? styles.active : ""
+              }`}
+              onClick={onToggleDisable}
+            >
+              <div className={styles.toggleSlider}></div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -212,6 +254,8 @@ export function ProviderModal(props: ProviderModalProps) {
     type: "openai",
     models: [],
     status: "inactive",
+    enableKeyList: [],
+    disableKeyList: [],
     paths: {
       ChatPath: "",
       SpeechPath: "",
@@ -253,6 +297,8 @@ export function ProviderModal(props: ProviderModalProps) {
         type: props.provider.type,
         models: props.provider.models || [],
         status: props.provider.status || "active",
+        enableKeyList: props.provider.enableKeyList || [],
+        disableKeyList: props.provider.disableKeyList || [],
         balance: props.provider.balance,
         testModel:
           props.provider.testModel ||
@@ -381,13 +427,29 @@ export function ProviderModal(props: ProviderModalProps) {
       balance: formData.balance,
       testModel: formData.testModel,
       paths: formData.paths,
+      enableKeyList: formData.enableKeyList || [],
+      disableKeyList: formData.disableKeyList || [],
     };
 
     props.onSave(saveData);
   };
 
-  const handleClose = () => {
-    // 调用原始的onClose
+  const handleClose = async () => {
+    const confirmContent = (
+      <div>
+        <div>{"可能有未保存的更改，是否要保存当前渠道的修改？"}</div>
+        <div style={{ marginTop: "8px", fontWeight: "500", color: "#dc2626" }}>
+          此操作执行后无法撤回，是否继续？
+        </div>
+      </div>
+    );
+
+    // 如果用户选择保存，则调用 handleSubmit 函数
+    // 如果用户选择不保存，则直接关闭模态框
+    const shouldSave = await showConfirm(confirmContent);
+    if (shouldSave) {
+      handleSubmit();
+    }
     props.onClose();
   };
 
@@ -713,6 +775,8 @@ export function ProviderModal(props: ProviderModalProps) {
         type: props.provider.type,
         models: props.provider.models || [],
         status: props.provider.status || "active",
+        enableKeyList: props.provider.enableKeyList || [],
+        disableKeyList: props.provider.disableKeyList || [],
         balance: props.provider.balance,
         testModel: props.provider.testModel,
         paths: props.provider.paths || {},
@@ -722,13 +786,31 @@ export function ProviderModal(props: ProviderModalProps) {
       }
 
       // Initialize key list from apiKey string
-      if (props.provider.apiKey) {
-        setKeyList(
-          props.provider.apiKey
-            .split(/[\s,]+/)
-            .map((key) => key.trim())
-            .filter(Boolean),
-        );
+      // if (props.provider.apiKey) {
+      //   setKeyList(
+      //     props.provider.apiKey
+      //       .split(/[\s,]+/)
+      //       .map((key) => key.trim())
+      //       .filter(Boolean),
+      //   );
+      // }
+      if (
+        props.provider.apiKey &&
+        (!props.provider.enableKeyList ||
+          !props.provider.enableKeyList.length) &&
+        (!props.provider.disableKeyList ||
+          !props.provider.disableKeyList.length)
+      ) {
+        const keys = props.provider.apiKey
+          .split(/[\s,]+/)
+          .map((k) => k.trim())
+          .filter(Boolean);
+
+        setFormData((prev) => ({
+          ...prev,
+          enableKeyList: keys,
+          disableKeyList: [],
+        }));
       }
     } else {
       // Reset for new provider
@@ -739,6 +821,8 @@ export function ProviderModal(props: ProviderModalProps) {
         type: "openai",
         models: [],
         status: "active",
+        enableKeyList: [],
+        disableKeyList: [],
       });
       setModels([]);
       setKeyList([]);
@@ -924,6 +1008,22 @@ export function ProviderModal(props: ProviderModalProps) {
           message: `✓ (${responseTime}ms)`,
           time: responseTime,
         };
+        setFormData((prev) => {
+          const enableList = [...(prev.enableKeyList || [])];
+          const disableList = [...(prev.disableKeyList || [])].filter(
+            (k) => k !== apiKey,
+          );
+
+          if (!enableList.includes(apiKey)) {
+            enableList.push(apiKey);
+          }
+
+          return {
+            ...prev,
+            enableKeyList: enableList,
+            disableKeyList: disableList,
+          };
+        });
       } else {
         const errorData = await response.json().catch(() => ({
           error: { message: "Unknown error", code: "unknown" },
@@ -937,6 +1037,31 @@ export function ProviderModal(props: ProviderModalProps) {
           message: `✗ Error (${response.status})`,
           fullError: fullError,
         };
+        if ([401, 403, 429, 500, 502, 503].includes(response.status)) {
+          setFormData((prev) => {
+            const enableList = [...(prev.enableKeyList || [])].filter(
+              (k) => k !== apiKey,
+            );
+            const disableList = [...(prev.disableKeyList || [])];
+
+            if (!disableList.includes(apiKey)) {
+              disableList.push(apiKey);
+              // 只有当密钥实际被禁用时才显示提示
+              showToast(
+                `密钥已自动禁用 (${response.status}): ${apiKey.substring(
+                  0,
+                  10,
+                )}...`,
+              );
+            }
+
+            return {
+              ...prev,
+              enableKeyList: enableList,
+              disableKeyList: disableList,
+            };
+          });
+        }
       }
     } catch (error) {
       let errorMsg = "Request failed";
@@ -955,6 +1080,23 @@ export function ProviderModal(props: ProviderModalProps) {
         message: "✗ Error",
         fullError: errorMsg,
       };
+      setFormData((prev) => {
+        const enableList = [...(prev.enableKeyList || [])].filter(
+          (k) => k !== apiKey,
+        );
+        const disableList = [...(prev.disableKeyList || [])];
+
+        if (!disableList.includes(apiKey)) {
+          disableList.push(apiKey);
+          showToast(`密钥已自动禁用 (网络错误): ${apiKey.substring(0, 10)}...`);
+        }
+
+        return {
+          ...prev,
+          enableKeyList: enableList,
+          disableKeyList: disableList,
+        };
+      });
     } finally {
       setTestResults((prev) => ({ ...prev, [apiKey]: result }));
       setTestingKeys((prev) => ({ ...prev, [apiKey]: false }));
@@ -1202,6 +1344,105 @@ export function ProviderModal(props: ProviderModalProps) {
     });
   }, [keyList, newKey, testResults]);
 
+  // yi
+  const clearDisabledKeys = async () => {
+    // 检查是否有禁用的密钥
+    if (!formData.disableKeyList || formData.disableKeyList.length === 0) {
+      showToast("没有禁用的密钥需要清除");
+      return;
+    }
+
+    // 构建确认对话框内容
+    const confirmContent = (
+      <div style={{ lineHeight: "1.4" }}>
+        <div style={{ marginBottom: "8px" }}>确定要清除所有禁用的密钥吗？</div>
+
+        <div
+          style={{
+            padding: "8px 10px",
+            borderLeft: "3px solid #f87171",
+            backgroundColor: "#fef2f2",
+            margin: "8px 0",
+          }}
+        >
+          <div
+            style={{
+              fontWeight: "600",
+              color: "#b91c1c",
+              marginBottom: "4px",
+            }}
+          >
+            将移除以下密钥:
+          </div>
+          <div
+            style={{
+              maxHeight: "150px",
+              overflowY: "auto",
+              paddingRight: "5px",
+            }}
+          >
+            {formData.disableKeyList.map((key, index) => (
+              <div
+                key={index}
+                style={{
+                  marginBottom: "4px",
+                  fontFamily: "monospace",
+                  fontSize: "13px",
+                  wordBreak: "break-all",
+                }}
+              >
+                {index + 1}. {key.substring(0, 12)}...
+                {key.substring(key.length - 5)}
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              marginTop: "8px",
+              color: "#b91c1c",
+              fontWeight: "500",
+              fontSize: "14px",
+            }}
+          >
+            共 {formData.disableKeyList.length} 个密钥
+          </div>
+        </div>
+
+        <div
+          style={{
+            fontSize: "14px",
+            color: "#6b7280",
+            marginTop: "8px",
+          }}
+        >
+          此操作不可撤销，请确认是否继续？
+        </div>
+      </div>
+    );
+
+    // 显示确认对话框
+    if (await showConfirm(confirmContent)) {
+      // 更新键列表：移除所有禁用的密钥
+      const newKeyList = keyList.filter(
+        (key) => !formData.disableKeyList?.includes(key),
+      );
+
+      // 更新 formData
+      setFormData((prev) => ({
+        ...prev,
+        apiKey: newKeyList.join(","), // 重要：更新 apiKey 字符串
+        disableKeyList: [], // 清空禁用列表
+        enableKeyList: newKeyList, // 保留启用列表中的键
+      }));
+
+      // 更新 keyList 状态
+      setKeyList(newKeyList);
+
+      // 显示成功消息
+      showToast(`已清除 ${formData.disableKeyList.length} 个禁用的密钥`);
+    }
+  };
+
   // 添加批量删除过滤后密钥的函数
   const removeFilteredKeys = async () => {
     // 如果没有过滤条件或没有匹配项，不执行任何操作
@@ -1298,6 +1539,12 @@ export function ProviderModal(props: ProviderModalProps) {
                 text={Locale.CustomProvider.ClearInput}
                 onClick={() => setNewKey("")}
                 bordered
+              />
+              <IconButton
+                text={Locale.CustomProvider.ClearDisabledKeys}
+                onClick={clearDisabledKeys}
+                bordered
+                disabled={!formData.disableKeyList?.length}
               />
               <IconButton
                 text={Locale.CustomProvider.ClearSelectKeys}
@@ -1451,6 +1698,8 @@ export function ProviderModal(props: ProviderModalProps) {
                     testResult={testResults[key]}
                     isTesting={testingKeys[key]}
                     onTest={() => testKeyConnectivity(key)}
+                    isDisabled={formData.disableKeyList?.includes(key)}
+                    onToggleDisable={() => toggleKeyDisableStatus(key)}
                   />
                 ))}
               </div>
@@ -1644,6 +1893,47 @@ export function ProviderModal(props: ProviderModalProps) {
       clearTimeout(id);
       throw error;
     }
+  };
+
+  const toggleKeyDisableStatus = (key: string) => {
+    setFormData((prev) => {
+      // 创建副本以避免直接修改
+      const enableList = [...(prev.enableKeyList || [])];
+      const disableList = [...(prev.disableKeyList || [])];
+
+      // 检查当前状态
+      const isCurrentlyDisabled = disableList.includes(key);
+
+      if (isCurrentlyDisabled) {
+        // 如果已禁用，则移除禁用并添加到启用列表
+        const newDisableList = disableList.filter((k) => k !== key);
+        if (!enableList.includes(key)) {
+          enableList.push(key);
+        }
+
+        showToast(`密钥已启用: ${key.substring(0, 10)}...`);
+
+        return {
+          ...prev,
+          enableKeyList: enableList,
+          disableKeyList: newDisableList,
+        };
+      } else {
+        // 如果已启用，则移除启用并添加到禁用列表
+        const newEnableList = enableList.filter((k) => k !== key);
+        if (!disableList.includes(key)) {
+          disableList.push(key);
+        }
+
+        showToast(`密钥已禁用: ${key.substring(0, 10)}...`);
+
+        return {
+          ...prev,
+          enableKeyList: newEnableList,
+          disableKeyList: disableList,
+        };
+      }
+    });
   };
 
   return (

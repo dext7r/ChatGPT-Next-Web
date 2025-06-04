@@ -948,6 +948,7 @@ const cn = {
     NormalView: "密钥：普通视图",
     AddKey: "添加密钥",
     ClearInput: "清除输入",
+    ClearDisabledKeys: "清除禁用密钥",
     ClearSelectKeys: "清除选中密钥",
     RefreshBalance: "刷新余额",
     RemoveInvalidKey: "删除无效密钥",

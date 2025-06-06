@@ -281,3 +281,7 @@
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=QAbot-zh/ChatGPT-Next-Web&type=Date)](https://www.star-history.com/#QAbot-zh/ChatGPT-Next-Web&Date)
+
+## Sponsorship (maybe)
+
+[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")

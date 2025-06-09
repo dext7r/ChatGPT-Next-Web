@@ -97,7 +97,7 @@
     <p align="center">打码后</p>
   </div>
 </details> -->
-<img src="./docs/images/toolbox.gif" width="60%" />
+<img src="./docs/images/toolbox.gif"/>
 
 ### 📊 交互与展示优化
 - **支持 details/summary 标签渲染** - 增强页面整洁度与交互性
@@ -135,7 +135,7 @@
 
 - **快速输入规则**
 
-<img src="./docs/images/expansion-rules.gif" width="60%" />
+<img src="./docs/images/expansion-rules.gif"/>
 
 
 ### 模型自定义功能增强

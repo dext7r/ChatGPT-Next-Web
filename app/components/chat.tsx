@@ -3427,6 +3427,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                   <div className={styles["chat-message-item"]}>
                     <Markdown
                       key={message.streaming ? "loading" : "done"}
+                      status={showTyping}
                       content={
                         !message.streaming && isThinkingModel(message.model)
                           ? wrapThinkingPart(getMessageTextContent(message))

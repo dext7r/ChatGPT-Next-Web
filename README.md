@@ -40,10 +40,10 @@
 ### 🔄 便捷同步与备份
 - **云备份功能** - 免导入导出的数据同步（需配合[文件服务器项目](https://github.com/QAbot-zh/go-file-server)使用）
 
-### 🤖 应用功能增强
+### 🤖 应用功能增强(工具箱)
 - **基于 AI 模型的中英互译**
 
-<details>
+<!-- <details>
   <summary>点击展开查看截图</summary>
 
   <div align="center">
@@ -52,11 +52,11 @@
     <img src="./docs/images/translate-2.png" width="100%" alt="翻译后">
     <p align="center">翻译后</p>
   </div>
-</details>
+</details> -->
 
 - **基于 AI 模型的 OCR 功能**
 
-<details>
+<!-- <details>
   <summary>点击展开查看截图</summary>
 
   <div align="center">
@@ -65,11 +65,11 @@
     <img src="./docs/images/ocr-2.png" width="100%" alt="OCR后">
     <p align="center">OCR 后</p>
   </div>
-</details>
+</details> -->
 
 - **基于 AI 模型的 提示词增强功能**
 
-<details>
+<!-- <details>
   <summary>点击展开查看截图</summary>
 
   <div align="center">
@@ -78,12 +78,16 @@
     <img src="./docs/images/improve-2.png" width="100%" alt="优化后">
     <p align="center">优化后</p>
   </div>
-</details>
+</details> -->
+- **输入区文本增强功能**
+  - **提示词智能优化**
+  - **输入文本一键清空**
+  - **输入区文本批量替换**
 
 ### 🔒 隐私与安全
 - **基于正则匹配的隐私打码**（注：所有基于 AI 模型的功能的信息安全请自行把握）
 
-<details>
+<!-- <details>
   <summary>点击展开查看截图</summary>
 
   <div align="center">
@@ -92,7 +96,8 @@
     <img src="./docs/images/privacy-2.png" width="100%" alt="打码后">
     <p align="center">打码后</p>
   </div>
-</details>
+</details> -->
+<img src="./docs/images/toolbox.gif" width="60%" />
 
 ### 📊 交互与展示优化
 - **支持 details/summary 标签渲染** - 增强页面整洁度与交互性
@@ -127,6 +132,11 @@
     <img src="./docs/images/completions-stat.png" width="50%" alt="Token统计">
   </div>
 </details>
+
+- **快速输入规则**
+
+<img src="./docs/images/expansion-rules.gif" width="60%" />
+
 
 ### 模型自定义功能增强
 - **OpenAI 类型支持前端配置** - 一键拉取可用模型 （已停更，建议使用更加完备的【自定义 AI 提供商】功能）
@@ -282,6 +292,11 @@
 
 [![Star History Chart](https://api.star-history.com/svg?repos=QAbot-zh/ChatGPT-Next-Web&type=Date)](https://www.star-history.com/#QAbot-zh/ChatGPT-Next-Web&Date)
 
-## Sponsorship (maybe)
+## Sponsorship 
 
-[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
+- User
+  - [@XK3023](https://github.com/CXK3023)  
+
+- Server
+  
+  [![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")

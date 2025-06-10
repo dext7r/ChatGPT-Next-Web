@@ -296,7 +296,3 @@
 
 - User
   - [@XK3023](https://github.com/CXK3023)  
-
-- Server
-  
-  [![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")

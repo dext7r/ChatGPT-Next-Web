@@ -439,43 +439,38 @@ export const useChatStore = createPersistStore(
 
         let mContent: string | MultimodalContent[] = userContent;
         let displayContent: string | MultimodalContent[] = userContent;
-        displayContent = [
-          {
-            type: "text",
-            text: userContent,
-          },
-        ];
-        // 创建一个变量来存储总的token数量
-        let totalTokens = 0;
 
-        if (attachFiles && attachFiles.length > 0) {
-          let fileContent = "";
-
-          // 处理每个文件，按照模板格式构建内容
-          // 遵循deepseek-ai推荐模板：https://github.com/deepseek-ai/DeepSeek-R1?tab=readme-ov-file#official-prompts
-          for (let i = 0; i < attachFiles.length; i++) {
-            let curFileContent = await readFileContent(attachFiles[i]);
-            if (curFileContent) {
-              fileContent += `[file name]: ${attachFiles[i].name}\n`;
-              fileContent += `[file content begin]\n`;
-              fileContent += curFileContent;
-              fileContent += `\n[file content end]\n`;
-            }
-          }
-          // 添加用户问题
-          fileContent += userContent;
-          // totalTokens += estimateTokenLengthInLLM(fileContent);
-
-          mContent = [
-            {
-              type: "text",
-              text: fileContent,
-            },
+        const hasImages = attachImages && attachImages.length > 0;
+        const hasFiles = attachFiles && attachFiles.length > 0;
+        const hasAttachments = hasImages || hasFiles;
+        if (hasAttachments) {
+          // 如果有任何附件，内容必须是多模态部分组成的数组
+          const mContentParts: MultimodalContent[] = [];
+          const displayContentParts: MultimodalContent[] = [
+            { type: "text", text: userContent },
           ];
-          displayContent = displayContent.concat(
-            attachFiles.map((file) => {
-              return {
-                type: "file_url",
+
+          // Part 1: 文件部分 (Files)
+          let mContentText = userContent;
+          if (hasFiles) {
+            let fileHeaderText = "";
+            // 处理每个文件，按照模板格式构建内容
+            // 遵循deepseek-ai推荐模板：https://github.com/deepseek-ai/DeepSeek-R1?tab=readme-ov-file#official-prompts
+            for (const file of attachFiles!) {
+              const curFileContent = await readFileContent(file);
+              if (curFileContent) {
+                fileHeaderText += `[file name]: ${file.name}\n`;
+                fileHeaderText += `[file content begin]\n`;
+                fileHeaderText += curFileContent;
+                fileHeaderText += `\n[file content end]\n`;
+              }
+            }
+            mContentText = fileHeaderText + userContent;
+
+            // 对于UI展示，文件以结构化对象的形式存在
+            displayContentParts.push(
+              ...attachFiles!.map((file) => ({
+                type: "file_url" as const,
                 file_url: {
                   url: file.url,
                   name: file.name,
@@ -483,71 +478,36 @@ export const useChatStore = createPersistStore(
                   size: file.size,
                   tokenCount: file.tokenCount,
                 },
-              };
-            }),
-          );
-
-          if (attachImages && attachImages.length > 0) {
-            mContent = mContent.concat(
-              attachImages.map((url) => {
-                return {
-                  type: "image_url",
-                  image_url: {
-                    url: url,
-                  },
-                };
-              }),
-            );
-            displayContent = displayContent.concat(
-              attachImages.map((url) => {
-                return {
-                  type: "image_url",
-                  image_url: {
-                    url: url,
-                  },
-                };
-              }),
+              })),
             );
           }
-        } else if (attachImages && attachImages.length > 0) {
-          mContent = [
-            {
-              type: "text",
-              text: userContent,
-            },
-          ];
-          // totalTokens += estimateTokenLengthInLLM(userContent);
-          mContent = mContent.concat(
-            attachImages.map((url) => {
-              return {
-                type: "image_url",
-                image_url: {
-                  url: url,
-                },
-              };
-            }),
-          );
-          displayContent = displayContent.concat(
-            attachImages.map((url) => {
-              return {
-                type: "image_url",
-                image_url: {
-                  url: url,
-                },
-              };
-            }),
-          );
-        } else {
-          mContent = userContent;
-          displayContent = userContent;
-          // totalTokens = estimateTokenLengthInLLM(userContent);
+
+          // 发送给模型的文本部分（可能已包含文件内容）必须是第一个部分
+          mContentParts.push({ type: "text", text: mContentText });
+
+          // Part 2: 图片部分 (Images)
+          if (hasImages) {
+            const imageParts: MultimodalContent[] = attachImages!.map(
+              (url) => ({
+                type: "image_url" as const,
+                image_url: { url },
+              }),
+            );
+            // 图片部分同时添加到模型入参和UI展示内容中
+            mContentParts.push(...imageParts);
+            displayContentParts.push(...imageParts);
+          }
+
+          mContent = mContentParts;
+          displayContent = displayContentParts;
         }
+
         let userMessage: ChatMessage = createMessage({
           role: "user",
           content: mContent,
           isContinuePrompt: isContinuePrompt,
           statistic: {
-            singlePromptTokens: totalTokens ?? 0,
+            // singlePromptTokens: totalTokens ?? 0,
           },
         });
         if (userMessage.statistic) {
@@ -569,6 +529,7 @@ export const useChatStore = createPersistStore(
 
         // save user's and bot's message
         get().updateCurrentSession((session) => {
+          // 存储在会话中的用户消息使用 displayContent，以支持富文本渲染
           const savedUserMessage = {
             ...userMessage,
             //content: mContent,

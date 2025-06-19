@@ -910,7 +910,7 @@ export const useChatStore = createPersistStore(
             config: {
               // ...modelcfg,
               stream: true,
-              model: modelConfig.compressModel,
+              model: compressModel,
             },
             type: "compress",
             onUpdate(message) {

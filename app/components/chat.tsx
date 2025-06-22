@@ -3955,186 +3955,57 @@ export function Chat() {
     }
   }, [session.messages[session.messages.length - 1]?.id]);
 
-  // // update session model
-  // useEffect(() => {
-  //   if (!modelTable || modelTable.length === 0) return;
-  //   console.log("modelTable changed, updating session model...");
+  // update session model
+  useEffect(() => {
+    if (!modelTable || modelTable.length === 0) return;
+    console.log("modelTable changed, updating session model...");
 
-  //   const storedConfigs = getStoredModelConfigs();
-  //   const modelConfig = { ...session.mask.modelConfig };
-  //   if (!storedConfigs.chatModel) {
-  //     saveModelConfig("chatModel", access.defaultModel);
-  //     const [modelName, providerName] =
-  //       access.defaultModel.split(/@(?=[^@]*$)/);
-  //     modelConfig.model = modelName;
-  //     modelConfig.providerName = providerName as ServiceProvider;
-  //     console.log("chatModel not set, using default", modelName, providerName);
-  //   }
-  //   if (!storedConfigs.compressModel) {
-  //     saveModelConfig("compressModel", access.compressModel);
-  //     const [modelName, providerName] =
-  //       access.compressModel.split(/@(?=[^@]*$)/);
-  //     modelConfig.compressModel = modelName;
-  //     modelConfig.compressProviderName = providerName as ServiceProvider;
-  //     console.log(
-  //       "compressModel not set, using default",
-  //       modelName,
-  //       providerName,
-  //     );
-  //   }
-  //   if (!storedConfigs.ocrModel) {
-  //     saveModelConfig("ocrModel", access.ocrModel);
-  //     const [modelName, providerName] = access.ocrModel.split(/@(?=[^@]*$)/);
-  //     modelConfig.ocrModel = modelName;
-  //     modelConfig.ocrProviderName = providerName as ServiceProvider;
-  //     console.log("ocrModel not set, using default", modelName, providerName);
-  //   }
-  //   if (!storedConfigs.textProcessModel) {
-  //     saveModelConfig("textProcessModel", access.textProcessModel);
-  //     const [modelName, providerName] =
-  //       access.textProcessModel.split(/@(?=[^@]*$)/);
-  //     modelConfig.textProcessModel = modelName;
-  //     modelConfig.textProcessProviderName = providerName as ServiceProvider;
-  //     console.log(
-  //       "textProcessModel not set, using default",
-  //       modelName,
-  //       providerName,
-  //     );
-  //   }
-  //   chatStore.updateTargetSession(
-  //     session,
-  //     (session) => (session.mask.modelConfig = modelConfig),
-  //   );
-  //   // 获取当前所有任务的模型配置
-  //   const currentConfig = {
-  //     chat: {
-  //       model: modelConfig.model || access.defaultModel,
-  //       providerName: modelConfig.providerName,
-  //     },
-  //     textProcess: {
-  //       model: modelConfig.textProcessModel || access.textProcessModel,
-  //       providerName: modelConfig.textProcessProviderName,
-  //     },
-  //     ocr: {
-  //       model: modelConfig.ocrModel || access.ocrModel,
-  //       providerName: modelConfig.ocrProviderName,
-  //     },
-  //     compress: {
-  //       model: modelConfig.compressModel || access.compressModel,
-  //       providerName: modelConfig.compressProviderName,
-  //     },
-  //   };
-  //   chatStore.updateTargetSession(
-  //     session,
-  //     (session) => (session.mask.modelConfig = modelConfig),
-  //   );
-  //   /**
-  //    * 获取任务模型 - 优先级：
-  //    * 1. 同名且 providerName 一致的模型
-  //    * 2. 同名的模型（任意提供商）
-  //    * 3. 首个可用模型
-  //    */
-  //   const getTaskModel = (model: string, providerName: string) => {
-  //     // 如果当前未设置模型名称，直接返回首个模型
-  //     if (!model) {
-  //       return modelTable.length > 0
-  //         ? {
-  //             model: modelTable[0].name,
-  //             providerName: modelTable[0].provider?.providerName,
-  //           }
-  //         : null;
-  //     }
+    const modelConfig = { ...session.mask.modelConfig };
 
-  //     let sameNameModel = null;
-  //     let firstAvailable = null;
-
-  //     for (const item of modelTable) {
-  //       // 【优先级 1】完全匹配（名称和提供商均一致）
-  //       if (
-  //         item.name === model &&
-  //         item.provider?.providerName === providerName
-  //       ) {
-  //         return null; // 直接返回无需修改
-  //       }
-
-  //       // 【优先级 2】记录第一个同名模型（只要名称匹配）
-  //       if (item.name === model && !sameNameModel) {
-  //         sameNameModel = item;
-  //       }
-
-  //       // 【优先级 3】记录首个可用模型（数组中第一个非空项）
-  //       if (!firstAvailable) {
-  //         firstAvailable = item;
-  //       }
-  //     }
-
-  //     // 根据候选结果返回
-  //     if (sameNameModel) {
-  //       return {
-  //         model: sameNameModel.name,
-  //         providerName: sameNameModel.provider?.providerName,
-  //       };
-  //     }
-
-  //     return firstAvailable
-  //       ? {
-  //           model: firstAvailable.name,
-  //           providerName: firstAvailable.provider?.providerName,
-  //         }
-  //       : null;
-  //   };
-
-  //   // 检查并更新每个任务的模型
-  //   Object.entries(currentConfig).forEach(([taskType, config]) => {
-  //     // 获取该任务可能的替代模型
-  //     const replacementModel = getTaskModel(config.model, config.providerName);
-  //     // 如果需要替换
-  //     if (replacementModel) {
-  //       console.log("update model for task", taskType, replacementModel);
-  //       switch (taskType) {
-  //         case "chat":
-  //           session.mask.modelConfig.model = replacementModel.model;
-  //           session.mask.modelConfig.providerName =
-  //             replacementModel.providerName as ServiceProvider;
-  //           saveModelConfig(
-  //             "chatModel",
-  //             `${replacementModel.model}@${replacementModel.providerName}`,
-  //           );
-  //           break;
-  //         case "textProcess":
-  //           session.mask.modelConfig.textProcessModel = replacementModel.model;
-  //           session.mask.modelConfig.textProcessProviderName =
-  //             replacementModel.providerName as ServiceProvider;
-  //           saveModelConfig(
-  //             "textProcessModel",
-  //             `${replacementModel.model}@${replacementModel.providerName}`,
-  //           );
-  //           break;
-  //         case "ocr":
-  //           session.mask.modelConfig.ocrModel = replacementModel.model;
-  //           session.mask.modelConfig.ocrProviderName =
-  //             replacementModel.providerName as ServiceProvider;
-  //           saveModelConfig(
-  //             "ocrModel",
-  //             `${replacementModel.model}@${replacementModel.providerName}`,
-  //           );
-  //           break;
-  //         case "compress":
-  //           session.mask.modelConfig.compressModel = replacementModel.model;
-  //           session.mask.modelConfig.compressProviderName =
-  //             replacementModel.providerName as ServiceProvider;
-  //           saveModelConfig(
-  //             "compressModel",
-  //             `${replacementModel.model}@${replacementModel.providerName}`,
-  //           );
-  //           break;
-  //         default:
-  //           // 非 chat 类型的任务暂不做处理
-  //           break;
-  //       }
-  //     }
-  //   });
-  // }, [modelTable]);
+    if (!modelConfig.textProcessModel) {
+      if (access.textProcessModel) {
+        let textProcessModel, providerNameStr;
+        [textProcessModel, providerNameStr] =
+          access.textProcessModel.split("/@(?=[^@]*$)/");
+        modelConfig.textProcessModel = textProcessModel;
+        modelConfig.textProcessProviderName =
+          providerNameStr as ServiceProvider;
+      } else {
+        modelConfig.textProcessModel = modelTable[0].name;
+        modelConfig.textProcessProviderName = modelTable[0].provider
+          ?.providerName as ServiceProvider;
+      }
+    }
+    if (!modelConfig.ocrModel) {
+      if (access.ocrModel) {
+        let ocrModel, providerNameStr;
+        [ocrModel, providerNameStr] = access.ocrModel.split("/@(?=[^@]*$)/");
+        modelConfig.ocrModel = ocrModel;
+        modelConfig.ocrProviderName = providerNameStr as ServiceProvider;
+      } else {
+        modelConfig.ocrModel = modelTable[0].name;
+        modelConfig.ocrProviderName = modelTable[0].provider
+          ?.providerName as ServiceProvider;
+      }
+    }
+    if (!modelConfig.compressModel) {
+      if (access.compressModel) {
+        let compressModel, providerNameStr;
+        [compressModel, providerNameStr] =
+          access.compressModel.split("/@(?=[^@]*$)/");
+        modelConfig.compressModel = compressModel;
+        modelConfig.compressProviderName = providerNameStr as ServiceProvider;
+      } else {
+        modelConfig.compressModel = modelTable[0].name;
+        modelConfig.compressProviderName = modelTable[0].provider
+          ?.providerName as ServiceProvider;
+      }
+    }
+    chatStore.updateTargetSession(
+      session,
+      (session) => (session.mask.modelConfig = modelConfig),
+    );
+  }, [modelTable]);
   return (
     <ChatComponent key={session.id} modelTable={modelTable}></ChatComponent>
   );

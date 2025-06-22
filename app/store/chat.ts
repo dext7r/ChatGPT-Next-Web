@@ -774,12 +774,14 @@ export const useChatStore = createPersistStore(
         const modelConfig = session.mask.modelConfig;
         let compressModel = modelConfig.compressModel;
         let providerName = modelConfig.compressProviderName;
+        // console.log("[Summarize] ", compressModel)
         if ((!compressModel || !providerName) && access.compressModel) {
           let providerNameStr;
           [compressModel, providerNameStr] =
             access.compressModel.split(/@(?=[^@]*$)/);
           providerName = providerNameStr as ServiceProvider;
         }
+        // console.log("[Summarize] ", compressModel)
 
         const api: ClientApi = getClientApi(providerName);
 

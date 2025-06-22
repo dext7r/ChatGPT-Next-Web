@@ -391,9 +391,11 @@ export function ModelConfigList(props: {
             });
           }}
         >
-          <option value={accessStore.defaultModel}>
-            【Default】{accessStore.defaultModel}
-          </option>
+          {accessStore.defaultModel && (
+            <option value={accessStore.defaultModel}>
+              【Default】{accessStore.defaultModel}
+            </option>
+          )}
           {Object.keys(groupModels).map((providerName, index) => (
             <optgroup label={providerName} key={index}>
               {groupModels[providerName].map((v, i) => (
@@ -426,9 +428,11 @@ export function ModelConfigList(props: {
             });
           }}
         >
-          <option value={accessStore.compressModel}>
-            【Default】{accessStore.compressModel}
-          </option>
+          {accessStore.compressModel && (
+            <option value={accessStore.compressModel}>
+              【Default】{accessStore.compressModel}
+            </option>
+          )}
           {Object.keys(groupModels).map((providerName, index) => (
             <optgroup label={providerName} key={index}>
               {groupModels[providerName].map((v, i) => (
@@ -462,9 +466,11 @@ export function ModelConfigList(props: {
             });
           }}
         >
-          <option value={accessStore.textProcessModel}>
-            【Default】{accessStore.textProcessModel}
-          </option>
+          {accessStore.textProcessModel && (
+            <option value={accessStore.textProcessModel}>
+              【Default】{accessStore.textProcessModel}
+            </option>
+          )}
           {Object.keys(groupModels).map((providerName, index) => (
             <optgroup label={providerName} key={index}>
               {groupModels[providerName].map((v, i) => (
@@ -498,9 +504,11 @@ export function ModelConfigList(props: {
             });
           }}
         >
-          <option value={accessStore.ocrModel}>
-            【Default】{accessStore.ocrModel}
-          </option>
+          {accessStore.ocrModel && (
+            <option value={accessStore.ocrModel}>
+              【Default】{accessStore.ocrModel}
+            </option>
+          )}
           {Object.keys(groupModels).map((providerName, index) => (
             <optgroup label={providerName} key={index}>
               {groupModels[providerName].map((v, i) => (

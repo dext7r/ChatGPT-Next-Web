@@ -175,16 +175,21 @@ export const KnowledgeCutOffDate: Record<string, string> = {
 
 export const DEFAULT_TTS_ENGINE = "OpenAI-TTS";
 export const DEFAULT_TTS_ENGINES = ["OpenAI-TTS", "Edge-TTS"];
-export const DEFAULT_TTS_MODEL = "tts-1";
+export const DEFAULT_TTS_MODEL = "gpt-4o-mini-tts";
 export const DEFAULT_TTS_VOICE = "alloy";
-export const DEFAULT_TTS_MODELS = ["tts-1", "tts-1-hd"];
+export const DEFAULT_TTS_MODELS = ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"];
 export const DEFAULT_TTS_VOICES = [
   "alloy",
+  "ash",
+  "ballad",
+  "coral",
   "echo",
   "fable",
   "onyx",
   "nova",
+  "sage",
   "shimmer",
+  "verse",
 ];
 
 export const VISION_MODEL_REGEXES = [

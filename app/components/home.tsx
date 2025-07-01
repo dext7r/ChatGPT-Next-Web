@@ -6,7 +6,8 @@ import { useState, useEffect } from "react";
 
 import styles from "./home.module.scss";
 
-import BotIcon from "../icons/bot.svg";
+// import BotIcon from "../icons/bot.svg";
+import AILogoIcon from "../icons/ai-logo.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 
 import { getCSSVar, useMobileScreen } from "../utils";
@@ -35,7 +36,7 @@ import { FloatingButton } from "./floating-button";
 export function Loading(props: { noLogo?: boolean }) {
   return (
     <div className={styles["loading-content"] + " no-dark"}>
-      {!props.noLogo && <BotIcon />}
+      {!props.noLogo && <AILogoIcon />}
       <LoadingIcon />
     </div>
   );

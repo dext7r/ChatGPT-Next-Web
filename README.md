@@ -31,8 +31,8 @@
 - **纯文本文件上传** - 遵循 [DeepSeek 官方实践模板](https://github.com/deepseek-ai/DeepSeek-R1?tab=readme-ov-file#official-prompts)
 - **自定义侧边栏** - 支持 HTML 样式定制
 - **侧边栏消息置顶** - 直观保留重要对话历史
-- **悬浮球信息栏** - 直观查看请求负载并支持快速编辑
-- **自定义 css** - 无限创意，[自定义主题体验](https://nextchat-theme.pages.dev)
+- **悬浮球信息栏** - 直观查看请求负载并支持快速编辑（功能入口：设置 → 个性化设置 → 启用悬浮球）
+- **自定义 css** - 无限创意，[自定义主题体验](https://nextchat-theme.pages.dev) （功能入口：设置 → 个性化设置 → 自定义 CSS）
 
 <!-- <div align="center">
   <img src="./docs/images/floating-button.png" width="50%" alt="悬浮球功能展示">

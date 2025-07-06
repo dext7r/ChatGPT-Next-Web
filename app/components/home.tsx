@@ -111,6 +111,12 @@ export function useSwitchTheme() {
       metaDescriptionDark?.setAttribute("content", themeColor);
       metaDescriptionLight?.setAttribute("content", themeColor);
     }
+
+    // 更新自定义CSS的主题属性
+    const customCssElem = document.getElementById("custom-css");
+    if (customCssElem) {
+      customCssElem.setAttribute("data-theme", config.theme);
+    }
   }, [config.theme]);
 }
 

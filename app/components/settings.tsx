@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 
 import styles from "./settings.module.scss";
+import { useCustomCssStore } from "../store/customCss";
 
 import ResetIcon from "../icons/reload.svg";
 import AddIcon from "../icons/add.svg";
@@ -63,6 +64,7 @@ import {
   ServiceProvider,
   SlotID,
   UPDATE_URL,
+  THEME_REPO_URL,
 } from "../constant";
 import { Prompt, SearchService, usePromptStore } from "../store/prompt";
 import {
@@ -79,6 +81,68 @@ import { nanoid } from "nanoid";
 import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
+
+function CustomCssModal(props: { onClose?: () => void }) {
+  const customCss = useCustomCssStore();
+  const [cssContent, setCssContent] = useState(customCss.content);
+
+  const handleSave = () => {
+    customCss.update((state) => {
+      state.content = cssContent;
+      state.lastUpdated = Date.now();
+      if (cssContent.trim().length > 0 && !state.enabled) {
+        state.enabled = true;
+      }
+    });
+    props.onClose?.();
+  };
+  const openThemeRepo = () => {
+    window.open(THEME_REPO_URL, "_blank", "noopener");
+  };
+
+  return (
+    <div className="modal-mask">
+      <Modal
+        title={Locale.Settings.CustomCSS.Title}
+        onClose={() => props.onClose?.()}
+        actions={[
+          <IconButton
+            key="theme-repo"
+            text={Locale.Settings.CustomCSS.More}
+            onClick={openThemeRepo}
+            bordered
+          />,
+          <IconButton
+            key="cancel"
+            text={Locale.UI.Cancel}
+            onClick={props.onClose}
+            bordered
+          />,
+          <IconButton
+            key="save"
+            text={Locale.Chat.Actions.Save}
+            type="primary"
+            onClick={handleSave}
+          />,
+        ]}
+      >
+        <div className={styles["edit-prompt-modal"]}>
+          <div className={styles["custom-css-hint"]}>
+            {Locale.Settings.CustomCSS.Hint}
+          </div>
+
+          <Input
+            value={cssContent}
+            placeholder=":root { --primary: #4385f5; }"
+            className={styles["edit-prompt-content"]}
+            rows={15}
+            onInput={(e) => setCssContent(e.currentTarget.value)}
+          />
+        </div>
+      </Modal>
+    </div>
+  );
+}
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
   const promptStore = usePromptStore();
@@ -1061,6 +1125,9 @@ export function Settings() {
     setShowCustomContinuePromptModal,
   ] = useState(false);
 
+  const [shouldShowCustomCssModal, setShowCustomCssModal] = useState(false);
+  const customCss = useCustomCssStore();
+
   const showUsage = accessStore.isAuthorized();
   useEffect(() => {
     // checks per minutes
@@ -1219,6 +1286,35 @@ export function Settings() {
                       </option>
                     ))}
                   </Select>
+                </ListItem>
+
+                <ListItem
+                  title={Locale.Settings.CustomCSS.Title}
+                  subTitle={
+                    customCss.enabled
+                      ? Locale.Settings.CustomCSS.SubTitleEnabled
+                      : Locale.Settings.CustomCSS.SubTitleDisabled
+                  }
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <input
+                      type="checkbox"
+                      checked={customCss.enabled}
+                      onChange={(e) => {
+                        if (e.currentTarget.checked) {
+                          customCss.enable();
+                        } else {
+                          customCss.disable();
+                        }
+                      }}
+                      style={{ marginRight: "10px" }}
+                    />
+                    <IconButton
+                      icon={<EditIcon />}
+                      text={Locale.Settings.CustomCSS.Edit}
+                      onClick={() => setShowCustomCssModal(true)}
+                    />
+                  </div>
                 </ListItem>
 
                 <ListItem title={Locale.Settings.Lang.Name}>
@@ -1884,6 +1980,9 @@ export function Settings() {
           )}
         </List>
 
+        {shouldShowCustomCssModal && (
+          <CustomCssModal onClose={() => setShowCustomCssModal(false)} />
+        )}
         {shouldShowPromptModal && (
           <UserPromptModal onClose={() => setShowPromptModal(false)} />
         )}

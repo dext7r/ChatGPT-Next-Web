@@ -19,6 +19,8 @@ export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/";
 export const CACHE_URL_PREFIX = "/api/cache";
 export const UPLOAD_URL = `${CACHE_URL_PREFIX}/upload`;
 
+export const THEME_REPO_URL = "https://nextchat-theme.pages.dev/";
+
 export enum Path {
   Home = "/",
   Chat = "/chat",
@@ -61,6 +63,7 @@ export enum StoreKey {
   CustomProvider = "custom-providers-store",
   TaskModelConfig = "task-model-config",
   ExpansionRules = "expansion-rules",
+  CustomCSS = "custom-css",
 }
 
 export const DEFAULT_SIDEBAR_WIDTH = 300;

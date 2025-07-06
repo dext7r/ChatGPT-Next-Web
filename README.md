@@ -32,10 +32,15 @@
 - **自定义侧边栏** - 支持 HTML 样式定制
 - **侧边栏消息置顶** - 直观保留重要对话历史
 - **悬浮球信息栏** - 直观查看请求负载并支持快速编辑
+- **自定义 css** - 无限创意，[自定义主题体验](https://nextchat-theme.pages.dev)
 
 <!-- <div align="center">
   <img src="./docs/images/floating-button.png" width="50%" alt="悬浮球功能展示">
 </div> -->
+
+<div align="center">
+  <img src="./docs/images/theme-demo.png" width="100%" alt="颜色主题功能展示">
+</div>
 
 ### 🔄 便捷同步与备份
 - **云备份功能** - 免导入导出的数据同步（需配合[文件服务器项目](https://github.com/QAbot-zh/go-file-server)使用）

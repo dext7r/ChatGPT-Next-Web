@@ -7,6 +7,8 @@ import { Metadata, Viewport } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getServerSideConfig, getSidebarConfig } from "./config/server";
 import { GoogleTagManager } from "@next/third-parties/google";
+import { CustomCssProvider } from "./components/CustomCssProvider";
+
 const serverConfig = getServerSideConfig();
 const siderbarConfig = getSidebarConfig();
 
@@ -47,6 +49,8 @@ export default function RootLayout({
           crossOrigin="use-credentials"
         ></link>
         <script src="/serviceWorkerRegister.js" defer></script>
+
+        <CustomCssProvider />
       </head>
       <body>
         {children}

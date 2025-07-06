@@ -376,6 +376,15 @@ const cn = {
       FoundUpdate: (x: string) => `发现新版本：${x}`,
       GoToUpdate: "前往更新",
     },
+    CustomCSS: {
+      Title: "自定义CSS",
+      SubTitleEnabled: "自定义CSS样式已启用",
+      SubTitleDisabled: "自定义CSS样式已禁用",
+      Edit: "编辑CSS",
+      Enable: "启用自定义CSS",
+      More: "获取更多主题",
+      Hint: "您可以自定义全局CSS样式，例如修改主题色，设置AI消息框最大宽度等，完整的变量列表可参考应用的globals.scss文件。",
+    },
     Personalization: {
       Title: "个性化设置",
       SubTitle: "点击展开个性化设置",

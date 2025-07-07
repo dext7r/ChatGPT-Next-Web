@@ -305,7 +305,7 @@
 
 // settings.module.scss 添加
 .custom-css-hint {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--black);
   margin-bottom: 12px;
   line-height: 1.5;
@@ -326,6 +326,7 @@
   align-items: center;
   
   input {
+    font-size: 14px;
     margin-right: 8px;
   }
 }

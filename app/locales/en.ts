@@ -374,8 +374,9 @@ const en: LocaleType = {
     },
     Avatar: "Avatar",
     FontSize: {
-      Title: "Font Size",
-      SubTitle: "Adjust font size of chat content",
+      Title: "Base Font Size",
+      SubTitle:
+        "Adjust base font size (1em) of app, which referenced in the chat title",
     },
     InjectSystemPrompts: {
       Title: "Inject System Prompts",

@@ -138,7 +138,7 @@
   font-weight: 500;
   margin-bottom: 8px;
   color: var(--text-color);
-  font-size: 14px;
+  font-size: var(--text-sm);
   padding-bottom: 8px;
   border-bottom: 1px solid #bfdbfe; /* 淡蓝色边框 */
 }
@@ -251,7 +251,7 @@
 }
 
 .paramLabel {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: #64748b; /* 标签颜色 */
   margin-bottom: 4px;
   display: flex;
@@ -301,7 +301,7 @@
   border: 1px solid rgba(147, 197, 253, 0.5);
   border-radius: 4px;
   padding: 2px 4px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: inherit;
   outline: none;
@@ -331,7 +331,7 @@
   color: #f8fafc;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   z-index: 1100;
   pointer-events: none;
   white-space: normal;
@@ -370,7 +370,7 @@
 }
 
 .paramValue {
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: #334155; /* 值颜色 */
   overflow: hidden;

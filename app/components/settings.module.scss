@@ -56,12 +56,12 @@
         max-width: calc(100% - 100px);
 
         .user-prompt-title {
-          font-size: 14px;
+          font-size: var(--text-sm);
           line-height: 2;
           font-weight: bold;
         }
         .user-prompt-content {
-          font-size: 12px;
+          font-size: var(--text-xs);
         }
       }
 
@@ -305,7 +305,7 @@
 
 // settings.module.scss 添加
 .custom-css-hint {
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--black);
   margin-bottom: 12px;
   line-height: 1.5;
@@ -326,7 +326,7 @@
   align-items: center;
   
   input {
-    font-size: 14px;
+    font-size: var(--text-sm);
     margin-right: 8px;
   }
 }

@@ -1823,7 +1823,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const config = useAppConfig();
-  const fontSize = config.fontSize;
+  // const fontSize = config.fontSize;
 
   const [showExport, setShowExport] = useState(false);
 
@@ -3443,7 +3443,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                         if (!isMobileScreen) return;
                         setUserInput(getMessageTextContent(message));
                       }}
-                      fontSize={fontSize}
+                      // fontSize={fontSize}
                       parentRef={scrollRef}
                       defaultShow={i >= messages.length - 6}
                       searchingTime={message.statistic?.searchingLatency}
@@ -3693,9 +3693,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             onPaste={handlePaste}
             rows={inputRows}
             autoFocus={autoFocus}
-            style={{
-              fontSize: config.fontSize,
-            }}
+            // style={{
+            //   fontSize: config.fontSize,
+            // }}
           />
           <div className={styles["attachments"]}>
             {attachImages.length != 0 && (

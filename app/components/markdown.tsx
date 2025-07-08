@@ -167,7 +167,7 @@ const ThinkCollapse = ({
       className={`${styles["think-collapse"]} ${
         disabled ? styles.disabled : ""
       } ${className || ""}`}
-      style={{ fontSize: `${fontSize}px` }}
+      // style={{ fontSize: `${fontSize}px` }}
     >
       <Collapse
         className={`${disabled ? "disabled" : ""}`}
@@ -962,9 +962,9 @@ export function Markdown(
   return (
     <div
       className="markdown-body"
-      style={{
-        fontSize: `${props.fontSize ?? 14}px`,
-      }}
+      // style={{
+      //   fontSize: `${props.fontSize ?? 14}px`,
+      // }}
       ref={mdRef}
       onContextMenu={props.onContextMenu}
       onDoubleClickCapture={props.onDoubleClickCapture}

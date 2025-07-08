@@ -171,8 +171,8 @@ const tw = {
     },
     Avatar: "大頭貼",
     FontSize: {
-      Title: "字型大小",
-      SubTitle: "聊天內容的字型大小",
+      Title: "基準字型大小",
+      SubTitle: "整體程式風格的字型基準（1em），參考聊天標題的字型大小",
     },
     InjectSystemPrompts: {
       Title: "匯入系統提示",

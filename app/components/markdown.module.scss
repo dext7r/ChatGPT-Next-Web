@@ -26,7 +26,7 @@
 
       .ant-collapse-content-box {
         padding: 8px 12px !important;
-        font-size: 14px;
+        font-size: var(--text-sm);
         color: var(--black);
         opacity: 0.8;
       }
@@ -36,6 +36,7 @@
 
 // Think Collapse styles 
 .think-collapse {
+  font-size: var(--text-sm);
   :global {
     .ant-collapse-item {
       border: var(--border-in-light) !important;
@@ -77,7 +78,7 @@
 }
 
 .copy-think-button {
-  font-size: 14px;
+  font-size: var(--text-sm);
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.3s ease;
@@ -127,7 +128,7 @@
 }
 
 .code-language {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 500;
   color: var(--black);
   text-transform: uppercase;
@@ -140,7 +141,8 @@
 
 .code-header-btn {
   padding: 4px 4px;
-  font-size: 12px;
+  font-family: inherit;
+  font-size: var(--text-xs);
   color: var(--black);
   background: var(--white);
   border: var(--border-in-light);

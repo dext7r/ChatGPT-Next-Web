@@ -197,7 +197,7 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 4.3,
+    version: 4.4,
 
     merge(persistedState, currentState) {
       const state = persistedState as ChatConfig | undefined;
@@ -281,6 +281,9 @@ export const useAppConfig = createPersistStore(
           DEFAULT_CONFIG.modelConfig.textProcessModel;
         state.modelConfig.textProcessProviderName =
           DEFAULT_CONFIG.modelConfig.textProcessProviderName;
+      }
+      if (version < 4.4) {
+        state.fontSize = 16; // Ensure fontSize is set to 16px
       }
       return state as any;
     },

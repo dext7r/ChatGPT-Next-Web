@@ -73,7 +73,7 @@ export const DEFAULT_CONFIG = {
     temperature_enabled: true,
     top_p: 0.99,
     top_p_enabled: false,
-    max_tokens: 4000,
+    max_tokens: 8000,
     max_tokens_enabled: true,
     presence_penalty: 0,
     presence_penalty_enabled: false,
@@ -147,7 +147,7 @@ export const ModalConfigValidator = {
     return x as ModelType;
   },
   max_tokens(x: number) {
-    return limitNumber(x, 0, 512000, 1024);
+    return limitNumber(x, 0, 512000, 4000);
   },
   presence_penalty(x: number) {
     return limitNumber(x, -2, 2, 0);
@@ -197,7 +197,7 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 4.4,
+    version: 4.5,
 
     merge(persistedState, currentState) {
       const state = persistedState as ChatConfig | undefined;
@@ -284,6 +284,9 @@ export const useAppConfig = createPersistStore(
       }
       if (version < 4.4) {
         state.fontSize = 16; // Ensure fontSize is set to 16px
+      }
+      if (version < 4.5) {
+        state.modelConfig.max_tokens = 8000;
       }
       return state as any;
     },

@@ -24,15 +24,28 @@
 
 ### 🔍 用户体验优化
 - **模型选择器优化** 
-   - 可配置的模型描述，支持模型搜索
-   - 可配置的模型标签，快速分类筛选
-   - @ 触发模型搜索和更改，沉浸式键盘输入体验
-- **快速搜索聊天记录** - 高效查找历史对话
-- **纯文本文件上传** - 遵循 [DeepSeek 官方实践模板](https://github.com/deepseek-ai/DeepSeek-R1?tab=readme-ov-file#official-prompts)
-- **自定义侧边栏** - 支持 HTML 样式定制
-- **侧边栏消息置顶** - 直观保留重要对话历史
-- **悬浮球信息栏** - 直观查看请求负载并支持快速编辑（功能入口：设置 → 个性化设置 → 启用悬浮球）
-- **自定义 css** - 无限创意，[自定义主题体验](https://nextchat-theme.pages.dev) （功能入口：设置 → 个性化设置 → 自定义 CSS）
+  - 可配置的模型描述，支持模型搜索
+  - 可配置的模型标签，快速分类筛选
+  - @ 触发模型搜索和更改，沉浸式键盘输入体验
+- **快速搜索聊天记录** 
+  - 高效查找历史对话
+- **纯文本文件上传** 
+  - 遵循 [DeepSeek 官方实践模板](https://github.com/deepseek-ai/DeepSeek-R1?tab=readme-ov-file#official-prompts)
+- **自定义侧边栏** 
+  - 支持 HTML 样式定制
+- **侧边栏消息置顶** 
+  - 直观保留重要对话历史
+- **悬浮球信息栏** 
+  - 直观查看请求负载并支持快速编辑
+  - 功能入口：设置 → 个性化设置 → 启用悬浮球
+- **自定义 css** 
+  - 无限创意，[自定义主题体验](https://nextchat-theme.pages.dev) 
+  - 功能入口：设置 → 个性化设置 → 自定义 CSS
+- **参数注入**
+  - 支持通过前端的`参数覆盖`项来设置/覆盖请求参数，灵活适配 api 的个性化功能（对当前设备的整个对话生效）
+  - 支持通过环境变量按`模型名称`注入请求参数，细粒度调整参数（优先级最高，全局生效）
+    - 通用格式："modelA:key1=val1;key2=val2,modelB:key3=val3"，英文逗号分隔模型，分号分隔参数
+    - 支持精确匹配与通配符匹配（如 `gpt-*`, `*-4`, `pre*suf`, `*`表示所有模型）
 
 <!-- <div align="center">
   <img src="./docs/images/floating-button.png" width="50%" alt="悬浮球功能展示">
@@ -210,7 +223,7 @@
 | `VISION_MODELS`            | 设置具备视觉能力的模型，多个模型用英文逗号分隔                                    | -                         |
 | `ICON_POSITION`            | 设置消息功能图标的位置，候选项：UP,DOWN,BOTH                                      | `DOWN`                    |
 | `SELECT_LABELS`            | 设置模型选择的标签，多个标签用英文逗号分隔                                        | -                         |
-
+| `MODEL_PARAMS`             | 指定模型注入参数，英文逗号分隔模型，分号分隔参数，支持`*`模式匹配，格式："modelA:key1=val1;key2=val2,modelB:key3=val3"，如：`deepseek-reasoner:max_tokens=40000,gemini-2.5-flash:max_tokens=60000;temperature=0.3` | - |
 
 ### 关键配置配置示例
 

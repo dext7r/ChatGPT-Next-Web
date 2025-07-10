@@ -80,6 +80,8 @@ const DEFAULT_ACCESS_STATE = {
 
   // select labels
   selectLabels: "",
+
+  modelParams: {},
 };
 
 export const useAccessStore = createPersistStore(
@@ -138,7 +140,10 @@ export const useAccessStore = createPersistStore(
       this.fetch();
       return get().selectLabels;
     },
-
+    getModelParams() {
+      this.fetch();
+      return get().modelParams;
+    },
     isValidOpenAI() {
       return ensure(get(), ["openaiApiKey"]);
     },

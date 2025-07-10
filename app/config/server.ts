@@ -24,6 +24,8 @@ declare global {
       DEFAULT_MODEL?: string; // to cnntrol default model in every new chat window
       VISION_MODELS?: string; // to control vision models
 
+      MODEL_PARAMS?: string; // 新增：格式为 "modelA:key1=val1;key2=val2,modelB:key3=val3"
+
       // azure only
       AZURE_URL?: string; // https://{azure-url}/openai/deployments/{deploy-name}
       AZURE_API_KEY?: string;
@@ -53,6 +55,31 @@ declare global {
     }
   }
 }
+
+const MODEL_PARAMS_MAP = (() => {
+  const raw = process.env.MODEL_PARAMS || "";
+  const map = new Map<string, Record<string, unknown>>();
+  raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .forEach((entry) => {
+      const [model, params] = entry.split(/:(.+)/);
+      if (!model || !params) return;
+      const obj: Record<string, unknown> = {};
+      params.split(";").forEach((pair) => {
+        const [k, v] = pair.split("=").map((s) => s.trim());
+        if (!k || v === undefined) return;
+        // 简单类型转换
+        let val: unknown = v;
+        if (v === "true" || v === "false") val = v === "true";
+        else if (!isNaN(Number(v))) val = Number(v);
+        obj[k] = val;
+      });
+      map.set(model, obj);
+    });
+  return map;
+})();
 
 const ACCESS_CODES = (function getAccessCodes(): Set<string> {
   const code = process.env.CODE;
@@ -190,5 +217,7 @@ export const getServerSideConfig = () => {
     selectLabels: process.env.SELECT_LABELS,
 
     iconPosition: process.env.ICON_POSITION || "down",
+
+    modelParams: Object.fromEntries(MODEL_PARAMS_MAP),
   };
 };

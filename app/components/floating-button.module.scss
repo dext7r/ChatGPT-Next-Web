@@ -17,9 +17,9 @@
   width: 40px;
   height: 40px;
   border-radius: 20px 0 0 20px;
-  background-color: #3b82f6; /* 淡蓝色调 */
-  color: white;
-  border: 1px solid #2563eb;
+  background-color: var(--primary); /* 淡蓝色调 */
+  color: var(--white);
+  border: 1px solid var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -31,7 +31,7 @@
 }
 
 .floatingButton:hover {
-  background-color: #2563eb;
+  background-color: var(--highlight);
 }
 
 .floatingButton:active {
@@ -102,29 +102,30 @@
 
 .closeButton {
   position: absolute;
-  top: 12px;
+  top: 8px;
   right: 12px;
-  background: none;
+  // background: var(--black);
   border: 1px solid transparent;
   cursor: pointer;
-  color: var(--text-color);
+  // color: var(--whi-color);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4px;
-  border-radius: 6px;
+  border-radius: 4px;
   transition: all 0.2s;
 }
 
 .closeButton:hover {
-  background-color: rgba(59, 130, 246, 0.1);
+  // background-color: rgba(59, 130, 246, 0.1);
   border-color: #bfdbfe;
+  transform: scale(0.9);
 }
 
-:global(.dark) .closeButton:hover {
-  background-color: rgba(59, 130, 246, 0.2);
-  border-color: #1e40af;
-}
+// :global(.dark) .closeButton:hover {
+//   // background-color: rgba(59, 130, 246, 0.2);
+//   border-color: #1e40af;
+// }
 
 .sessionInfoSection {
   margin-bottom: 8px;
@@ -137,14 +138,14 @@
   gap: 8px;
   font-weight: 500;
   margin-bottom: 8px;
-  color: var(--text-color);
+  // color: var(--text-color);
   font-size: var(--text-sm);
   padding-bottom: 8px;
   border-bottom: 1px solid #bfdbfe; /* 淡蓝色边框 */
 }
 
 :global(.dark) .sectionHeader {
-  border-color: #1e40af; /* 深蓝色边框 */
+  border-color: var(--primary); /* 深蓝色边框 */
 }
 
 .headerTitleWrapper {

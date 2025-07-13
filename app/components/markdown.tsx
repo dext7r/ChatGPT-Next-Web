@@ -10,17 +10,17 @@ import RehypeHighlight from "rehype-highlight";
 import rehypeSanitize from "rehype-sanitize";
 import { defaultSchema } from "rehype-sanitize";
 import { useRef, useState, RefObject, useEffect, useMemo } from "react";
-import { copyToClipboard, downloadAs } from "../utils";
+import { copyToClipboard, downloadAs, useWindowSize } from "../utils";
 import mermaid from "mermaid";
 import Locale from "../locales";
 import LoadingIcon from "../icons/three-dots.svg";
-// import ReloadButtonIcon from "../icons/reload.svg";
+import ReloadButtonIcon from "../icons/reload.svg";
 import React from "react";
 // import { useDebouncedCallback } from "use-debounce";
 import { showImageModal, FullScreen } from "./ui-lib";
 import { HTMLPreview, HTMLPreviewHander } from "./artifacts";
 import { useChatStore } from "../store";
-// import { IconButton } from "./button";
+import { IconButton } from "./button";
 
 import { useAppConfig } from "../store/config";
 
@@ -305,6 +305,7 @@ export function Mermaid(props: { code: string }) {
 export function PreCode(props: { children: any }) {
   const ref = useRef<HTMLPreElement>(null);
   const previewRef = useRef<HTMLPreviewHander>(null);
+  const { height } = useWindowSize();
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState("");
   const [originalCode, setOriginalCode] = useState("");
@@ -373,14 +374,15 @@ export function PreCode(props: { children: any }) {
     if (contentType === "svg") {
       const blob = new Blob([previewContent], { type: "image/svg+xml" });
       showImageModal(URL.createObjectURL(blob));
-    } else if (contentType === "html") {
-      const win = window.open("", "_blank");
-      if (win) {
-        win.document.write(previewContent);
-        win.document.title = "HTML Preview";
-        win.document.close();
-      }
     }
+    // else if (contentType === "html") {
+    //   const win = window.open("", "_blank");
+    //   if (win) {
+    //     win.document.write(previewContent);
+    //     win.document.title = "HTML Preview";
+    //     win.document.close();
+    //   }
+    // }
   };
   const renderPreview = () => {
     if (!previewContent) return null;
@@ -397,12 +399,22 @@ export function PreCode(props: { children: any }) {
         );
       case "html":
         return (
-          <HTMLPreview
-            ref={previewRef}
-            code={previewContent}
-            autoHeight={true}
-            height={400}
-          />
+          <FullScreen>
+            <HTMLPreview
+              ref={previewRef}
+              code={previewContent}
+              autoHeight={!document.fullscreenElement}
+              height={!document.fullscreenElement ? 600 : height}
+              minWidth="50vw"
+            />
+            <IconButton
+              style={{ position: "absolute", right: 60, top: 10 }}
+              bordered
+              icon={<ReloadButtonIcon />}
+              shadow
+              onClick={() => previewRef.current?.reload()}
+            />
+          </FullScreen>
         );
       default:
         return null;

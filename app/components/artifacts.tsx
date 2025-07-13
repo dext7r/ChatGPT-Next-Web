@@ -26,6 +26,7 @@ type HTMLPreviewProps = {
   code: string;
   autoHeight?: boolean;
   height?: number | string;
+  minWidth?: number | string;
   onLoad?: (title?: string) => void;
 };
 
@@ -78,6 +79,13 @@ export const HTMLPreview = forwardRef<HTMLPreviewHander, HTMLPreviewProps>(
         : iframeHeight + 40;
     }, [props.autoHeight, props.height, iframeHeight]);
 
+    const minWidthStyle = useMemo(() => {
+      if (!props.minWidth) return undefined;
+      return typeof props.minWidth === "number"
+        ? `${props.minWidth}px`
+        : props.minWidth;
+    }, [props.minWidth]);
+
     const srcDoc = useMemo(() => {
       const script = `<script>window.addEventListener("DOMContentLoaded", () => new ResizeObserver((entries) => parent.postMessage({id: '${frameId}', height: entries[0].target.clientHeight}, '*')).observe(document.body))</script>`;
       if (props.code.includes("<!DOCTYPE html>")) {
@@ -98,7 +106,7 @@ export const HTMLPreview = forwardRef<HTMLPreviewHander, HTMLPreviewProps>(
         key={frameId}
         ref={iframeRef}
         sandbox="allow-forms allow-modals allow-scripts"
-        style={{ height }}
+        style={{ height, minWidth: minWidthStyle }}
         srcDoc={srcDoc}
         onLoad={handleOnLoad}
       />

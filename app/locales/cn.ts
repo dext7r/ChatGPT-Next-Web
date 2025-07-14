@@ -299,6 +299,7 @@ const cn = {
     Artifacts: {
       Title: "分享页面",
       Error: "分享失败",
+      Expired: "分享链接已过期或请求ID不存在",
     },
   },
   Select: {

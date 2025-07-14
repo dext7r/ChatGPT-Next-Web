@@ -1,15 +1,37 @@
 import md5 from "spark-md5";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSideConfig } from "@/app/config/server";
+import { auth } from "@/app/api/auth";
+import { ModelProvider } from "@/app/constant";
 
 async function handle(req: NextRequest) {
   const serverConfig = getServerSideConfig();
+  if (
+    !serverConfig.cloudflareAccountId ||
+    !serverConfig.cloudflareKVNamespaceId ||
+    !serverConfig.cloudflareKVApiKey
+  ) {
+    return NextResponse.json(
+      { error: true, msg: "Cloudflare KV is not configured" },
+      { status: 500 },
+    );
+  }
+
   const storeUrl = () =>
     `https://api.cloudflare.com/client/v4/accounts/${serverConfig.cloudflareAccountId}/storage/kv/namespaces/${serverConfig.cloudflareKVNamespaceId}`;
   const storeHeaders = () => ({
     Authorization: `Bearer ${serverConfig.cloudflareKVApiKey}`,
   });
   if (req.method === "POST") {
+    // post 请求添加身份验证避免恶意请求
+    const authResult = auth(req, ModelProvider.System);
+    if (authResult.error) {
+      return NextResponse.json(
+        { error: true, msg: authResult.msg },
+        { status: 401 },
+      );
+    }
+
     const clonedBody = await req.text();
     const hashedCode = md5.hash(clonedBody).trim();
     const body: {
@@ -22,7 +44,7 @@ async function handle(req: NextRequest) {
     };
     try {
       const ttl = parseInt(serverConfig.cloudflareKVTTL as string);
-      if (ttl > 60) {
+      if (ttl >= 60) {
         body["expiration_ttl"] = ttl;
       }
     } catch (e) {

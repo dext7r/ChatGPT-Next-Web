@@ -21,6 +21,7 @@ import { copyToClipboard, downloadAs } from "../utils";
 import { Path, ApiPath, REPO_URL } from "@/app/constant";
 import { Loading } from "./home";
 import styles from "./artifacts.module.scss";
+import { getHeaders } from "../client/api";
 
 type HTMLPreviewProps = {
   code: string;
@@ -138,16 +139,29 @@ export function ArtifactsShareButton({
       : fetch(ApiPath.Artifacts, {
           method: "POST",
           body: code,
+          headers: getHeaders(),
         })
-          .then((res) => res.json())
-          .then(({ id }) => {
-            if (id) {
-              return { id };
+          .then((res) => {
+            // 先解析 JSON
+            return res.json().then((data) => {
+              if (!res.ok) {
+                const message = data?.msg || "Upload failed";
+                throw new Error(message);
+              }
+              return data;
+            });
+          })
+          .then((data) => {
+            if (data.id) {
+              return { id: data.id };
             }
-            throw Error();
+            // 如果没有 id，但有 message，用它抛出 Error
+            const message = data?.msg || "No ID returned";
+            throw new Error(message);
           })
           .catch((e) => {
-            showToast(Locale.Export.Artifacts.Error);
+            console.error(e);
+            showToast(`${Locale.Export.Artifacts.Error}: ${e.message}`);
           });
   return (
     <>
@@ -229,7 +243,7 @@ export function Artifacts() {
         .then((res) => res.text())
         .then(setCode)
         .catch((e) => {
-          showToast(Locale.Export.Artifacts.Error);
+          showToast(Locale.Export.Artifacts.Expired);
         });
     }
   }, [id]);

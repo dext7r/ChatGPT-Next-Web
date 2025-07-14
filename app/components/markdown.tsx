@@ -18,7 +18,11 @@ import ReloadButtonIcon from "../icons/reload.svg";
 import React from "react";
 // import { useDebouncedCallback } from "use-debounce";
 import { showImageModal, FullScreen } from "./ui-lib";
-import { HTMLPreview, HTMLPreviewHander } from "./artifacts";
+import {
+  HTMLPreview,
+  HTMLPreviewHander,
+  ArtifactsShareButton,
+} from "./artifacts";
 import { useChatStore } from "../store";
 import { IconButton } from "./button";
 
@@ -400,19 +404,23 @@ export function PreCode(props: { children: any }) {
       case "html":
         return (
           <FullScreen>
+            <ArtifactsShareButton
+              getCode={() => previewContent}
+              style={{ position: "absolute", right: 120, top: 10 }}
+            />
+            <IconButton
+              style={{ position: "absolute", right: 65, top: 10 }}
+              bordered
+              icon={<ReloadButtonIcon />}
+              shadow
+              onClick={() => previewRef.current?.reload()}
+            />
             <HTMLPreview
               ref={previewRef}
               code={previewContent}
               autoHeight={!document.fullscreenElement}
               height={!document.fullscreenElement ? 600 : height}
               minWidth="50vw"
-            />
-            <IconButton
-              style={{ position: "absolute", right: 60, top: 10 }}
-              bordered
-              icon={<ReloadButtonIcon />}
-              shadow
-              onClick={() => previewRef.current?.reload()}
             />
           </FullScreen>
         );

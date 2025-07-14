@@ -225,6 +225,15 @@
 | `SELECT_LABELS`            | 设置模型选择的标签，多个标签用英文逗号分隔                                        | -                         |
 | `MODEL_PARAMS`             | 指定模型注入参数，英文逗号分隔模型，分号分隔参数，支持`*`模式匹配，格式："modelA:key1=val1;key2=val2,modelB:key3=val3"，如：`deepseek-reasoner:max_tokens=40000,gemini-2.5-flash:max_tokens=60000;temperature=0.3` | - |
 
+### artifacts 分享至 cloudflare kv 环境变量
+| 环境变量名称                | 描述                            | 默认值                    |
+|----------------------------|---------------------------------|---------------------------|
+| CLOUDFLARE_ACCOUNT_ID      | cloudflare 账户 ID              | -                        |
+| CLOUDFLARE_KV_NAMESPACE_ID | kv 空间 ID                      | -                        |
+| CLOUDFLARE_KV_API_KEY      | cloudflare 令牌（需要有kv操作权限）| -                       |
+| CLOUDFLARE_KV_TTL          | kv 数据保存时间 （单位：秒）       | -                        |
+
+
 ### 关键配置配置示例
 
 #### `CUSTOM_MODELS`：支持通过<>设置模型描述

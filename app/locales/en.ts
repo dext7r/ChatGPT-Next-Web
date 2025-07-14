@@ -318,6 +318,8 @@ const en: LocaleType = {
     Artifacts: {
       Title: "Share Artifacts",
       Error: "Share Error",
+      Expired:
+        "The shared link has expired or the requested ID does not exist.",
     },
   },
   Select: {

@@ -1,0 +1,50 @@
+// app/components/share.module.scss
+
+.share-page {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--c-page-bg);
+  height: 100vh;
+  padding: 0 20px;
+}
+
+.share-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto 20px;
+
+  h1 {
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+}
+.share-content-wrapper {
+  flex-grow: 1; /* Allow this wrapper to fill all remaining vertical space */
+  overflow-y: auto; /* Add a vertical scrollbar ONLY when content overflows */
+  min-height: 0; /* A flexbox fix to ensure scrolling works correctly in all browsers */
+  padding-bottom: 20px; /* Add some space at the very bottom */
+}
+.share-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  text-align: center;
+
+  h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+  }
+
+  p {
+    color: var(--text-light-color);
+  }
+}
+
+// Override to hide actions on the share page
+:global(.share-page) .preview-actions {
+  display: none !important;
+}

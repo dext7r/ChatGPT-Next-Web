@@ -47,6 +47,10 @@ const Artifacts = dynamic(async () => (await import("./artifacts")).Artifacts, {
   loading: () => <Loading noLogo />,
 });
 
+const Share = dynamic(async () => (await import("./share")).Share, {
+  loading: () => <Loading noLogo />,
+});
+
 const Settings = dynamic(async () => (await import("./settings")).Settings, {
   loading: () => <Loading noLogo />,
 });
@@ -161,6 +165,7 @@ function Screen() {
   const config = useAppConfig();
   const location = useLocation();
   const isArtifact = location.pathname.includes(Path.Artifacts);
+  const isShare = location.pathname.includes(Path.Share);
   const isHome = location.pathname === Path.Home;
   const isAuth = location.pathname === Path.Auth;
   const isMobileScreen = useMobileScreen();
@@ -175,6 +180,13 @@ function Screen() {
     return (
       <Routes>
         <Route path="/artifacts/:id" element={<Artifacts />} />
+      </Routes>
+    );
+  }
+  if (isShare) {
+    return (
+      <Routes>
+        <Route path="/share/:id" element={<Share />} />
       </Routes>
     );
   }

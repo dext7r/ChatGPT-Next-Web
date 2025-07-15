@@ -367,7 +367,11 @@ export function PreCode(props: { children: any }) {
     let extension = language || "txt";
     if (contentType === "html") extension = "html";
     else if (contentType === "svg") extension = "svg";
-    else if (contentType === "mermaid") extension = "md";
+    else if (contentType === "mermaid" || language === "markdown")
+      extension = "md";
+    else if (language === "python") extension = "py";
+    else if (language === "javascript") extension = "js";
+    else if (language === "typescript") extension = "ts";
 
     const filename = `code-${Date.now()}.${extension}`;
     await downloadAs(originalCode, filename);

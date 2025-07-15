@@ -287,9 +287,13 @@ const en: LocaleType = {
     Title: "Export Messages",
     Copy: "Copy All",
     Download: "Download",
+    Share: "Create Share Link",
+    ShareError: "Share failed. Please check your network or try again later.",
+    ShareNotFound: "Share Link not found",
+    ShareNotFoundDesc:
+      "Please verify the link's validation or check if it has expired.",
     MessageFromYou: "Message From You",
     MessageFromChatGPT: "Message From ChatGPT",
-    Share: "Share to ShareGPT",
     Format: {
       Title: "Export Format",
       SubTitle: "Markdown or PNG Image",
@@ -320,6 +324,8 @@ const en: LocaleType = {
       Error: "Share Error",
       Expired:
         "The shared link has expired or the requested ID does not exist.",
+      SetExpiration: "Set the Expiration Time",
+      ExpirationLabel: "Expiration Tile:",
     },
   },
   Select: {

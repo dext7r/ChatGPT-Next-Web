@@ -9,7 +9,7 @@ import {
   Modal,
   Select,
   showImageModal,
-  showModal,
+  // showModal,
   showToast,
 } from "./ui-lib";
 import { IconButton } from "./button";
@@ -35,23 +35,22 @@ import dynamic from "next/dynamic";
 import NextImage from "next/image";
 
 import { toBlob, toPng } from "html-to-image";
-import { DEFAULT_MASK_AVATAR } from "../store/mask";
+import { DEFAULT_MASK_AVATAR, Mask } from "../store/mask";
 
-import { prettyObject } from "../utils/format";
 import {
+  ApiPath,
   EXPORT_MESSAGE_CLASS_NAME,
-  ModelProvider,
+  Path,
   REPO_URL,
 } from "../constant";
 import { getClientConfig } from "../config/client";
-import { ClientApi } from "../client/api";
+import { getHeaders } from "../client/api";
 import { getMessageTextContent } from "../utils";
-import { identifyDefaultClaudeModel } from "../utils/checkers";
 import { useAllModels } from "../utils/hooks";
 
 import { FileIcon, defaultStyles } from "react-file-icon";
 import type { DefaultExtensionType } from "react-file-icon";
-import { estimateMessageTokenInLLM } from "../store/chat";
+import { estimateMessageTokenInLLM, ChatSession } from "../store/chat";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
@@ -215,6 +214,7 @@ export function MessageExporter() {
         <ImagePreviewer
           messages={selectedMessages}
           topic={exportConfig.shareSessionTitle || session.topic}
+          mask={session.mask}
           useDisplayName={exportConfig.useDisplayName}
         />
       );
@@ -361,67 +361,93 @@ export function PreviewActions(props: {
   copy: () => void;
   showCopy?: boolean;
   messages?: ChatMessage[];
+  session?: ChatSession;
 }) {
   const [loading, setLoading] = useState(false);
-  const [shouldExport, setShouldExport] = useState(false);
-  const config = useAppConfig();
-  const onRenderMsgs = (msgs: ChatMessage[]) => {
-    setShouldExport(false);
+  // const [shouldExport, setShouldExport] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [shareResult, setShareResult] = useState<
+    { url: string; error?: null } | { url?: null; error: string } | null
+  >(null);
 
-    var api: ClientApi;
-    if (config.modelConfig.model.startsWith("gemini")) {
-      api = new ClientApi(ModelProvider.GeminiPro);
-    } else if (identifyDefaultClaudeModel(config.modelConfig.model)) {
-      api = new ClientApi(ModelProvider.Claude);
-    } else {
-      api = new ClientApi(ModelProvider.GPT);
+  const [selectedTtlOption, setSelectedTtlOption] = useState("86400"); // Default to '1 Day'
+  const [customTtlValue, setCustomTtlValue] = useState(1);
+  const [customTtlUnit, setCustomTtlUnit] = useState("days");
+
+  const calculatedTtlInSeconds = useMemo(() => {
+    if (selectedTtlOption !== "custom") {
+      return Number(selectedTtlOption);
     }
+    const value = Number(customTtlValue);
+    if (isNaN(value) || value <= 0) return null; // Invalid state
+    switch (customTtlUnit) {
+      case "minutes":
+        return value * 60;
+      case "hours":
+        return value * 3600;
+      case "days":
+        return value * 86400;
+      default:
+        return null; // Invalid unit
+    }
+  }, [selectedTtlOption, customTtlValue, customTtlUnit]);
 
-    api
-      .share(msgs)
+  const handleShare = () => {
+    if (
+      !props.session ||
+      !props.messages ||
+      loading ||
+      calculatedTtlInSeconds === null
+    )
+      return;
+
+    setLoading(true);
+    setShowOptionsModal(false); // Close options modal
+    setShowResultModal(true);
+    setShareResult(null);
+
+    const sessionToShare = {
+      ...props.session,
+      messages: props.messages,
+    };
+
+    fetch(ApiPath.Share, {
+      method: "POST",
+      body: JSON.stringify({
+        session: sessionToShare,
+        ttl: calculatedTtlInSeconds, // Pass the TTL to the backend
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(),
+      },
+    })
+      .then((res) => res.json())
       .then((res) => {
-        if (!res) return;
-        showModal({
-          title: Locale.Export.Share,
-          children: [
-            <input
-              type="text"
-              value={res}
-              key="input"
-              style={{
-                width: "100%",
-                maxWidth: "unset",
-              }}
-              readOnly
-              onClick={(e) => e.currentTarget.select()}
-            ></input>,
-          ],
-          actions: [
-            <IconButton
-              icon={<CopyIcon />}
-              text={Locale.Chat.Actions.Copy}
-              key="copy"
-              onClick={() => copyToClipboard(res)}
-            />,
-          ],
-        });
-        setTimeout(() => {
-          window.open(res, "_blank");
-        }, 800);
+        if (res.id) {
+          const newShareUrl = `${location.origin}/#${Path.Share}/${res.id}`;
+          setShareUrl(newShareUrl);
+        } else {
+          showToast(res.msg ?? Locale.Export.ShareError);
+        }
       })
       .catch((e) => {
         console.error("[Share]", e);
-        showToast(prettyObject(e));
+        showToast(e.message ?? Locale.Export.ShareError);
       })
       .finally(() => setLoading(false));
   };
 
-  const share = async () => {
-    if (props.messages?.length) {
-      setLoading(true);
-      setShouldExport(true);
-    }
-  };
+  const ttlOptions = [
+    { label: "1 Hour", value: 3600 },
+    { label: "1 Day", value: 86400 },
+    { label: "1 Week", value: 604800 },
+    { label: "1 Month", value: 2592000 },
+    { label: "Never", value: 0 },
+    { label: "Custom...", value: "custom" },
+  ];
 
   return (
     <>
@@ -442,28 +468,101 @@ export function PreviewActions(props: {
           icon={<DownloadIcon />}
           onClick={props.download}
         ></IconButton>
-        {/* <IconButton
+        <IconButton
           text={Locale.Export.Share}
           bordered
           shadow
           icon={loading ? <LoadingIcon /> : <ShareIcon />}
-          onClick={share}
-        ></IconButton> */}
+          onClick={() => setShowOptionsModal(true)}
+        ></IconButton>
       </div>
-      <div
-        style={{
-          position: "fixed",
-          right: "200vw",
-          pointerEvents: "none",
-        }}
-      >
-        {shouldExport && (
-          <RenderExport
-            messages={props.messages ?? []}
-            onRender={onRenderMsgs}
-          />
-        )}
-      </div>
+      {showOptionsModal && (
+        <div className="modal-mask">
+          <Modal
+            title={Locale.Export.Artifacts.SetExpiration}
+            onClose={() => setShowOptionsModal(false)}
+            actions={[
+              <IconButton
+                key="share"
+                icon={<ShareIcon />}
+                bordered
+                text={Locale.Export.Share}
+                onClick={handleShare}
+                disabled={calculatedTtlInSeconds === null}
+              />,
+            ]}
+          >
+            <div className={styles["export-share-options"]}>
+              <label>{Locale.Export.Artifacts.ExpirationLabel}</label>
+              <select
+                value={selectedTtlOption}
+                onChange={(e) => setSelectedTtlOption(e.target.value)}
+                className={styles["export-share-select"]}
+              >
+                {ttlOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {selectedTtlOption === "custom" && (
+                <div className={styles["export-custom-ttl"]}>
+                  <input
+                    type="number"
+                    min="1"
+                    className={styles["export-custom-ttl-input"]}
+                    value={customTtlValue}
+                    onChange={(e) => setCustomTtlValue(Number(e.target.value))}
+                  />
+                  <select
+                    className={styles["export-custom-ttl-unit"]}
+                    value={customTtlUnit}
+                    onChange={(e) => setCustomTtlUnit(e.target.value)}
+                  >
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </Modal>
+        </div>
+      )}
+
+      {showResultModal && (
+        <div className="modal-mask">
+          <Modal
+            title={
+              shareUrl
+                ? Locale.Export.Share
+                : shareResult?.error
+                ? "Error"
+                : "Sharing..."
+            }
+            onClose={() => setShowResultModal(false)}
+            actions={[
+              <IconButton
+                key="copy"
+                icon={<CopyIcon />}
+                bordered
+                text={Locale.Chat.Actions.Copy}
+                onClick={() => {
+                  copyToClipboard(shareUrl).then(() =>
+                    setShowResultModal(false),
+                  );
+                }}
+              />,
+            ]}
+          >
+            <div>
+              <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+                {shareUrl}
+              </a>
+            </div>
+          </Modal>
+        </div>
+      )}
     </>
   );
 }
@@ -492,11 +591,13 @@ function ExportAvatar(props: ExportAvatarProps) {
 export function ImagePreviewer(props: {
   messages: ChatMessage[];
   topic: string;
+  mask: Mask;
   useDisplayName: boolean;
+  notShowActions?: boolean;
 }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
-  const mask = session.mask;
+  const mask = props.mask;
   const config = useAppConfig();
 
   const previewRef = useRef<HTMLDivElement>(null);
@@ -617,12 +718,15 @@ export function ImagePreviewer(props: {
   };
   return (
     <div className={styles["image-previewer"]}>
-      <PreviewActions
-        copy={copy}
-        download={download}
-        showCopy={!isMobile}
-        messages={props.messages}
-      />
+      {!props.notShowActions && (
+        <PreviewActions
+          copy={copy}
+          download={download}
+          showCopy={!isMobile}
+          messages={props.messages}
+          session={session}
+        />
+      )}
       <div
         className={`${styles["preview-body"]} ${styles["default-theme"]}`}
         ref={previewRef}
@@ -639,7 +743,15 @@ export function ImagePreviewer(props: {
 
           <div>
             <div className={styles["main-title"]}>NextChat</div>
-            <div className={styles["sub-title"]}>{REPO_URL}</div>
+            {/* <div className={styles["sub-title"]}>{REPO_URL}</div> */}
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles["sub-title"]}
+            >
+              {REPO_URL}
+            </a>
             <div className={styles["icons"]}>
               <ExportAvatar avatar={config.avatar} />
               <span className={styles["icon-space"]}>&</span>

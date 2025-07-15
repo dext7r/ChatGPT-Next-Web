@@ -1,8 +1,11 @@
+// app/api/share/route.ts
+
 import md5 from "spark-md5";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSideConfig } from "@/app/config/server";
 import { auth } from "@/app/api/auth";
 import { ModelProvider } from "@/app/constant";
+import { ChatSession } from "@/app/store";
 
 async function handle(req: NextRequest) {
   const serverConfig = getServerSideConfig();
@@ -23,7 +26,7 @@ async function handle(req: NextRequest) {
     Authorization: `Bearer ${serverConfig.cloudflareKVApiKey}`,
   });
   if (req.method === "POST") {
-    // post 请求添加身份验证避免恶意请求
+    // Add authentication to prevent malicious requests
     const authResult = auth(req, ModelProvider.System);
     if (authResult.error) {
       return NextResponse.json(
@@ -31,8 +34,7 @@ async function handle(req: NextRequest) {
         { status: 401 },
       );
     }
-
-    let payload: { code: string; ttl?: number };
+    let payload: { session: ChatSession; ttl?: number };
     try {
       payload = await req.json();
     } catch (e) {
@@ -41,75 +43,99 @@ async function handle(req: NextRequest) {
         { status: 400 },
       );
     }
-
-    const { code, ttl: clientTTL } = payload;
-    if (!code) {
+    const { session, ttl: clientTTL } = payload;
+    if (!session || !session.messages || !session.topic) {
       return NextResponse.json(
-        { error: true, msg: "Missing 'code' in request body" },
+        { error: true, msg: "Missing 'session' data in request body" },
         { status: 400 },
       );
     }
 
-    // const clonedBody = await req.text();
-    const hashedCode = md5.hash(code).trim();
+    const sessionString = JSON.stringify(session);
+    const hashedSession = md5.hash(sessionString).trim();
+
     const body: {
       key: string;
       value: string;
       expiration_ttl?: number;
     } = {
-      key: hashedCode,
-      value: code,
+      key: hashedSession,
+      value: sessionString,
     };
+
     try {
       const serverDefaultTTL = parseInt(serverConfig.cloudflareKVTTL || "0");
-      // Prioritize client-side TTL if it's a valid number >= 60 seconds
+
       if (typeof clientTTL === "number" && clientTTL >= 60) {
-        // Optional: you can set a maximum TTL to prevent abuse, e.g., 1 year (31536000 seconds)
+        // Optional: set a maximum TTL to prevent abuse, e.g., 1 year (31536000 seconds)
         const maxTTL = 31536000;
         body["expiration_ttl"] = Math.min(clientTTL, maxTTL);
       } else if (serverDefaultTTL >= 60) {
-        // Fallback to server default TTL
         body["expiration_ttl"] = serverDefaultTTL;
       }
     } catch (e) {
-      console.error(e);
+      console.error("[Share API] TTL Error:", e);
     }
-    const res = await fetch(`${storeUrl()}/bulk`, {
+    const res = await fetch(`${storeUrl()}/values/${hashedSession}`, {
       headers: {
         ...storeHeaders(),
         "Content-Type": "application/json",
       },
       method: "PUT",
-      body: JSON.stringify([body]),
+      body: body.value, // Cloudflare KV API for single key expects the value directly in the body
     });
-    const result = await res.json();
-    // console.log("save data", result);
-    if (result?.success) {
-      return NextResponse.json(
-        { code: 0, id: hashedCode, result },
-        { status: res.status },
-      );
+
+    if (res.ok) {
+      // If an expiration is set, we need to update the metadata
+      if (body.expiration_ttl) {
+        await fetch(`${storeUrl()}/keys/${hashedSession}/metadata`, {
+          method: "PUT",
+          headers: {
+            ...storeHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expiration_ttl: body.expiration_ttl }),
+        });
+      }
+      return NextResponse.json({ code: 0, id: hashedSession }, { status: 200 });
     }
+
+    const result = await res.json();
+    console.error("[Share API] Save data error:", result);
     return NextResponse.json(
-      { error: true, msg: "Save data error" },
+      { error: true, msg: "Save data error", details: result },
       { status: 400 },
     );
   }
+
   if (req.method === "GET") {
-    const id = req?.nextUrl?.searchParams?.get("id");
+    const id = req.nextUrl.searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { error: true, msg: "Missing 'id' parameter" },
+        { status: 400 },
+      );
+    }
     const res = await fetch(`${storeUrl()}/values/${id}`, {
       headers: storeHeaders(),
       method: "GET",
     });
+
+    if (!res.ok) {
+      // If the key is not found, Cloudflare returns a 404
+      return new Response("Session not found or expired.", { status: 404 });
+    }
+
     return new Response(res.body, {
       status: res.status,
       statusText: res.statusText,
-      headers: res.headers,
+      headers: { "Content-Type": "application/json" },
     });
   }
+
   return NextResponse.json(
-    { error: true, msg: "Invalid request" },
-    { status: 400 },
+    { error: true, msg: "Invalid request method" },
+    { status: 405 },
   );
 }
 

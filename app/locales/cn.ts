@@ -268,7 +268,10 @@ const cn = {
     Title: "分享聊天记录",
     Copy: "全部复制",
     Download: "下载文件",
-    Share: "分享到 ShareGPT",
+    Share: "创建分享链接",
+    ShareError: "分享失败，请检查网络连接或稍后再试",
+    ShareNotFound: "分享链接不存在",
+    ShareNotFoundDesc: "请检查链接是否正确或已过期",
     MessageFromYou: "用户",
     MessageFromChatGPT: "ChatGPT",
     Format: {
@@ -300,6 +303,8 @@ const cn = {
       Title: "分享页面",
       Error: "分享失败",
       Expired: "分享链接已过期或请求ID不存在",
+      SetExpiration: "设置分享过期时间",
+      ExpirationLabel: "过期时间:",
     },
   },
   Select: {

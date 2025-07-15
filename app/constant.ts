@@ -31,6 +31,7 @@ export enum Path {
   SearchChat = "/search-chat",
   CloudBackup = "/cloud-backup",
   Artifacts = "/artifacts",
+  Share = "/share",
   CustomProvider = "/custom-provider",
 }
 
@@ -40,6 +41,7 @@ export enum ApiPath {
   Anthropic = "/api/anthropic",
   Google = "/api/google",
   Artifacts = "/api/artifacts",
+  Share = "/api/share",
 }
 
 export enum SlotID {

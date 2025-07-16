@@ -9,7 +9,6 @@ import {
   Modal,
   Select,
   showImageModal,
-  // showModal,
   showToast,
 } from "./ui-lib";
 import { IconButton } from "./button";
@@ -360,95 +359,9 @@ export function PreviewActions(props: {
   download: () => void;
   copy: () => void;
   showCopy?: boolean;
-  messages?: ChatMessage[];
-  session?: ChatSession;
+  share?: () => void;
+  shareLoading?: boolean;
 }) {
-  const [loading, setLoading] = useState(false);
-  // const [shouldExport, setShouldExport] = useState(false);
-  const [showOptionsModal, setShowOptionsModal] = useState(false);
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
-  const [shareResult, setShareResult] = useState<
-    { url: string; error?: null } | { url?: null; error: string } | null
-  >(null);
-
-  const [selectedTtlOption, setSelectedTtlOption] = useState("86400"); // Default to '1 Day'
-  const [customTtlValue, setCustomTtlValue] = useState(1);
-  const [customTtlUnit, setCustomTtlUnit] = useState("days");
-
-  const calculatedTtlInSeconds = useMemo(() => {
-    if (selectedTtlOption !== "custom") {
-      return Number(selectedTtlOption);
-    }
-    const value = Number(customTtlValue);
-    if (isNaN(value) || value <= 0) return null; // Invalid state
-    switch (customTtlUnit) {
-      case "minutes":
-        return value * 60;
-      case "hours":
-        return value * 3600;
-      case "days":
-        return value * 86400;
-      default:
-        return null; // Invalid unit
-    }
-  }, [selectedTtlOption, customTtlValue, customTtlUnit]);
-
-  const handleShare = () => {
-    if (
-      !props.session ||
-      !props.messages ||
-      loading ||
-      calculatedTtlInSeconds === null
-    )
-      return;
-
-    setLoading(true);
-    setShowOptionsModal(false); // Close options modal
-    setShowResultModal(true);
-    setShareResult(null);
-
-    const sessionToShare = {
-      ...props.session,
-      messages: props.messages,
-    };
-
-    fetch(ApiPath.Share, {
-      method: "POST",
-      body: JSON.stringify({
-        session: sessionToShare,
-        ttl: calculatedTtlInSeconds, // Pass the TTL to the backend
-      }),
-      headers: {
-        "Content-Type": "application/json",
-        ...getHeaders(),
-      },
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.id) {
-          const newShareUrl = `${location.origin}/#${Path.Share}/${res.id}`;
-          setShareUrl(newShareUrl);
-        } else {
-          showToast(res.msg ?? Locale.Export.ShareError);
-        }
-      })
-      .catch((e) => {
-        console.error("[Share]", e);
-        showToast(e.message ?? Locale.Export.ShareError);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  const ttlOptions = [
-    { label: "1 Hour", value: 3600 },
-    { label: "1 Day", value: 86400 },
-    { label: "1 Week", value: 604800 },
-    { label: "1 Month", value: 2592000 },
-    { label: "Never", value: 0 },
-    { label: "Custom...", value: "custom" },
-  ];
-
   return (
     <>
       <div className={styles["preview-actions"]}>
@@ -468,101 +381,16 @@ export function PreviewActions(props: {
           icon={<DownloadIcon />}
           onClick={props.download}
         ></IconButton>
-        <IconButton
-          text={Locale.Export.Share}
-          bordered
-          shadow
-          icon={loading ? <LoadingIcon /> : <ShareIcon />}
-          onClick={() => setShowOptionsModal(true)}
-        ></IconButton>
+        {props.share && (
+          <IconButton
+            text={Locale.Export.Share}
+            bordered
+            shadow
+            icon={props.shareLoading ? <LoadingIcon /> : <ShareIcon />}
+            onClick={props.share}
+          ></IconButton>
+        )}
       </div>
-      {showOptionsModal && (
-        <div className="modal-mask">
-          <Modal
-            title={Locale.Export.Artifacts.SetExpiration}
-            onClose={() => setShowOptionsModal(false)}
-            actions={[
-              <IconButton
-                key="share"
-                icon={<ShareIcon />}
-                bordered
-                text={Locale.Export.Share}
-                onClick={handleShare}
-                disabled={calculatedTtlInSeconds === null}
-              />,
-            ]}
-          >
-            <div className={styles["export-share-options"]}>
-              <label>{Locale.Export.Artifacts.ExpirationLabel}</label>
-              <select
-                value={selectedTtlOption}
-                onChange={(e) => setSelectedTtlOption(e.target.value)}
-                className={styles["export-share-select"]}
-              >
-                {ttlOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              {selectedTtlOption === "custom" && (
-                <div className={styles["export-custom-ttl"]}>
-                  <input
-                    type="number"
-                    min="1"
-                    className={styles["export-custom-ttl-input"]}
-                    value={customTtlValue}
-                    onChange={(e) => setCustomTtlValue(Number(e.target.value))}
-                  />
-                  <select
-                    className={styles["export-custom-ttl-unit"]}
-                    value={customTtlUnit}
-                    onChange={(e) => setCustomTtlUnit(e.target.value)}
-                  >
-                    <option value="minutes">Minutes</option>
-                    <option value="hours">Hours</option>
-                    <option value="days">Days</option>
-                  </select>
-                </div>
-              )}
-            </div>
-          </Modal>
-        </div>
-      )}
-
-      {showResultModal && (
-        <div className="modal-mask">
-          <Modal
-            title={
-              shareUrl
-                ? Locale.Export.Share
-                : shareResult?.error
-                ? "Error"
-                : "Sharing..."
-            }
-            onClose={() => setShowResultModal(false)}
-            actions={[
-              <IconButton
-                key="copy"
-                icon={<CopyIcon />}
-                bordered
-                text={Locale.Chat.Actions.Copy}
-                onClick={() => {
-                  copyToClipboard(shareUrl).then(() =>
-                    setShowResultModal(false),
-                  );
-                }}
-              />,
-            ]}
-          >
-            <div>
-              <a href={shareUrl} target="_blank" rel="noopener noreferrer">
-                {shareUrl}
-              </a>
-            </div>
-          </Modal>
-        </div>
-      )}
     </>
   );
 }
@@ -601,6 +429,97 @@ export function ImagePreviewer(props: {
   const config = useAppConfig();
 
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Share related state and logic
+  const [loading, setLoading] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [shareResult, setShareResult] = useState<
+    | { url: string; error?: undefined }
+    | { url?: undefined; error: string }
+    | null
+  >(null);
+  const [selectedTtlOption, setSelectedTtlOption] = useState("86400"); // Default to '1 Day'
+  const [customTtlValue, setCustomTtlValue] = useState(1);
+  const [customTtlUnit, setCustomTtlUnit] = useState("days");
+
+  const calculatedTtlInSeconds = useMemo(() => {
+    if (selectedTtlOption !== "custom") {
+      return Number(selectedTtlOption);
+    }
+    const value = Number(customTtlValue);
+    if (isNaN(value) || value <= 0) return null; // Invalid state
+    switch (customTtlUnit) {
+      case "minutes":
+        return value * 60;
+      case "hours":
+        return value * 3600;
+      case "days":
+        return value * 86400;
+      default:
+        return null; // Invalid unit
+    }
+  }, [selectedTtlOption, customTtlValue, customTtlUnit]);
+
+  const handleShare = () => {
+    if (
+      !session ||
+      !props.messages ||
+      loading ||
+      calculatedTtlInSeconds === null
+    )
+      return;
+
+    setLoading(true);
+    setShowOptionsModal(false);
+    setShowResultModal(true);
+    setShareResult(null);
+
+    const sessionToShare = {
+      ...session,
+      messages: props.messages,
+      topic: props.topic,
+    };
+
+    fetch(ApiPath.Share, {
+      method: "POST",
+      body: JSON.stringify({
+        session: sessionToShare,
+        ttl: calculatedTtlInSeconds,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(),
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.id) {
+          const shareUrl = `${location.origin}/#${Path.Share}/${res.id}`;
+          setShareResult({ url: shareUrl });
+        } else {
+          const errorMsg = res.msg ?? Locale.Export.ShareError;
+          setShareResult({ error: errorMsg });
+          showToast(errorMsg);
+        }
+      })
+      .catch((e) => {
+        console.error("[Share]", e);
+        const errorMsg = e.message ?? Locale.Export.ShareError;
+        setShareResult({ error: errorMsg });
+        showToast(errorMsg);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  const ttlOptions = [
+    { label: "1 Hour", value: 3600 },
+    { label: "1 Day", value: 86400 },
+    { label: "1 Week", value: 604800 },
+    { label: "1 Month", value: 2592000 },
+    { label: "Never", value: 0 },
+    { label: "Custom...", value: "custom" },
+  ];
 
   const copy = () => {
     showToast(Locale.Export.Image.Toast);
@@ -723,8 +642,8 @@ export function ImagePreviewer(props: {
           copy={copy}
           download={download}
           showCopy={!isMobile}
-          messages={props.messages}
-          session={session}
+          share={() => setShowOptionsModal(true)}
+          shareLoading={loading}
         />
       )}
       <div
@@ -896,6 +815,107 @@ export function ImagePreviewer(props: {
           );
         })}
       </div>
+      {showOptionsModal && (
+        <div className="modal-mask">
+          <Modal
+            title={Locale.Export.Artifacts.SetExpiration}
+            onClose={() => setShowOptionsModal(false)}
+            actions={[
+              <IconButton
+                key="share"
+                icon={<ShareIcon />}
+                bordered
+                text={Locale.Export.Share}
+                onClick={handleShare}
+                disabled={calculatedTtlInSeconds === null}
+              />,
+            ]}
+          >
+            <div className={styles["export-share-options"]}>
+              <label>{Locale.Export.Artifacts.ExpirationLabel}</label>
+              <select
+                value={selectedTtlOption}
+                onChange={(e) => setSelectedTtlOption(e.target.value)}
+                className={styles["export-share-select"]}
+              >
+                {ttlOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {selectedTtlOption === "custom" && (
+                <div className={styles["export-custom-ttl"]}>
+                  <input
+                    type="number"
+                    min="1"
+                    className={styles["export-custom-ttl-input"]}
+                    value={customTtlValue}
+                    onChange={(e) => setCustomTtlValue(Number(e.target.value))}
+                  />
+                  <select
+                    className={styles["export-custom-ttl-unit"]}
+                    value={customTtlUnit}
+                    onChange={(e) => setCustomTtlUnit(e.target.value)}
+                  >
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </Modal>
+        </div>
+      )}
+
+      {showResultModal && (
+        <div className="modal-mask">
+          <Modal
+            title={
+              shareResult?.url
+                ? Locale.Export.Share
+                : shareResult?.error
+                ? "Error"
+                : "Sharing..."
+            }
+            onClose={() => setShowResultModal(false)}
+            actions={
+              shareResult?.url
+                ? [
+                    <IconButton
+                      key="copy"
+                      icon={<CopyIcon />}
+                      bordered
+                      text={Locale.Chat.Actions.Copy}
+                      onClick={() => {
+                        if (shareResult.url) {
+                          copyToClipboard(shareResult.url).then(() =>
+                            setShowResultModal(false),
+                          );
+                        }
+                      }}
+                    />,
+                  ]
+                : []
+            }
+          >
+            <div>
+              {shareResult?.url && (
+                <a
+                  href={shareResult.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {shareResult.url}
+                </a>
+              )}
+              {shareResult?.error && <div>{shareResult.error}</div>}
+              {!shareResult && <LoadingIcon />}
+            </div>
+          </Modal>
+        </div>
+      )}
     </div>
   );
 }
@@ -955,7 +975,7 @@ export function MarkdownPreviewer(props: {
         copy={copy}
         download={download}
         showCopy={true}
-        messages={props.messages}
+        // messages={props.messages}
       />
       <div className="markdown-body">
         <pre className={styles["export-content"]}>{mdText}</pre>
@@ -998,7 +1018,7 @@ export function JsonPreviewer(props: {
         copy={copy}
         download={download}
         showCopy={false}
-        messages={props.messages}
+        // messages={props.messages}
       />
       <div className="markdown-body" onClick={copy}>
         <Markdown content={mdText} />

@@ -31,7 +31,7 @@ async function handle(req: NextRequest) {
         { status: 401 },
       );
     }
-
+    console.log("[Request Task] artifacts-share");
     let payload: { code: string; ttl?: number };
     try {
       payload = await req.json();

@@ -87,7 +87,7 @@ export async function requestOpenai(req: NextRequest) {
       fetchOptions.body = clonedBody;
 
       const jsonBody = JSON.parse(clonedBody) as { model?: string };
-      console.log("[Requset Model] ", jsonBody?.model ?? "");
+      console.log("[Request Model] ", jsonBody?.model ?? "");
       // not undefined and is false
       const models = [
         serverConfig.customModels,

@@ -34,6 +34,7 @@ async function handle(req: NextRequest) {
         { status: 401 },
       );
     }
+    console.log("[Request Task] export-share");
     let payload: { session: ChatSession; ttl?: number };
     try {
       payload = await req.json();

@@ -50,6 +50,7 @@ const en: LocaleType = {
       Delete: "Delete",
       Edit: "Edit",
       EditCode: "Edit Code Block",
+      EditFailed: "Edit failed, unable to find the code block to replace",
       EditSucceeded: "Finished editing code block",
       EditToInput: "Edit to Input",
       EditNoMessage: "No message to edit",

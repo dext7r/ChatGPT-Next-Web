@@ -209,3 +209,35 @@
 .code-content {
   position: relative;
 }
+
+.code-editor-modal {
+  display: flex;
+  flex-direction: column;
+
+  .code-editor-title {
+    max-width: unset;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+  .code-editor-content {
+    max-width: unset;
+
+    &:focus-within {
+      border: 2px solid var(--primary);
+      outline: none;
+      border-radius: 6px;
+    }
+  }
+}
+
+.mermaid-error {
+  color: red;
+  padding: 10px;
+  border: 1px solid red;
+
+  .mermaid-code {
+    display: block;
+    white-space: pre-wrap;
+    color: var(--black);
+  }
+}

@@ -720,6 +720,23 @@ function escapeDollarNumber(text: string) {
   return escapedText;
 }
 
+function autoFixLatexDisplayMode(text: string): string {
+  // 定义一系列常见的、必须在展示模式下使用的 LaTeX 环境
+  const displayEnvs =
+    /\\begin\{(?:equation|equation\*|align|align\*|gather|gather\*|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|split)\}/;
+
+  // 这个正则表达式用于匹配被单美元符号包裹的内容（同时避免匹配双美元符号）
+  return text.replace(/\$(?!\$)([\s\S]*?)(?<!\$)\$/g, (match, content) => {
+    // 如果一个行内公式块的内容，包含了展示模式的环境...
+    if (displayEnvs.test(content)) {
+      // ...就将这个块升级为展示模式，即把 `$` 替换为 `$$`
+      return `$$${content}$$`;
+    }
+    // 否则，保持原样
+    return match;
+  });
+}
+
 function escapeBrackets(text: string) {
   const pattern =
     /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g;
@@ -881,8 +898,8 @@ function R_MarkDownContent(props: {
   onCodeUpdate?: (oldCode: string, newCode: string) => void;
 }) {
   const escapedContent = useMemo(() => {
-    const originalContent = formatBoldText(
-      escapeBrackets(escapeDollarNumber(props.content)),
+    const originalContent = autoFixLatexDisplayMode(
+      formatBoldText(escapeBrackets(escapeDollarNumber(props.content))),
     );
     const { searchText, remainText: searchRemainText } = formatSearchText(
       originalContent,
@@ -894,7 +911,7 @@ function R_MarkDownContent(props: {
     );
     const content = searchText + thinkText + remainText;
     return tryWrapHtmlCode(content);
-  }, [props.content]);
+  }, [props.content, props.searchingTime, props.thinkingTime]);
 
   return (
     <ReactMarkdown

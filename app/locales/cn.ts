@@ -886,6 +886,7 @@ const cn = {
     SelectALL: "所有模型",
     NoPresetRule: "未预置规则",
     Replace: "替换",
+    MermaidError: "Mermaid 渲染失败，请检查语法",
   },
   Exporter: {
     Description: {

@@ -262,18 +262,21 @@ function Summary(props: { children: React.ReactNode }) {
 
 export function Mermaid(props: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [hasError, setHasError] = useState(false);
+  // const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (props.code && ref.current) {
       mermaid
         .run({
           nodes: [ref.current],
-          suppressErrors: true,
+          suppressErrors: false,
         })
         .catch((e) => {
-          setHasError(true);
-          console.error("[Mermaid] ", e.message);
+          // setHasError(true);
+          // console.error("[Mermaid] ", e.message);
+          const errorMsg = e.message || "Mermaid rendering error";
+          setErrorMessage(errorMsg);
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,11 +287,22 @@ export function Mermaid(props: { code: string }) {
     if (!svg) return;
     const text = new XMLSerializer().serializeToString(svg);
     const blob = new Blob([text], { type: "image/svg+xml" });
-    showImageModal(URL.createObjectURL(blob));
+    const fileName = `mermaid-${Date.now()}.svg`;
+    showImageModal(URL.createObjectURL(blob), fileName);
   }
 
-  if (hasError) {
-    return null;
+  if (errorMessage) {
+    // return null;
+    return (
+      <div className={styles["mermaid-error"]}>
+        <div>{Locale.UI.MermaidError}</div>
+        {errorMessage && <pre>{errorMessage}</pre>}
+        <details>
+          <summary>Mermaid Code</summary>
+          <code className={styles["mermaid-code"]}>{props.code}</code>
+        </details>
+      </div>
+    );
   }
 
   return (
@@ -297,6 +311,7 @@ export function Mermaid(props: { code: string }) {
       style={{
         cursor: "pointer",
         overflow: "auto",
+        maxHeight: "50vh",
       }}
       ref={ref}
       onClick={() => viewSvgInNewWindow()}
@@ -306,9 +321,11 @@ export function Mermaid(props: { code: string }) {
   );
 }
 
-export function PreCode(props: { children: any }) {
+export function PreCode(props: { children: any; status?: boolean }) {
   const ref = useRef<HTMLPreElement>(null);
   const previewRef = useRef<HTMLPreviewHander>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
   const { height } = useWindowSize();
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState("");
@@ -318,6 +335,8 @@ export function PreCode(props: { children: any }) {
     "html" | "mermaid" | "svg" | null
   >(null);
 
+  const isStatusReady = !props.status;
+
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const config = useAppConfig();
@@ -325,6 +344,8 @@ export function PreCode(props: { children: any }) {
     session.mask?.enableArtifacts !== false && config.enableArtifacts;
 
   useEffect(() => {
+    if (!isStatusReady) return;
+
     if (ref.current) {
       const codeElement = ref.current.querySelector("code");
       if (codeElement) {
@@ -359,11 +380,29 @@ export function PreCode(props: { children: any }) {
         }
       }
     }
-  }, [enableArtifacts]);
+  }, [enableArtifacts, isStatusReady]);
+
   const copyCode = () => {
     copyToClipboard(originalCode);
   };
   const downloadCode = async () => {
+    // 单独处理 mermaid，改成下载 svg 图片
+    if (contentType === "mermaid" && previewContainerRef.current) {
+      const svgElement = previewContainerRef.current.querySelector("svg");
+      if (svgElement) {
+        // Add a white background to the SVG for better viewing
+        svgElement.style.backgroundColor = "white";
+
+        const svgString = new XMLSerializer().serializeToString(svgElement);
+        const filename = `mermaid-${Date.now()}.svg`;
+        await downloadAs(svgString, filename);
+
+        // Reset the background color after download
+        svgElement.style.backgroundColor = "";
+        return; // Stop execution here
+      }
+    }
+
     let extension = language || "txt";
     if (contentType === "html") extension = "html";
     else if (contentType === "svg") extension = "svg";
@@ -464,6 +503,7 @@ export function PreCode(props: { children: any }) {
       <div className={styles["code-content"]}>
         {showPreview ? (
           <div
+            ref={previewContainerRef}
             className={styles["preview-container"]}
             onClick={handlePreviewClick}
           >
@@ -795,6 +835,7 @@ function R_MarkDownContent(props: {
   searchingTime?: number;
   thinkingTime?: number;
   fontSize?: number;
+  status?: boolean;
 }) {
   const escapedContent = useMemo(() => {
     const originalContent = autoFixLatexDisplayMode(
@@ -829,7 +870,9 @@ function R_MarkDownContent(props: {
       ]}
       components={
         {
-          pre: PreCode,
+          pre: (preProps: any) => (
+            <PreCode {...preProps} status={props.status} />
+          ),
           code: CustomCode,
           p: (pProps: any) => <p {...pProps} dir="auto" />,
           searchcollapse: ({
@@ -1015,10 +1058,12 @@ export function Markdown(
         <LoadingIcon />
       ) : (
         <MarkdownContent
+          key={processedContent}
           content={processedContent}
           searchingTime={props.searchingTime}
           thinkingTime={props.thinkingTime}
           fontSize={props.fontSize}
+          status={props.status}
         />
       )}
     </div>

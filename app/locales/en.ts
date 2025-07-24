@@ -922,6 +922,7 @@ const en: LocaleType = {
     SelectALL: "All Models",
     NoPresetRule: "No preset rules",
     Replace: "Replace",
+    MermaidError: "Mermaid rendering failed, please check the syntax",
   },
   Exporter: {
     Description: {

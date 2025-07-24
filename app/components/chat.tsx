@@ -3161,34 +3161,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     );
   };
 
-  /**
-   * 智能反缩进函数
-   * 移除一个多行字符串中每一行的公共前导空白
-   * @param text 要处理的字符串
-   * @returns 反缩进后的字符串
-   */
-  const dedent = (text: string): string => {
-    const lines = text.split("\n");
-    let minIndent: number | null = null;
-    for (const line of lines) {
-      if (line.trim() === "") continue;
-      const match = line.match(/^(\s*)/);
-      const indentLength = match ? match[1].length : 0;
-      if (minIndent === null || indentLength < minIndent) {
-        minIndent = indentLength;
-      }
-    }
-    if (minIndent === null || minIndent === 0) {
-      return text;
-    }
-    const prefix = " ".repeat(minIndent);
-    return lines
-      .map((line) =>
-        line.startsWith(prefix) ? line.substring(minIndent!) : line,
-      )
-      .join("\n");
-  };
-
   const handleCodeUpdate = (
     messageId: string,
     oldCode: string,
@@ -3199,76 +3171,72 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       if (!msg) return;
 
       const fullContent = getMessageTextContent(msg);
+      let finalContent = fullContent;
+      let replaced = false;
 
-      const regex = /^(\s*)```(\w*)\n([\s\S]+?)\n\s*```\s*$/gm;
+      // 优化的正则表达式，用于查找代码块并捕获其缩进
+      // ^(\s*): 捕获组 1: 行首的引导空格 (缩进)
+      // ```(\w*): 开放代码块标记，并捕获组 2: 语言标识 (可选)
+      // \n([\s\S]+?)\n: 捕获组 3: 代码内容
+      // \1```: 闭合代码块标记，\1 确保其缩进与开放标记相同
+      // 'gm' 标志: 全局和多行匹配
+      const regex = /^(\s*)```(\w*)\n([\s\S]+?)\n\1```/gm;
+      let match;
 
       const normalizedOldCode = oldCode.replace(/\r\n/g, "\n").trim();
+      while ((match = regex.exec(fullContent)) !== null) {
+        const blockIndentation = match[1]; // 捕获到的缩进
+        const lang = match[2]; // 捕获到的语言
+        const rawCode = match[3]; // 捕获到的代码
 
-      const allMatches = [...fullContent.matchAll(regex)];
-      const candidates = [];
-
-      for (const match of allMatches) {
-        const [
-          originalBlock,
-          blockIndentation, // 这是开头的缩进，我们用它来重建代码块
-          lang,
-          rawCode,
-        ] = match;
-
-        const dedentedCode = dedent(rawCode.replace(/\r\n/g, "\n"));
+        // 移除每行代码头部的公共缩进，以获得与编辑器内 oldCode 相匹配的纯净代码
+        const normalizedRawCode = rawCode.replace(/\r\n/g, "\n");
+        const dedentedCode = normalizedRawCode
+          .split("\n")
+          .map((line) =>
+            line.startsWith(blockIndentation)
+              ? line.substring(blockIndentation.length)
+              : line,
+          )
+          .join("\n");
 
         if (dedentedCode.trim() === normalizedOldCode) {
-          candidates.push({
-            originalBlock,
-            blockIndentation,
-            lang,
-            index: match.index!,
-          });
+          // 精确地重建原始代码块字符串，用于替换
+          const originalBlock = match[0];
+          // 创建新的代码块，并保留原始的缩进和语言标识
+          const indentedNewCode = newCode
+            .split("\n")
+            .map((line) => `${blockIndentation}${line}`)
+            .join("\n");
+          const newBlock = `${blockIndentation}\`\`\`${lang}\n${indentedNewCode}\n${blockIndentation}\`\`\``;
+
+          // 使用精确匹配到的 originalBlock 进行替换，避免内容相同的代码块被错误替换
+          finalContent = finalContent.replace(originalBlock, newBlock);
+          replaced = true;
+          break; // 假设一次只编辑一个代码块，找到后即停止
         }
       }
 
-      if (candidates.length === 0) {
+      if (!replaced) {
+        // 如果无法匹配，说明代码块格式非常特殊（例如没有换行），
+        // 此时不进行替换比错误地替换更安全。
+        // console.warn("无法找到要替换的代码块。其格式可能不标准。");
         showToast(Locale.Chat.Actions.EditFailed);
-        console.warn("无法找到要替换的代码块。");
-        return;
+        return; // 退出函数，不作任何更改
       }
-
-      // if (candidates.length > 1) {
-      //   showToast(Locale.Chat.Actions.EditAmbiguous);
-      //   console.warn("发现多个内容相同的代码块，无法确定要替换哪一个。");
-      //   return;
-      // }
-
-      const target = candidates[0];
-
-      // 重建新代码时，我们用回开头捕获的缩进(blockIndentation)
-      // 以保持文档的整体结构
-      const trimmedNewCode = newCode.trim();
-      const indentedNewCode = trimmedNewCode
-        .split("\n")
-        .map((line) => `${target.blockIndentation}${line}`)
-        .join("");
-      // 注意：重建闭合```时，我们也使用与开头相同的缩进，这是一种规范化行为
-      const newBlock = `${target.blockIndentation}\`\`\`${
-        target.lang
-      }\n${indentedNewCode.trim()}\n${target.blockIndentation}\`\`\``;
-
-      const finalContent =
-        fullContent.substring(0, target.index) +
-        newBlock +
-        fullContent.substring(target.index + target.originalBlock.length);
 
       if (typeof msg.content === "string") {
         msg.content = finalContent;
       } else if (Array.isArray(msg.content)) {
+        // 对于多模态内容，找到并更新文本部分
         const textPart = msg.content.find((part) => part.type === "text");
         if (textPart) {
           textPart.text = finalContent;
         }
       }
-
-      showToast(Locale.Chat.Actions.EditSucceeded);
     });
+
+    showToast(Locale.Chat.Actions.EditSucceeded);
   };
 
   const enableParamOverride =

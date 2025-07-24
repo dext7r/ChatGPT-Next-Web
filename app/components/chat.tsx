@@ -3161,56 +3161,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     );
   };
 
-  const handleCodeUpdate = (
-    messageId: string,
-    oldCode: string,
-    newCode: string,
-  ) => {
-    chatStore.updateTargetSession(session, (session) => {
-      const msg = session.messages.find((m) => m.id === messageId);
-      if (!msg) return;
-
-      const fullContent = getMessageTextContent(msg);
-      // We need to find the language of the code block for a robust replacement
-      const regex = /```(\w*)\n([\s\S]+?)\n```/g;
-      let match;
-      let finalContent = fullContent;
-      let replaced = false;
-
-      // This loop is to build a robust replacement string with the correct language tag
-      while ((match = regex.exec(fullContent)) !== null) {
-        const lang = match[1];
-        const code = match[2];
-        if (code.trim() === oldCode.trim()) {
-          const oldBlock = "```" + lang + "\n" + code + "\n```";
-          const newBlock = "```" + lang + "\n" + newCode + "\n```";
-          finalContent = finalContent.replace(oldBlock, newBlock);
-          replaced = true;
-          break; // Replace only the first match
-        }
-      }
-
-      // Fallback for code blocks without a language tag
-      if (!replaced) {
-        const oldBlock = "```\n" + oldCode + "\n```";
-        const newBlock = "```\n" + newCode + "\n```";
-        finalContent = finalContent.replace(oldBlock, newBlock);
-      }
-
-      if (typeof msg.content === "string") {
-        msg.content = finalContent;
-      } else if (Array.isArray(msg.content)) {
-        // For multimodal content, find and update the text part
-        const textPart = msg.content.find((part) => part.type === "text");
-        if (textPart) {
-          textPart.text = finalContent;
-        }
-      }
-    });
-
-    showToast(Locale.Chat.Actions.EditSucceeded);
-  };
-
   const enableParamOverride =
     session.mask.modelConfig.enableParamOverride || false;
   const paramOverrideContent =
@@ -3498,9 +3448,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       defaultShow={i >= messages.length - 6}
                       searchingTime={message.statistic?.searchingLatency}
                       thinkingTime={message.statistic?.reasoningLatency}
-                      onCodeUpdate={(oldCode, newCode) =>
-                        handleCodeUpdate(message.id, oldCode, newCode)
-                      }
                     />
                     {getMessageImages(message).length == 1 && (
                       <Image

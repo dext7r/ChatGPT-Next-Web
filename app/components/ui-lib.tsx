@@ -443,13 +443,7 @@ export function showPrompt(content: any, value = "", rows = 3) {
   });
 }
 
-function ImageModalContent({
-  img,
-  fileName: propFileName,
-}: {
-  img: string;
-  fileName?: string;
-}) {
+function ImageModalContent({ img }: { img: string }) {
   const [rotation, setRotation] = useState(0); // 旋转角度
   const [scale, setScale] = useState(1); // 缩放比例
   const [isAdaptive, setIsAdaptive] = useState(true);
@@ -516,17 +510,8 @@ function ImageModalContent({
         .replace(/\..+/, "")
         .replace("T", "_");
       // 假设 img 是完整的 URL 字符串
-      let fileName: string;
-      if (propFileName) {
-        fileName = propFileName;
-      } else {
-        // 否则，使用旧的逻辑作为备用方案
-        const fileExt = getFileExtension(img) || "jpg";
-        fileName = `image_${timestamp}.${fileExt}`;
-      }
-
-      // const fileExt = getFileExtension(img) || "jpg"; // img 是你图片 URL 的变量
-      // const fileName = `image_${timestamp}.${fileExt}`;
+      const fileExt = getFileExtension(img) || "jpg"; // img 是你图片 URL 的变量
+      const fileName = `image_${timestamp}.${fileExt}`;
 
       // 创建一个临时的下载链接
       const link = document.createElement("a");
@@ -717,11 +702,11 @@ function ImageModalContent({
   );
 }
 
-export function showImageModal(img: string, fileName?: string) {
+export function showImageModal(img: string) {
   showModal({
     title: Locale.Export.Image.Modal,
     defaultMax: true,
-    children: <ImageModalContent img={img} fileName={fileName} />,
+    children: <ImageModalContent img={img} />,
   });
 }
 export function SearchSelector<T>(props: {

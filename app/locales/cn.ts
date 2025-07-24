@@ -47,8 +47,6 @@ const cn = {
       PinToastAction: "查看",
       Delete: "删除",
       Edit: "编辑",
-      EditCode: "编辑代码块",
-      EditSucceeded: "已完成代码块编辑",
       EditToInput: "编辑为输入",
       EditNoMessage: "没有消息可以编辑",
       Save: "保存",
@@ -888,7 +886,6 @@ const cn = {
     SelectALL: "所有模型",
     NoPresetRule: "未预置规则",
     Replace: "替换",
-    MermaidError: "Mermaid 图表渲染失败",
   },
   Exporter: {
     Description: {

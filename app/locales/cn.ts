@@ -48,7 +48,6 @@ const cn = {
       Delete: "删除",
       Edit: "编辑",
       EditCode: "编辑代码块",
-      EditFailed: "编辑失败，无法找到要替换的代码块",
       EditSucceeded: "已完成代码块编辑",
       EditToInput: "编辑为输入",
       EditNoMessage: "没有消息可以编辑",

@@ -3171,64 +3171,36 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       if (!msg) return;
 
       const fullContent = getMessageTextContent(msg);
+      // We need to find the language of the code block for a robust replacement
+      const regex = /```(\w*)\n([\s\S]+?)\n```/g;
+      let match;
       let finalContent = fullContent;
       let replaced = false;
 
-      // 优化的正则表达式，用于查找代码块并捕获其缩进
-      // ^(\s*): 捕获组 1: 行首的引导空格 (缩进)
-      // ```(\w*): 开放代码块标记，并捕获组 2: 语言标识 (可选)
-      // \n([\s\S]+?)\n: 捕获组 3: 代码内容
-      // \1```: 闭合代码块标记，\1 确保其缩进与开放标记相同
-      // 'gm' 标志: 全局和多行匹配
-      const regex = /^(\s*)```(\w*)\n([\s\S]+?)\n\1```/gm;
-      let match;
-
-      const normalizedOldCode = oldCode.replace(/\r\n/g, "\n").trim();
+      // This loop is to build a robust replacement string with the correct language tag
       while ((match = regex.exec(fullContent)) !== null) {
-        const blockIndentation = match[1]; // 捕获到的缩进
-        const lang = match[2]; // 捕获到的语言
-        const rawCode = match[3]; // 捕获到的代码
-
-        // 移除每行代码头部的公共缩进，以获得与编辑器内 oldCode 相匹配的纯净代码
-        const normalizedRawCode = rawCode.replace(/\r\n/g, "\n");
-        const dedentedCode = normalizedRawCode
-          .split("\n")
-          .map((line) =>
-            line.startsWith(blockIndentation)
-              ? line.substring(blockIndentation.length)
-              : line,
-          )
-          .join("\n");
-
-        if (dedentedCode.trim() === normalizedOldCode) {
-          // 精确地重建原始代码块字符串，用于替换
-          const originalBlock = match[0];
-          // 创建新的代码块，并保留原始的缩进和语言标识
-          const indentedNewCode = newCode
-            .split("\n")
-            .map((line) => `${blockIndentation}${line}`)
-            .join("\n");
-          const newBlock = `${blockIndentation}\`\`\`${lang}\n${indentedNewCode}\n${blockIndentation}\`\`\``;
-
-          // 使用精确匹配到的 originalBlock 进行替换，避免内容相同的代码块被错误替换
-          finalContent = finalContent.replace(originalBlock, newBlock);
+        const lang = match[1];
+        const code = match[2];
+        if (code.trim() === oldCode.trim()) {
+          const oldBlock = "```" + lang + "\n" + code + "\n```";
+          const newBlock = "```" + lang + "\n" + newCode + "\n```";
+          finalContent = finalContent.replace(oldBlock, newBlock);
           replaced = true;
-          break; // 假设一次只编辑一个代码块，找到后即停止
+          break; // Replace only the first match
         }
       }
 
+      // Fallback for code blocks without a language tag
       if (!replaced) {
-        // 如果无法匹配，说明代码块格式非常特殊（例如没有换行），
-        // 此时不进行替换比错误地替换更安全。
-        // console.warn("无法找到要替换的代码块。其格式可能不标准。");
-        showToast(Locale.Chat.Actions.EditFailed);
-        return; // 退出函数，不作任何更改
+        const oldBlock = "```\n" + oldCode + "\n```";
+        const newBlock = "```\n" + newCode + "\n```";
+        finalContent = finalContent.replace(oldBlock, newBlock);
       }
 
       if (typeof msg.content === "string") {
         msg.content = finalContent;
       } else if (Array.isArray(msg.content)) {
-        // 对于多模态内容，找到并更新文本部分
+        // For multimodal content, find and update the text part
         const textPart = msg.content.find((part) => part.type === "text");
         if (textPart) {
           textPart.text = finalContent;

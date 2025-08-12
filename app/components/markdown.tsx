@@ -837,6 +837,8 @@ function R_MarkDownContent(props: {
   fontSize?: number;
   status?: boolean;
 }) {
+  const isStreaming = !!props.status;
+
   const escapedContent = useMemo(() => {
     const originalContent = autoFixLatexDisplayMode(
       formatBoldText(escapeBrackets(escapeDollarNumber(props.content))),
@@ -853,21 +855,29 @@ function R_MarkDownContent(props: {
     return tryWrapHtmlCode(content);
   }, [props.content, props.searchingTime, props.thinkingTime]);
 
+  const remarkPlugins = useMemo(
+    () =>
+      isStreaming
+        ? [RemarkGfm, RemarkBreaks]
+        : [RemarkMath, RemarkGfm, RemarkBreaks],
+    [isStreaming],
+  );
+  const rehypePlugins = useMemo(
+    () =>
+      isStreaming
+        ? [RehypeRaw, [rehypeSanitize, sanitizeOptions]]
+        : [
+            RehypeRaw,
+            RehypeKatex,
+            [rehypeSanitize, sanitizeOptions],
+            [RehypeHighlight, { detect: false, ignoreMissing: true }],
+          ],
+    [isStreaming],
+  );
   return (
     <ReactMarkdown
-      remarkPlugins={[RemarkMath, RemarkGfm, RemarkBreaks]}
-      rehypePlugins={[
-        RehypeRaw,
-        RehypeKatex,
-        [rehypeSanitize, sanitizeOptions],
-        [
-          RehypeHighlight,
-          {
-            detect: false,
-            ignoreMissing: true,
-          },
-        ],
-      ]}
+      remarkPlugins={remarkPlugins as any}
+      rehypePlugins={rehypePlugins as any}
       components={
         {
           pre: (preProps: any) => (

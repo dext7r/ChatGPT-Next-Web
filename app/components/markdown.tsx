@@ -372,7 +372,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
       const codeElement = ref.current.querySelector("code");
       if (codeElement) {
         // 获取语言
-        const code = codeElement.innerText;
+        const code = codeElement.textContent || codeElement.innerText || "";
         setOriginalCode(code);
 
         const langClass = codeElement.className.match(/language-(\w+)/);
@@ -402,7 +402,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
         }
       }
     }
-  }, [enableArtifacts, isStatusReady]);
+  }, [enableArtifacts, isStatusReady, props.children]);
 
   const copyCode = () => {
     copyToClipboard(originalCode);
@@ -481,10 +481,11 @@ export function PreCode(props: { children: any; status?: boolean }) {
               onClick={() => previewRef.current?.reload()}
             />
             <HTMLPreview
+              key={previewContent}
               ref={previewRef}
               code={previewContent}
               autoHeight={!document.fullscreenElement}
-              height={!document.fullscreenElement ? 600 : height}
+              height={!document.fullscreenElement ? "30vh" : height}
               minWidth="50vw"
             />
           </FullScreen>
@@ -550,13 +551,27 @@ function CustomCode(props: { children: any; className?: string }) {
   const [collapsed, setCollapsed] = useState(true);
   const [showToggle, setShowToggle] = useState(false);
 
+  const [foldHeight, setFoldHeight] = useState(280); // SSR/初始回退
+  useEffect(() => {
+    const calc = () => {
+      if (typeof window !== "undefined") {
+        // 给一点下限，避免超小窗口难看
+        const h = Math.max(160, Math.round(window.innerHeight * 0.3));
+        setFoldHeight(h);
+      }
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, []);
+
   useEffect(() => {
     if (ref.current) {
       const codeHeight = ref.current.scrollHeight;
-      setShowToggle(codeHeight > 400);
+      setShowToggle(codeHeight > foldHeight);
       ref.current.scrollTop = ref.current.scrollHeight;
     }
-  }, [props.children]);
+  }, [props.children, foldHeight]);
 
   const toggleCollapsed = () => {
     setCollapsed((collapsed) => !collapsed);
@@ -588,7 +603,7 @@ function CustomCode(props: { children: any; className?: string }) {
         className={props?.className}
         ref={ref}
         style={{
-          maxHeight: enableCodeFold && collapsed ? "400px" : "none",
+          maxHeight: enableCodeFold && collapsed ? `${foldHeight}px` : "none",
           overflowY: enableCodeFold && collapsed ? "auto" : "visible",
         }}
       >

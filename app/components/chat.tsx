@@ -4135,7 +4135,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             value={userInput}
             onKeyDown={onInputKeyDown}
             // onFocus={scrollToBottom}
-            onClick={scrollToBottom}
+            onClick={() => scrollToBottom()}
             onPaste={handlePaste}
             rows={inputRows}
             autoFocus={autoFocus}

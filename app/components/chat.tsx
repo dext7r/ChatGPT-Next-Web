@@ -2505,36 +2505,102 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     context.push(copiedHello);
   }
 
+  function InputPreviewBubble(props: {
+    text: string;
+    images: string[];
+    files: UploadFile[];
+    avatar: string;
+  }) {
+    const { text, images, files, avatar } = props;
+    const [view, setView] = React.useState(text);
+    // 打字去抖，别每个键都跑 Markdown 和高亮
+    const update = useDebouncedCallback((v: string) => setView(v), 120);
+    React.useEffect(() => update(text), [text]);
+
+    if (!text && images.length === 0 && files.length === 0) return null;
+
+    return (
+      <div
+        className={`${styles["chat-message-user"]} ${styles["preview"]}`}
+        style={{ opacity: 0.85 }}
+      >
+        <div className={styles["chat-message-container"]}>
+          <div className={styles["chat-message-header"]}>
+            <div className={styles["chat-message-avatar"]}>
+              <Avatar avatar={avatar} />
+            </div>
+          </div>
+          <div className={styles["chat-message-item"]}>
+            {/* status 设为 true，跳过 Markdown 的语言检测与预处理，省 CPU */}
+            <Markdown content={view} status={true} />
+          </div>
+
+          {/* 可选：给图片/文件一个缩略预览，别写太重 */}
+          {images?.length > 0 && (
+            <div className={styles["attach-images"]} style={{ marginTop: 6 }}>
+              {images.map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  style={{
+                    width: 96,
+                    height: 96,
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    marginRight: 6,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          {files?.length > 0 && (
+            <div className={styles["attach-files"]} style={{ marginTop: 6 }}>
+              {files.map((f, i) => (
+                <div key={i} className={styles["attach-file"]}>
+                  <div className={styles["attach-file-name-full"]}>
+                    {f.name} ({f.size}K)
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  const previewVisible =
+    config.sendPreviewBubble &&
+    (userInput.trim().length > 0 ||
+      attachImages.length > 0 ||
+      attachFiles.length > 0);
   // preview messages
   const renderMessages = useMemo(() => {
-    return context
-      .concat(session.messages as RenderMessage[])
-      .concat(
-        isLoading
-          ? [
-              {
-                ...createMessage({
-                  role: "assistant",
-                  content: "……",
-                }),
-                preview: true,
-              },
-            ]
-          : [],
-      )
-      .concat(
-        userInput.length > 0 && config.sendPreviewBubble
-          ? [
-              {
-                ...createMessage({
-                  role: "user",
-                  content: userInput,
-                }),
-                preview: true,
-              },
-            ]
-          : [],
-      );
+    return context.concat(session.messages as RenderMessage[]).concat(
+      isLoading
+        ? [
+            {
+              ...createMessage({
+                role: "assistant",
+                content: "……",
+              }),
+              preview: true,
+            },
+          ]
+        : [],
+    );
+    // .concat(
+    //   userInput.length > 0 && config.sendPreviewBubble
+    //     ? [
+    //         {
+    //           ...createMessage({
+    //             role: "user",
+    //             content: userInput,
+    //           }),
+    //           preview: true,
+    //         },
+    //       ]
+    //     : [],
+    // );
   }, [
     config.sendPreviewBubble,
     context,
@@ -3889,6 +3955,17 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                 )}
               </Fragment>
             );
+          }}
+          components={{
+            Footer: () =>
+              previewVisible ? (
+                <InputPreviewBubble
+                  text={userInput}
+                  images={attachImages}
+                  files={attachFiles}
+                  avatar={config.avatar}
+                />
+              ) : null,
           }}
         />
       </div>

@@ -264,6 +264,7 @@ export function Mermaid(props: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
   // const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (props.code && ref.current) {
@@ -291,11 +292,32 @@ export function Mermaid(props: { code: string }) {
     showImageModal(URL.createObjectURL(blob), fileName);
   }
 
+  function copyErrorToClipboard() {
+    const text = errorMessage || "Mermaid rendering error";
+    try {
+      copyToClipboard(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      console.error("Failed to copy error message to clipboard");
+    }
+  }
+
   if (errorMessage) {
     // return null;
     return (
       <div className={styles["mermaid-error"]}>
-        <div>{Locale.UI.MermaidError}</div>
+        <div className={styles["mermaid-error-message"]}>
+          <div>{Locale.UI.MermaidError}</div>
+          <button
+            className={styles["code-header-btn"]}
+            onClick={copyErrorToClipboard}
+            title={Locale.Chat.Actions.CopyError}
+            aria-label={Locale.Chat.Actions.CopyError}
+          >
+            {copied ? "✓" : Locale.Chat.Actions.CopyError}
+          </button>
+        </div>
         {errorMessage && <pre>{errorMessage}</pre>}
         <details>
           <summary>Mermaid Code</summary>

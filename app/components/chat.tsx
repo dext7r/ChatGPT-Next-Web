@@ -2573,6 +2573,21 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     (userInput.trim().length > 0 ||
       attachImages.length > 0 ||
       attachFiles.length > 0);
+
+  useEffect(() => {
+    if (!hitBottom) return; // 用户不在底部就别打扰他
+    if (!previewVisible) return;
+    // 等一帧，等 DOM 测量完 Footer 新高度
+    const id = requestAnimationFrame(() => scrollToBottom());
+    return () => cancelAnimationFrame(id);
+  }, [
+    userInput,
+    attachImages.length,
+    attachFiles.length,
+    previewVisible,
+    hitBottom,
+  ]);
+
   // preview messages
   const renderMessages = useMemo(() => {
     return context.concat(session.messages as RenderMessage[]).concat(
@@ -2652,12 +2667,29 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   //   setMsgRenderIndex(renderMessages.length - CHAT_PAGE_SIZE);
   //   scrollDomToBottom();
   // }
-  function scrollToBottom() {
-    virtuosoRef.current?.scrollToIndex({
-      index: messages.length - 1,
-      align: "end",
-      behavior: "smooth",
-    });
+  // function scrollToBottom() {
+  //   virtuosoRef.current?.scrollToIndex({
+  //     index: messages.length - 1,
+  //     align: "end",
+  //     behavior: "smooth",
+  //   });
+  // }
+
+  function scrollToBottom(force?: boolean) {
+    const v = virtuosoRef.current;
+    if (!v) return;
+    // Footer 内有预览，或者强制要求到底，就直接滚到最底（含 Footer）
+    if (previewVisible || force) {
+      // 大数即可；Virtuoso 内部会 clamp 到 scrollHeight
+      v.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" });
+    } else {
+      // 无预览时仍可对齐最后一项
+      v.scrollToIndex({
+        index: messages.length - 1,
+        align: "end",
+        behavior: "smooth",
+      });
+    }
   }
   // clear context index = context length + index in messages
   const clearContextIndex =
@@ -3634,10 +3666,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       <div
         className={styles["chat-body"]}
         onMouseDown={() => inputRef.current?.blur()}
-        onTouchStart={() => {
-          inputRef.current?.blur();
-          setHitBottom(false);
-        }}
+        // onTouchStart={() => {
+        //   inputRef.current?.blur();
+        //   setHitBottom(false);
+        // }}
       >
         <Virtuoso
           ref={virtuosoRef}
@@ -3645,6 +3677,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           initialTopMostItemIndex={messages.length - 1}
           followOutput={hitBottom ? "smooth" : false}
           atBottomStateChange={setHitBottom}
+          atBottomThreshold={64}
           increaseViewportBy={{ top: 400, bottom: 800 }}
           computeItemKey={(index, m) => m.id}
           itemContent={(index, message) => {

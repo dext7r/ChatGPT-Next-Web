@@ -61,6 +61,7 @@ const en: LocaleType = {
         "Title generation failed, please manually click 🔄 after checking the compression model settings",
       Speech: "Play",
       StopSpeech: "Stop",
+      Quote: "Quote to Input",
     },
     Commands: {
       new: "Start a new chat",

@@ -1829,6 +1829,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const [showExport, setShowExport] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const quoteBubbleRef = useRef<HTMLDivElement>(null);
+
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { submitKey, shouldSubmit } = useSubmitHandler();
@@ -1886,6 +1888,89 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     100,
     { leading: true, trailing: true },
   );
+
+  // 引用气泡的 UI 状态
+  const [quoteBubble, setQuoteBubble] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    text: string;
+  }>({ visible: false, x: 0, y: 0, text: "" });
+
+  function hideQuoteBubble() {
+    setQuoteBubble((q) => ({ ...q, visible: false, text: "" }));
+  }
+
+  // 将选中文本转为逐行 Markdown 引用
+  function toMarkdownQuote(raw: string) {
+    const lines = raw.replace(/\r\n?/g, "\n").split("\n");
+    // 空行也保留为 "> "，更贴近聊天上下文引用
+    const quoted = lines.map((l) => `> ${l}`).join("\n");
+    return quoted + "\n\n"; // 结尾空行，便于继续输入
+  }
+  // 鼠标划完一段文本抬起时弹出气泡
+  const onMessageMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isMobileScreen) return;
+
+      if (
+        quoteBubbleRef.current &&
+        e.target instanceof Node &&
+        quoteBubbleRef.current.contains(e.target)
+      ) {
+        return;
+      }
+
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) {
+        hideQuoteBubble();
+        return;
+      }
+      const container = e.currentTarget;
+      const anchor = sel.anchorNode,
+        focus = sel.focusNode;
+      if (
+        (anchor && container.contains(anchor)) ||
+        (focus && container.contains(focus))
+      ) {
+        const text = sel.toString().trim();
+        if (!text) return;
+        const range = sel.rangeCount ? sel.getRangeAt(0) : null;
+        const rect = range?.getBoundingClientRect();
+        if (rect) {
+          const px = rect.left + rect.width / 2; // 中间
+          const py = rect.bottom + 8; // 下方 8px
+          setQuoteBubble({ visible: true, x: px, y: py, text });
+        }
+      } else {
+        hideQuoteBubble();
+      }
+    },
+    [isMobileScreen, hideQuoteBubble],
+  );
+  useEffect(() => {
+    const close = () => hideQuoteBubble();
+    const onDocMouseDown = (evt: MouseEvent) => {
+      const target = evt.target as Node | null;
+      // 点在气泡里就别关，否则会抢在 onClick 前把气泡收掉
+      if (
+        quoteBubbleRef.current &&
+        target &&
+        quoteBubbleRef.current.contains(target)
+      ) {
+        return;
+      }
+      close();
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    window.addEventListener("resize", close);
+    document.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("mousedown", onDocMouseDown);
+      window.removeEventListener("resize", close);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [hideQuoteBubble]);
 
   // expansive rules
   const [lastExpansion, setLastExpansion] = useState<{
@@ -2530,7 +2615,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
               <Avatar avatar={avatar} />
             </div>
           </div>
-          <div className={styles["chat-message-item"]}>
+          <div
+            className={styles["chat-message-item"]}
+            onMouseUp={onMessageMouseUp}
+          >
             {/* status 设为 true，跳过 Markdown 的语言检测与预处理，省 CPU */}
             <Markdown content={view} status={true} />
           </div>
@@ -3857,7 +3945,10 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                         {Locale.Chat.Typing}
                       </div>
                     )}
-                    <div className={styles["chat-message-item"]}>
+                    <div
+                      className={styles["chat-message-item"]}
+                      onMouseUp={onMessageMouseUp}
+                    >
                       <Markdown
                         key={message.streaming ? "loading" : "done"}
                         status={showTyping}
@@ -4323,6 +4414,31 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
       {showShortcutKeyModal && (
         <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
+      )}
+
+      {quoteBubble.visible && (
+        <div
+          className={styles["quote-bubble"]}
+          style={{ position: "fixed", left: quoteBubble.x, top: quoteBubble.y }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const q = toMarkdownQuote(quoteBubble.text);
+            // 头部插入引用文本
+            setUserInput((prev) => (prev ? q + prev : q));
+            // 聚焦输入框，清理选区并收起气泡
+            requestAnimationFrame(() => inputRef.current?.focus());
+            window.getSelection()?.removeAllRanges();
+            hideQuoteBubble();
+          }}
+          onMouseUp={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {Locale.Chat.Actions.Quote}
+        </div>
       )}
     </div>
   );

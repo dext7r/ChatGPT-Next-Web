@@ -157,6 +157,7 @@ const localStorage = safeLocalStorage();
 const ttsPlayer = createTTSPlayer();
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
+  ssr: false,
   loading: () => <LoadingIcon />,
 });
 

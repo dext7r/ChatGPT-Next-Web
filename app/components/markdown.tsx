@@ -28,7 +28,7 @@ import { IconButton } from "./button";
 
 import { useAppConfig } from "../store/config";
 
-import { Collapse } from "antd";
+import Collapse from "antd/es/collapse";
 import styles from "./markdown.module.scss";
 
 interface SearchCollapseProps {

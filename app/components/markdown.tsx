@@ -209,9 +209,10 @@ const sanitizeOptions = {
   ...defaultSchema,
   attributes: {
     ...defaultSchema.attributes,
+    span: ["className", "style", "data-tex"],
     div: [
       ...(defaultSchema.attributes?.div || []),
-      ["className", "math", "math-display"],
+      ["className", "math", "math-display", "katex-display"],
     ],
     img: [
       ...(defaultSchema.attributes?.img || []),
@@ -219,7 +220,6 @@ const sanitizeOptions = {
     ],
     math: [["xmlns", "http://www.w3.org/1998/Math/MathML"], "display"],
     annotation: ["encoding"],
-    span: ["className", "style"],
     svg: [
       ["xmlns", "http://www.w3.org/2000/svg"],
       "width",

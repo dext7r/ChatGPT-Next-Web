@@ -1,4 +1,4 @@
-import hljs from "highlight.js";
+// import hljs from "highlight.js";
 import ReactMarkdown from "react-markdown";
 import "katex/dist/katex.min.css";
 import RemarkMath from "remark-math";
@@ -566,12 +566,17 @@ function CustomCode(props: { children: any; className?: string }) {
   }, []);
 
   useEffect(() => {
-    if (ref.current) {
-      const codeHeight = ref.current.scrollHeight;
-      setShowToggle(codeHeight > foldHeight);
-      ref.current.scrollTop = ref.current.scrollHeight;
+    if (!ref.current) return;
+    const el = ref.current;
+    const codeHeight = el.scrollHeight;
+    const desired = codeHeight > foldHeight + 4; // +4px 缓冲，防抖边界抖动
+
+    setShowToggle((prev) => (prev === desired ? prev : desired)); // ← 只在变化时更新
+
+    if (el.scrollTop !== el.scrollHeight) {
+      el.scrollTop = el.scrollHeight;
     }
-  }, [props.children, foldHeight]);
+  }, [props.children]);
 
   const toggleCollapsed = () => {
     setCollapsed((collapsed) => !collapsed);
@@ -907,7 +912,31 @@ function R_MarkDownContent(props: {
             RehypeRaw,
             RehypeKatex,
             [rehypeSanitize, sanitizeOptions],
-            [RehypeHighlight, { detect: false, ignoreMissing: true }],
+            [
+              RehypeHighlight,
+              {
+                detect: true, // 无语言标注时自动识别
+                ignoreMissing: true, // 未注册语言跳过
+                subset: [
+                  "javascript",
+                  "typescript",
+                  "python",
+                  "json",
+                  "bash",
+                  "yaml",
+                  "markdown",
+                  "java",
+                  "c",
+                  "cpp",
+                  "go",
+                  "sql",
+                  "html",
+                  "xml",
+                  "css",
+                ],
+                plainText: ["plain", "text", "txt"],
+              },
+            ],
           ],
     [isStreaming],
   );
@@ -973,98 +1002,98 @@ function R_MarkDownContent(props: {
 
 export const MarkdownContent = React.memo(R_MarkDownContent);
 
-function detectCodeLanguage(code: string): string {
-  try {
-    const result = hljs.highlightAuto(code, [
-      "python",
-      "java",
-      "c",
-      "cpp",
-      "javascript",
-      "typescript",
-      "go",
-      "rust",
-      "html",
-      "css",
-      "sql",
-      "bash",
-      "json",
-      "yaml",
-      "xml",
-      "r",
-      "php",
-      "ruby",
-      "swift",
-      "kotlin",
-      "shell",
-      "perl",
-      "haskell",
-      "matlab",
-    ]);
-    return result.language || "text";
-  } catch (e) {
-    console.warn("Language detection failed:", e);
-    return "text";
-  }
-}
-function preprocessContent(content: string): string {
-  const lines = content.split("\n");
-  let inCodeBlock = false;
-  let codeBlockLines: string[] = [];
-  let result: string[] = [];
-  let hasLanguageTag = false; // 标记当前代码块是否有语言标注
+// function detectCodeLanguage(code: string): string {
+//   try {
+//     const result = hljs.highlightAuto(code, [
+//       "python",
+//       "java",
+//       "c",
+//       "cpp",
+//       "javascript",
+//       "typescript",
+//       "go",
+//       "rust",
+//       "html",
+//       "css",
+//       "sql",
+//       "bash",
+//       "json",
+//       "yaml",
+//       "xml",
+//       "r",
+//       "php",
+//       "ruby",
+//       "swift",
+//       "kotlin",
+//       "shell",
+//       "perl",
+//       "haskell",
+//       "matlab",
+//     ]);
+//     return result.language || "text";
+//   } catch (e) {
+//     console.warn("Language detection failed:", e);
+//     return "text";
+//   }
+// }
+// function preprocessContent(content: string): string {
+//   const lines = content.split("\n");
+//   let inCodeBlock = false;
+//   let codeBlockLines: string[] = [];
+//   let result: string[] = [];
+//   let hasLanguageTag = false; // 标记当前代码块是否有语言标注
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+//   for (let i = 0; i < lines.length; i++) {
+//     const line = lines[i];
 
-    if (line.trim().startsWith("```")) {
-      if (!inCodeBlock) {
-        // 开始新的代码块
-        inCodeBlock = true;
-        codeBlockLines = [];
-        hasLanguageTag = line.trim().length > 3;
+//     if (line.trim().startsWith("```")) {
+//       if (!inCodeBlock) {
+//         // 开始新的代码块
+//         inCodeBlock = true;
+//         codeBlockLines = [];
+//         hasLanguageTag = line.trim().length > 3;
 
-        if (hasLanguageTag) {
-          // 有语言标注，直接添加这一行
-          result.push(line);
-        }
-        // 无语言标注时不添加这一行，等待语言检测
-      } else {
-        // 代码块结束
-        inCodeBlock = false;
-        if (!hasLanguageTag && codeBlockLines.length > 0) {
-          // 只有在没有语言标注时才进行语言检测
-          const detectedLang = detectCodeLanguage(codeBlockLines.join("\n"));
-          result.push("```" + detectedLang);
-          result.push(...codeBlockLines);
-        }
-        result.push(line); // 添加结束标记
-      }
-    } else if (inCodeBlock) {
-      if (hasLanguageTag) {
-        // 有语言标注的代码块直接添加内容
-        result.push(line);
-      } else {
-        // 无语言标注的代码块先收集内容
-        codeBlockLines.push(line);
-      }
-    } else {
-      // 非代码块内容直接添加
-      result.push(line);
-    }
-  }
+//         if (hasLanguageTag) {
+//           // 有语言标注，直接添加这一行
+//           result.push(line);
+//         }
+//         // 无语言标注时不添加这一行，等待语言检测
+//       } else {
+//         // 代码块结束
+//         inCodeBlock = false;
+//         if (!hasLanguageTag && codeBlockLines.length > 0) {
+//           // 只有在没有语言标注时才进行语言检测
+//           const detectedLang = detectCodeLanguage(codeBlockLines.join("\n"));
+//           result.push("```" + detectedLang);
+//           result.push(...codeBlockLines);
+//         }
+//         result.push(line); // 添加结束标记
+//       }
+//     } else if (inCodeBlock) {
+//       if (hasLanguageTag) {
+//         // 有语言标注的代码块直接添加内容
+//         result.push(line);
+//       } else {
+//         // 无语言标注的代码块先收集内容
+//         codeBlockLines.push(line);
+//       }
+//     } else {
+//       // 非代码块内容直接添加
+//       result.push(line);
+//     }
+//   }
 
-  // 处理未闭合的代码块
-  if (inCodeBlock && !hasLanguageTag && codeBlockLines.length > 0) {
-    console.warn("Unclosed code block detected");
-    const detectedLang = detectCodeLanguage(codeBlockLines.join("\n"));
-    result.push("```" + detectedLang);
-    result.push(...codeBlockLines);
-    result.push("```");
-  }
+//   // 处理未闭合的代码块
+//   if (inCodeBlock && !hasLanguageTag && codeBlockLines.length > 0) {
+//     console.warn("Unclosed code block detected");
+//     const detectedLang = detectCodeLanguage(codeBlockLines.join("\n"));
+//     result.push("```" + detectedLang);
+//     result.push(...codeBlockLines);
+//     result.push("```");
+//   }
 
-  return result.join("\n");
-}
+//   return result.join("\n");
+// }
 
 export function Markdown(
   props: {
@@ -1080,15 +1109,15 @@ export function Markdown(
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
 
-  // 使用 useMemo 缓存处理结果
-  const processedContent = useMemo(() => {
-    // 只在 key 为 "done" 时进行语言检测
-    if (!props.status) {
-      return preprocessContent(props.content);
-    }
-    // 其他情况直接返回原始内容
-    return props.content;
-  }, [props.content, props.status]);
+  // // 使用 useMemo 缓存处理结果
+  // const processedContent = useMemo(() => {
+  //   // 只在 key 为 "done" 时进行语言检测
+  //   if (!props.status) {
+  //     return preprocessContent(props.content);
+  //   }
+  //   // 其他情况直接返回原始内容
+  //   return props.content;
+  // }, [props.content, props.status]);
 
   return (
     <div
@@ -1105,8 +1134,8 @@ export function Markdown(
         <LoadingIcon />
       ) : (
         <MarkdownContent
-          key={processedContent}
-          content={processedContent}
+          // key={processedContent}
+          content={props.content}
           searchingTime={props.searchingTime}
           thinkingTime={props.thinkingTime}
           fontSize={props.fontSize}

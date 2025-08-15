@@ -9,6 +9,7 @@ import React, {
   RefObject,
   useLayoutEffect,
 } from "react";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import clsx from "clsx";
 
 import SendWhiteIcon from "../icons/send-white.svg";
@@ -156,6 +157,7 @@ const localStorage = safeLocalStorage();
 const ttsPlayer = createTTSPlayer();
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
+  ssr: false,
   loading: () => <LoadingIcon />,
 });
 
@@ -1828,36 +1830,39 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const [showExport, setShowExport] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const quoteBubbleRef = useRef<HTMLDivElement>(null);
+
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { submitKey, shouldSubmit } = useSubmitHandler();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const isScrolledToBottom = scrollRef?.current
-    ? Math.abs(
-        scrollRef.current.scrollHeight -
-          (scrollRef.current.scrollTop + scrollRef.current.clientHeight),
-      ) <= 1
-    : false;
-  const isAttachWithTop = useMemo(() => {
-    const lastMessage = scrollRef.current?.lastElementChild as HTMLElement;
-    // if scrolllRef is not ready or no message, return false
-    if (!scrollRef?.current || !lastMessage) return false;
-    const topDistance =
-      lastMessage!.getBoundingClientRect().top -
-      scrollRef.current.getBoundingClientRect().top;
-    // leave some space for user question
-    return topDistance < 100;
-  }, [scrollRef?.current?.scrollHeight]);
+  // const scrollRef = useRef<HTMLDivElement>(null);
+  // const isScrolledToBottom = scrollRef?.current
+  //   ? Math.abs(
+  //       scrollRef.current.scrollHeight -
+  //         (scrollRef.current.scrollTop + scrollRef.current.clientHeight),
+  //     ) <= 1
+  //   : false;
+  // const isAttachWithTop = useMemo(() => {
+  //   const lastMessage = scrollRef.current?.lastElementChild as HTMLElement;
+  //   // if scrolllRef is not ready or no message, return false
+  //   if (!scrollRef?.current || !lastMessage) return false;
+  //   const topDistance =
+  //     lastMessage!.getBoundingClientRect().top -
+  //     scrollRef.current.getBoundingClientRect().top;
+  //   // leave some space for user question
+  //   return topDistance < 100;
+  // }, [scrollRef?.current?.scrollHeight]);
 
-  const isTyping = userInput !== "";
+  // const isTyping = userInput !== "";
 
-  // if user is typing, should auto scroll to bottom
-  // if user is not typing, should auto scroll to bottom only if already at bottom
+  // // if user is typing, should auto scroll to bottom
+  // // if user is not typing, should auto scroll to bottom only if already at bottom
 
-  const { setAutoScroll, scrollDomToBottom } = useScrollToBottom(
-    scrollRef,
-    (isScrolledToBottom || isAttachWithTop) && !isTyping,
-  );
+  // const { setAutoScroll, scrollDomToBottom } = useScrollToBottom(
+  //   scrollRef,
+  //   (isScrolledToBottom || isAttachWithTop) && !isTyping,
+  // );
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [hitBottom, setHitBottom] = useState(true);
   const isMobileScreen = useMobileScreen();
   const navigate = useNavigate();
@@ -1884,6 +1889,89 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     100,
     { leading: true, trailing: true },
   );
+
+  // 引用气泡的 UI 状态
+  const [quoteBubble, setQuoteBubble] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    text: string;
+  }>({ visible: false, x: 0, y: 0, text: "" });
+
+  function hideQuoteBubble() {
+    setQuoteBubble((q) => ({ ...q, visible: false, text: "" }));
+  }
+
+  // 将选中文本转为逐行 Markdown 引用
+  function toMarkdownQuote(raw: string) {
+    const lines = raw.replace(/\r\n?/g, "\n").split("\n");
+    // 空行也保留为 "> "，更贴近聊天上下文引用
+    const quoted = lines.map((l) => `> ${l}`).join("\n");
+    return quoted + "\n\n"; // 结尾空行，便于继续输入
+  }
+  // 鼠标划完一段文本抬起时弹出气泡
+  const onMessageMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isMobileScreen) return;
+
+      if (
+        quoteBubbleRef.current &&
+        e.target instanceof Node &&
+        quoteBubbleRef.current.contains(e.target)
+      ) {
+        return;
+      }
+
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) {
+        hideQuoteBubble();
+        return;
+      }
+      const container = e.currentTarget;
+      const anchor = sel.anchorNode,
+        focus = sel.focusNode;
+      if (
+        (anchor && container.contains(anchor)) ||
+        (focus && container.contains(focus))
+      ) {
+        const text = sel.toString().trim();
+        if (!text) return;
+        const range = sel.rangeCount ? sel.getRangeAt(0) : null;
+        const rect = range?.getBoundingClientRect();
+        if (rect) {
+          const px = rect.left + rect.width / 2; // 中间
+          const py = rect.bottom + 8; // 下方 8px
+          setQuoteBubble({ visible: true, x: px, y: py, text });
+        }
+      } else {
+        hideQuoteBubble();
+      }
+    },
+    [isMobileScreen, hideQuoteBubble],
+  );
+  useEffect(() => {
+    const close = () => hideQuoteBubble();
+    const onDocMouseDown = (evt: MouseEvent) => {
+      const target = evt.target as Node | null;
+      // 点在气泡里就别关，否则会抢在 onClick 前把气泡收掉
+      if (
+        quoteBubbleRef.current &&
+        target &&
+        quoteBubbleRef.current.contains(target)
+      ) {
+        return;
+      }
+      close();
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    window.addEventListener("resize", close);
+    document.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("mousedown", onDocMouseDown);
+      window.removeEventListener("resize", close);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [hideQuoteBubble]);
 
   // expansive rules
   const [lastExpansion, setLastExpansion] = useState<{
@@ -2140,7 +2228,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     setUserInput("");
     setPromptHints([]);
     if (!isMobileScreen) inputRef.current?.focus();
-    setAutoScroll(true);
+    // setAutoScroll(true);
+    scrollToBottom();
     setLastExpansion(null);
   };
 
@@ -2502,36 +2591,107 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     context.push(copiedHello);
   }
 
+  function InputPreviewBubble(props: {
+    text: string;
+    images: string[];
+    files: UploadFile[];
+    avatar: string;
+  }) {
+    const { text, images, files, avatar } = props;
+    const [view, setView] = React.useState(text);
+    // 打字去抖，别每个键都跑 Markdown 和高亮
+    const update = useDebouncedCallback((v: string) => setView(v), 120);
+    React.useEffect(() => update(text), [text]);
+
+    if (!text && images.length === 0 && files.length === 0) return null;
+
+    return (
+      <div
+        className={`${styles["chat-message-user"]} ${styles["preview"]}`}
+        style={{ opacity: 0.85 }}
+      >
+        <div className={styles["chat-message-container"]}>
+          <div className={styles["chat-message-header"]}>
+            <div className={styles["chat-message-avatar"]}>
+              <Avatar avatar={avatar} />
+            </div>
+          </div>
+          <div
+            className={styles["chat-message-item"]}
+            onMouseUp={onMessageMouseUp}
+          >
+            {/* status 设为 true，跳过 Markdown 的语言检测与预处理，省 CPU */}
+            <Markdown content={view} status={true} />
+          </div>
+
+          {/* 可选：给图片/文件一个缩略预览，别写太重 */}
+          {images?.length > 0 && (
+            <div className={styles["attach-images"]} style={{ marginTop: 6 }}>
+              {images.map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  style={{
+                    width: 96,
+                    height: 96,
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    marginRight: 6,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          {files?.length > 0 && (
+            <div className={styles["attach-files"]} style={{ marginTop: 6 }}>
+              {files.map((f, i) => (
+                <div key={i} className={styles["attach-file"]}>
+                  <div className={styles["attach-file-name-full"]}>
+                    {f.name} ({f.size}K)
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  const previewVisible =
+    config.sendPreviewBubble &&
+    (userInput.trim().length > 0 ||
+      attachImages.length > 0 ||
+      attachFiles.length > 0);
+
+  useEffect(() => {
+    if (!hitBottom) return; // 用户不在底部就别打扰他
+    if (!previewVisible) return;
+    // 等一帧，等 DOM 测量完 Footer 新高度
+    const id = requestAnimationFrame(() => scrollToBottom());
+    return () => cancelAnimationFrame(id);
+  }, [
+    userInput,
+    attachImages.length,
+    attachFiles.length,
+    previewVisible,
+    hitBottom,
+  ]);
+
   // preview messages
   const renderMessages = useMemo(() => {
-    return context
-      .concat(session.messages as RenderMessage[])
-      .concat(
-        isLoading
-          ? [
-              {
-                ...createMessage({
-                  role: "assistant",
-                  content: "……",
-                }),
-                preview: true,
-              },
-            ]
-          : [],
-      )
-      .concat(
-        userInput.length > 0 && config.sendPreviewBubble
-          ? [
-              {
-                ...createMessage({
-                  role: "user",
-                  content: userInput,
-                }),
-                preview: true,
-              },
-            ]
-          : [],
-      );
+    return context.concat(session.messages as RenderMessage[]).concat(
+      isLoading
+        ? [
+            {
+              ...createMessage({
+                role: "assistant",
+                content: "……",
+              }),
+              preview: true,
+            },
+          ]
+        : [],
+    );
   }, [
     config.sendPreviewBubble,
     context,
@@ -2540,53 +2700,28 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     userInput,
   ]);
 
-  const [msgRenderIndex, _setMsgRenderIndex] = useState(
-    Math.max(0, renderMessages.length - CHAT_PAGE_SIZE),
-  );
-  function setMsgRenderIndex(newIndex: number) {
-    newIndex = Math.min(renderMessages.length - CHAT_PAGE_SIZE, newIndex);
-    newIndex = Math.max(0, newIndex);
-    _setMsgRenderIndex(newIndex);
-  }
+  const messages = renderMessages;
 
-  const messages = useMemo(() => {
-    const endRenderIndex = Math.min(
-      msgRenderIndex + 3 * CHAT_PAGE_SIZE,
-      renderMessages.length,
-    );
-    return renderMessages.slice(msgRenderIndex, endRenderIndex);
-  }, [msgRenderIndex, renderMessages]);
-
-  const onChatBodyScroll = (e: HTMLElement) => {
-    const bottomHeight = e.scrollTop + e.clientHeight;
-    const edgeThreshold = e.clientHeight;
-
-    const isTouchTopEdge = e.scrollTop <= edgeThreshold;
-    const isTouchBottomEdge = bottomHeight >= e.scrollHeight - edgeThreshold;
-    const isHitBottom =
-      bottomHeight >= e.scrollHeight - (isMobileScreen ? 4 : 10);
-
-    const prevPageMsgIndex = msgRenderIndex - CHAT_PAGE_SIZE;
-    const nextPageMsgIndex = msgRenderIndex + CHAT_PAGE_SIZE;
-
-    if (isTouchTopEdge && !isTouchBottomEdge) {
-      setMsgRenderIndex(prevPageMsgIndex);
-    } else if (isTouchBottomEdge) {
-      setMsgRenderIndex(nextPageMsgIndex);
+  function scrollToBottom(force?: boolean) {
+    const v = virtuosoRef.current;
+    if (!v) return;
+    // Footer 内有预览，或者强制要求到底，就直接滚到最底（含 Footer）
+    if (previewVisible || force) {
+      // 大数即可；Virtuoso 内部会 clamp 到 scrollHeight
+      v.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" });
+    } else {
+      // 无预览时仍可对齐最后一项
+      v.scrollToIndex({
+        index: messages.length - 1,
+        align: "end",
+        behavior: "smooth",
+      });
     }
-
-    setHitBottom(isHitBottom);
-    setAutoScroll(isHitBottom);
-  };
-  function scrollToBottom() {
-    setMsgRenderIndex(renderMessages.length - CHAT_PAGE_SIZE);
-    scrollDomToBottom();
   }
-
   // clear context index = context length + index in messages
   const clearContextIndex =
     (session.clearContextIndex ?? -1) >= 0
-      ? session.clearContextIndex! + context.length - msgRenderIndex
+      ? session.clearContextIndex! + context.length // - msgRenderIndex
       : -1;
 
   const [showPromptModal, setShowPromptModal] = useState(false);
@@ -3251,154 +3386,302 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
       <div
         className={styles["chat-body"]}
-        ref={scrollRef}
-        onScroll={(e) => onChatBodyScroll(e.currentTarget)}
         onMouseDown={() => inputRef.current?.blur()}
-        onTouchStart={() => {
-          inputRef.current?.blur();
-          setAutoScroll(false);
-        }}
       >
-        {messages.map((message, i) => {
-          const isUser = message.role === "user";
-          const shouldHideUserMessage =
-            isUser && message.isContinuePrompt === true;
-          if (!config.enableShowUserContinuePrompt && shouldHideUserMessage) {
-            return null;
-          }
-          const isContext = i < context.length;
-          const showActions =
-            i > 0 &&
-            !(message.preview || message.content.length === 0) &&
-            !isContext;
-          const showTyping = message.preview || message.streaming;
-          const shouldShowClearContextDivider =
-            i === clearContextIndex - 1 || message?.beClear === true;
-          const providerIdForClick =
-            message?.providerType && message.providerType === "custom-provider";
-          return (
-            <Fragment key={message.id}>
-              <div
-                className={
-                  isUser ? styles["chat-message-user"] : styles["chat-message"]
-                }
-              >
-                <div className={styles["chat-message-container"]}>
-                  <div className={styles["chat-message-header"]}>
-                    <div className={styles["chat-message-avatar"]}>
-                      <div className={styles["chat-message-edit"]}>
-                        <IconButton
-                          icon={<EditIcon />}
-                          aria={Locale.Chat.Actions.Edit}
-                          onClick={async () => {
-                            const newMessage = await showPrompt(
-                              Locale.Chat.Actions.Edit,
-                              getMessageTextContent(message),
-                              10,
-                            );
-                            // 检查原始消息是否包含多模态内容（图片或文件）
-                            const hasMultimodalContent =
-                              Array.isArray(message.content) &&
-                              message.content.some(
-                                (item) =>
-                                  item.type === "image_url" ||
-                                  item.type === "file_url",
+        <Virtuoso
+          ref={virtuosoRef}
+          data={messages}
+          initialTopMostItemIndex={messages.length - 1}
+          followOutput={hitBottom ? "smooth" : false}
+          atBottomStateChange={setHitBottom}
+          atBottomThreshold={64}
+          increaseViewportBy={{ top: 400, bottom: 800 }}
+          computeItemKey={(index, m) => m.id}
+          itemContent={(index, message) => {
+            const i = index;
+            const isUser = message.role === "user";
+            const shouldHideUserMessage =
+              isUser && message.isContinuePrompt === true;
+            if (!config.enableShowUserContinuePrompt && shouldHideUserMessage) {
+              return null;
+            }
+
+            const isContext = i < context.length;
+            const showActions =
+              i > 0 &&
+              !(
+                message.preview || getMessageTextContent(message).length === 0
+              ) &&
+              !isContext;
+
+            const showTyping = message.preview || message.streaming;
+
+            const shouldShowClearContextDivider =
+              i === clearContextIndex - 1 || message?.beClear === true;
+
+            const providerIdForClick =
+              message?.providerType === "custom-provider";
+            return (
+              <Fragment key={message.id}>
+                <div
+                  className={
+                    isUser
+                      ? styles["chat-message-user"]
+                      : styles["chat-message"]
+                  }
+                >
+                  <div className={styles["chat-message-container"]}>
+                    <div className={styles["chat-message-header"]}>
+                      <div className={styles["chat-message-avatar"]}>
+                        <div className={styles["chat-message-edit"]}>
+                          <IconButton
+                            icon={<EditIcon />}
+                            aria={Locale.Chat.Actions.Edit}
+                            onClick={async () => {
+                              const newMessage = await showPrompt(
+                                Locale.Chat.Actions.Edit,
+                                getMessageTextContent(message),
+                                10,
                               );
+                              // 检查原始消息是否包含多模态内容（图片或文件）
+                              const hasMultimodalContent =
+                                Array.isArray(message.content) &&
+                                message.content.some(
+                                  (item) =>
+                                    item.type === "image_url" ||
+                                    item.type === "file_url",
+                                );
 
-                            let newContent: string | MultimodalContent[];
+                              let newContent: string | MultimodalContent[];
 
-                            if (hasMultimodalContent) {
-                              // 如果有多模态内容，直接创建为数组类型
-                              newContent = [{ type: "text", text: newMessage }];
+                              if (hasMultimodalContent) {
+                                // 如果有多模态内容，直接创建为数组类型
+                                newContent = [
+                                  { type: "text", text: newMessage },
+                                ];
 
-                              // 如果原始消息是数组形式，遍历并保留所有非文本内容
-                              if (Array.isArray(message.content)) {
-                                // 保留所有图片和文件
-                                message.content.forEach((item) => {
-                                  if (
-                                    item.type === "image_url" &&
-                                    item.image_url
-                                  ) {
-                                    (newContent as MultimodalContent[]).push({
-                                      type: "image_url",
-                                      image_url: {
-                                        url: item.image_url.url,
-                                      },
-                                    });
-                                  } else if (
-                                    item.type === "file_url" &&
-                                    item.file_url
-                                  ) {
-                                    console.log("edit file_url", item);
-                                    (newContent as MultimodalContent[]).push({
-                                      type: "file_url",
-                                      file_url: {
-                                        url: item.file_url.url,
-                                        name: item.file_url.name,
-                                        contentType: item.file_url.contentType,
-                                        size: item.file_url.size,
-                                        tokenCount: item.file_url.tokenCount,
-                                      },
-                                    });
-                                  }
-                                });
-                              }
-                            } else {
-                              // 如果没有多模态内容，就直接使用文本
-                              newContent = newMessage;
-                            }
-                            chatStore.updateTargetSession(
-                              session,
-                              (session) => {
-                                const m = session.mask.context
-                                  .concat(session.messages)
-                                  .find((m) => m.id === message.id);
-                                if (m) {
-                                  m.content = newContent;
+                                // 如果原始消息是数组形式，遍历并保留所有非文本内容
+                                if (Array.isArray(message.content)) {
+                                  // 保留所有图片和文件
+                                  message.content.forEach((item) => {
+                                    if (
+                                      item.type === "image_url" &&
+                                      item.image_url
+                                    ) {
+                                      (newContent as MultimodalContent[]).push({
+                                        type: "image_url",
+                                        image_url: {
+                                          url: item.image_url.url,
+                                        },
+                                      });
+                                    } else if (
+                                      item.type === "file_url" &&
+                                      item.file_url
+                                    ) {
+                                      console.log("edit file_url", item);
+                                      (newContent as MultimodalContent[]).push({
+                                        type: "file_url",
+                                        file_url: {
+                                          url: item.file_url.url,
+                                          name: item.file_url.name,
+                                          contentType:
+                                            item.file_url.contentType,
+                                          size: item.file_url.size,
+                                          tokenCount: item.file_url.tokenCount,
+                                        },
+                                      });
+                                    }
+                                  });
                                 }
-                              },
-                            );
-                          }}
-                        ></IconButton>
-                      </div>
-                      {isUser ? (
-                        <Avatar avatar={config.avatar} />
-                      ) : (
-                        <>
-                          {["system"].includes(message.role) ? (
-                            <Avatar avatar="2699-fe0f" />
-                          ) : (
-                            <MaskAvatar
-                              avatar={session.mask.avatar}
-                              model={
-                                message.displayName ||
-                                message.model ||
-                                session.mask.modelConfig.model
+                              } else {
+                                // 如果没有多模态内容，就直接使用文本
+                                newContent = newMessage;
                               }
+                              chatStore.updateTargetSession(
+                                session,
+                                (session) => {
+                                  const m = session.mask.context
+                                    .concat(session.messages)
+                                    .find((m) => m.id === message.id);
+                                  if (m) {
+                                    m.content = newContent;
+                                  }
+                                },
+                              );
+                            }}
+                          ></IconButton>
+                        </div>
+                        {isUser ? (
+                          <Avatar avatar={config.avatar} />
+                        ) : (
+                          <>
+                            {["system"].includes(message.role) ? (
+                              <Avatar avatar="2699-fe0f" />
+                            ) : (
+                              <MaskAvatar
+                                avatar={session.mask.avatar}
+                                model={
+                                  message.displayName ||
+                                  message.model ||
+                                  session.mask.modelConfig.model
+                                }
+                              />
+                            )}
+                          </>
+                        )}
+                      </div>
+                      {!isUser && (
+                        <div
+                          className={`${styles["chat-model-name"]} ${
+                            providerIdForClick
+                              ? styles["chat-model-name--clickable"]
+                              : ""
+                          }`}
+                          onClick={
+                            providerIdForClick
+                              ? () => handleModelNameClick(message.providerId)
+                              : undefined
+                          }
+                          title={Locale.Chat.GoToCustomProviderConfig}
+                        >
+                          {message.displayName || message.model}
+                        </div>
+                      )}
+
+                      {iconUpEnabled && showActions && (
+                        <div className={styles["chat-message-actions"]}>
+                          <div className={styles["message-actions-row"]}>
+                            <ChatInputActions
+                              message={message}
+                              onUserStop={onUserStop}
+                              onResend={onResend}
+                              onDelete={onDelete}
+                              onBreak={onBreak}
+                              onPinMessage={onPinMessage}
+                              copyToClipboard={copyToClipboard}
+                              openaiSpeech={openaiSpeech}
+                              setUserInput={setUserInput}
+                              speechStatus={speechStatus}
+                              config={config}
+                              i={i}
                             />
-                          )}
-                        </>
+                          </div>
+                        </div>
                       )}
                     </div>
-                    {!isUser && (
-                      <div
-                        className={`${styles["chat-model-name"]} ${
-                          providerIdForClick
-                            ? styles["chat-model-name--clickable"]
-                            : ""
-                        }`}
-                        onClick={
-                          providerIdForClick
-                            ? () => handleModelNameClick(message.providerId)
-                            : undefined
-                        }
-                        title={Locale.Chat.GoToCustomProviderConfig}
-                      >
-                        {message.displayName || message.model}
+                    {showTyping && (
+                      <div className={styles["chat-message-status"]}>
+                        {Locale.Chat.Typing}
                       </div>
                     )}
+                    <div
+                      className={styles["chat-message-item"]}
+                      onMouseUp={onMessageMouseUp}
+                    >
+                      <Markdown
+                        key={message.streaming ? "loading" : "done"}
+                        status={showTyping}
+                        content={
+                          !message.streaming && isThinkingModel(message.model)
+                            ? wrapThinkingPart(getMessageTextContent(message))
+                            : getMessageTextContent(message)
+                        }
+                        loading={
+                          (message.preview || message.streaming) &&
+                          message.content.length === 0 &&
+                          !isUser
+                        }
+                        // onContextMenu={(e) => onRightClick(e, message)}  //don't copy message to input area when right click
+                        onDoubleClickCapture={() => {
+                          if (!isMobileScreen) return;
+                          setUserInput(getMessageTextContent(message));
+                        }}
+                        // fontSize={fontSize}
+                        // parentRef={scrollRef}
+                        defaultShow={i >= messages.length - 6}
+                        searchingTime={message.statistic?.searchingLatency}
+                        thinkingTime={message.statistic?.reasoningLatency}
+                      />
+                      {getMessageImages(message).length == 1 && (
+                        <Image
+                          className={styles["chat-message-item-image"]}
+                          src={getMessageImages(message)[0]}
+                          alt=""
+                          width={400}
+                          height={400}
+                          style={{ maxWidth: "100%", height: "auto" }}
+                        />
+                      )}
+                      {getMessageImages(message).length > 1 && (
+                        <div
+                          className={styles["chat-message-item-images"]}
+                          style={
+                            {
+                              "--image-count": getMessageImages(message).length,
+                            } as React.CSSProperties
+                          }
+                        >
+                          {getMessageImages(message).map((image, index) => {
+                            return (
+                              <Image
+                                className={
+                                  styles["chat-message-item-image-multi"]
+                                }
+                                key={index}
+                                src={image}
+                                alt=""
+                                width={400}
+                                height={400}
+                                style={{ maxWidth: "100%", height: "auto" }}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                      {getMessageFiles(message).length > 0 && (
+                        <div className={styles["chat-message-item-files"]}>
+                          {getMessageFiles(message).map((file, index) => {
+                            const extension: DefaultExtensionType = file.name
+                              .split(".")
+                              .pop()
+                              ?.toLowerCase() as DefaultExtensionType;
+                            const style = defaultStyles[extension];
+                            return (
+                              <a
+                                key={index}
+                                className={styles["chat-message-item-file"]}
+                              >
+                                <div
+                                  className={
+                                    styles["chat-message-item-file-icon"] +
+                                    " no-dark"
+                                  }
+                                >
+                                  <FileIcon {...style} glyphColor="#303030" />
+                                </div>
+                                <div
+                                  className={
+                                    styles["chat-message-item-file-name"]
+                                  }
+                                >
+                                  {file.name}{" "}
+                                  {file?.size !== undefined
+                                    ? `(${file.size}K, ${file.tokenCount}Tokens)`
+                                    : `(${file.tokenCount}K)`}
+                                </div>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
 
-                    {iconUpEnabled && showActions && (
+                    <div className={styles["chat-message-action-date"]}>
+                      {isContext
+                        ? Locale.Chat.IsContext
+                        : formatMessage(message)}
+                    </div>
+                    {iconDownEnabled && showActions && (
                       <div className={styles["chat-message-actions"]}>
                         <div className={styles["message-actions-row"]}>
                           <ChatInputActions
@@ -3419,143 +3702,26 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       </div>
                     )}
                   </div>
-                  {showTyping && (
-                    <div className={styles["chat-message-status"]}>
-                      {Locale.Chat.Typing}
-                    </div>
-                  )}
-                  <div className={styles["chat-message-item"]}>
-                    <Markdown
-                      key={message.streaming ? "loading" : "done"}
-                      status={showTyping}
-                      content={
-                        !message.streaming && isThinkingModel(message.model)
-                          ? wrapThinkingPart(getMessageTextContent(message))
-                          : getMessageTextContent(message)
-                      }
-                      loading={
-                        (message.preview || message.streaming) &&
-                        message.content.length === 0 &&
-                        !isUser
-                      }
-                      // onContextMenu={(e) => onRightClick(e, message)}  //don't copy message to input area when right click
-                      onDoubleClickCapture={() => {
-                        if (!isMobileScreen) return;
-                        setUserInput(getMessageTextContent(message));
-                      }}
-                      // fontSize={fontSize}
-                      parentRef={scrollRef}
-                      defaultShow={i >= messages.length - 6}
-                      searchingTime={message.statistic?.searchingLatency}
-                      thinkingTime={message.statistic?.reasoningLatency}
-                    />
-                    {getMessageImages(message).length == 1 && (
-                      <Image
-                        className={styles["chat-message-item-image"]}
-                        src={getMessageImages(message)[0]}
-                        alt=""
-                        width={400}
-                        height={400}
-                        style={{ maxWidth: "100%", height: "auto" }}
-                      />
-                    )}
-                    {getMessageImages(message).length > 1 && (
-                      <div
-                        className={styles["chat-message-item-images"]}
-                        style={
-                          {
-                            "--image-count": getMessageImages(message).length,
-                          } as React.CSSProperties
-                        }
-                      >
-                        {getMessageImages(message).map((image, index) => {
-                          return (
-                            <Image
-                              className={
-                                styles["chat-message-item-image-multi"]
-                              }
-                              key={index}
-                              src={image}
-                              alt=""
-                              width={400}
-                              height={400}
-                              style={{ maxWidth: "100%", height: "auto" }}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    {getMessageFiles(message).length > 0 && (
-                      <div className={styles["chat-message-item-files"]}>
-                        {getMessageFiles(message).map((file, index) => {
-                          const extension: DefaultExtensionType = file.name
-                            .split(".")
-                            .pop()
-                            ?.toLowerCase() as DefaultExtensionType;
-                          const style = defaultStyles[extension];
-                          return (
-                            <a
-                              key={index}
-                              className={styles["chat-message-item-file"]}
-                            >
-                              <div
-                                className={
-                                  styles["chat-message-item-file-icon"] +
-                                  " no-dark"
-                                }
-                              >
-                                <FileIcon {...style} glyphColor="#303030" />
-                              </div>
-                              <div
-                                className={
-                                  styles["chat-message-item-file-name"]
-                                }
-                              >
-                                {file.name}{" "}
-                                {file?.size !== undefined
-                                  ? `(${file.size}K, ${file.tokenCount}Tokens)`
-                                  : `(${file.tokenCount}K)`}
-                              </div>
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles["chat-message-action-date"]}>
-                    {isContext ? Locale.Chat.IsContext : formatMessage(message)}
-                  </div>
-                  {iconDownEnabled && showActions && (
-                    <div className={styles["chat-message-actions"]}>
-                      <div className={styles["message-actions-row"]}>
-                        <ChatInputActions
-                          message={message}
-                          onUserStop={onUserStop}
-                          onResend={onResend}
-                          onDelete={onDelete}
-                          onBreak={onBreak}
-                          onPinMessage={onPinMessage}
-                          copyToClipboard={copyToClipboard}
-                          openaiSpeech={openaiSpeech}
-                          setUserInput={setUserInput}
-                          speechStatus={speechStatus}
-                          config={config}
-                          i={i}
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
-              {shouldShowClearContextDivider && (
-                <ClearContextDivider index={i} />
-              )}
-            </Fragment>
-          );
-        })}
+                {shouldShowClearContextDivider && (
+                  <ClearContextDivider index={i} />
+                )}
+              </Fragment>
+            );
+          }}
+          components={{
+            Footer: () =>
+              previewVisible ? (
+                <InputPreviewBubble
+                  text={userInput}
+                  images={attachImages}
+                  files={attachFiles}
+                  avatar={config.avatar}
+                />
+              ) : null,
+          }}
+        />
       </div>
-
       <div className={styles["chat-input-panel"]}>
         <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
 
@@ -3689,7 +3855,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             value={userInput}
             onKeyDown={onInputKeyDown}
             // onFocus={scrollToBottom}
-            onClick={scrollToBottom}
+            onClick={() => scrollToBottom()}
             onPaste={handlePaste}
             rows={inputRows}
             autoFocus={autoFocus}
@@ -3877,6 +4043,31 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
       {showShortcutKeyModal && (
         <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
+      )}
+
+      {quoteBubble.visible && (
+        <div
+          className={styles["quote-bubble"]}
+          style={{ position: "fixed", left: quoteBubble.x, top: quoteBubble.y }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const q = toMarkdownQuote(quoteBubble.text);
+            // 头部插入引用文本
+            setUserInput((prev) => (prev ? q + prev : q));
+            // 聚焦输入框，清理选区并收起气泡
+            requestAnimationFrame(() => inputRef.current?.focus());
+            window.getSelection()?.removeAllRanges();
+            hideQuoteBubble();
+          }}
+          onMouseUp={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {Locale.Chat.Actions.Quote}
+        </div>
       )}
     </div>
   );

@@ -1286,3 +1286,22 @@
   font-size: var(--text-xs);
   color: var(--black);
 }
+
+.quote-bubble {
+  z-index: 9999;
+  position: fixed; /* 双重保险，JS 里也设了 */
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--white, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  font-size: var(--text-sm);
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: transform .08s ease, opacity .08s ease;
+
+  &:hover { transform: translateY(-1px); }
+  &:active { transform: translateY(0); }
+}

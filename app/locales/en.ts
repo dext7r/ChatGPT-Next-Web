@@ -37,6 +37,7 @@ const en: LocaleType = {
       CompressedHistory: "Compressed History Memory Prompt",
       Export: "Export All Messages as Markdown",
       Copy: "Copy",
+      CopyError: "Copy Error",
       Download: "Download",
       Preview: "Preview",
       ShowCode: "ShowCode",
@@ -60,6 +61,7 @@ const en: LocaleType = {
         "Title generation failed, please manually click 🔄 after checking the compression model settings",
       Speech: "Play",
       StopSpeech: "Stop",
+      Quote: "Quote to Input",
     },
     Commands: {
       new: "Start a new chat",

@@ -1,4 +1,4 @@
-import hljs from "highlight.js";
+// import hljs from "highlight.js";
 import ReactMarkdown from "react-markdown";
 import "katex/dist/katex.min.css";
 import RemarkMath from "remark-math";
@@ -28,7 +28,7 @@ import { IconButton } from "./button";
 
 import { useAppConfig } from "../store/config";
 
-import { Collapse } from "antd";
+import Collapse from "antd/es/collapse";
 import styles from "./markdown.module.scss";
 
 interface SearchCollapseProps {
@@ -209,9 +209,10 @@ const sanitizeOptions = {
   ...defaultSchema,
   attributes: {
     ...defaultSchema.attributes,
+    span: ["className", "style", "data-tex"],
     div: [
       ...(defaultSchema.attributes?.div || []),
-      ["className", "math", "math-display"],
+      ["className", "math", "math-display", "katex-display"],
     ],
     img: [
       ...(defaultSchema.attributes?.img || []),
@@ -219,7 +220,6 @@ const sanitizeOptions = {
     ],
     math: [["xmlns", "http://www.w3.org/1998/Math/MathML"], "display"],
     annotation: ["encoding"],
-    span: ["className", "style"],
     svg: [
       ["xmlns", "http://www.w3.org/2000/svg"],
       "width",
@@ -264,6 +264,7 @@ export function Mermaid(props: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
   // const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (props.code && ref.current) {
@@ -291,11 +292,32 @@ export function Mermaid(props: { code: string }) {
     showImageModal(URL.createObjectURL(blob), fileName);
   }
 
+  function copyErrorToClipboard() {
+    const text = errorMessage || "Mermaid rendering error";
+    try {
+      copyToClipboard(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      console.error("Failed to copy error message to clipboard");
+    }
+  }
+
   if (errorMessage) {
     // return null;
     return (
       <div className={styles["mermaid-error"]}>
-        <div>{Locale.UI.MermaidError}</div>
+        <div className={styles["mermaid-error-message"]}>
+          <div>{Locale.UI.MermaidError}</div>
+          <button
+            className={styles["code-header-btn"]}
+            onClick={copyErrorToClipboard}
+            title={Locale.Chat.Actions.CopyError}
+            aria-label={Locale.Chat.Actions.CopyError}
+          >
+            {copied ? "✓" : Locale.Chat.Actions.CopyError}
+          </button>
+        </div>
         {errorMessage && <pre>{errorMessage}</pre>}
         <details>
           <summary>Mermaid Code</summary>
@@ -350,7 +372,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
       const codeElement = ref.current.querySelector("code");
       if (codeElement) {
         // 获取语言
-        const code = codeElement.innerText;
+        const code = codeElement.textContent || codeElement.innerText || "";
         setOriginalCode(code);
 
         const langClass = codeElement.className.match(/language-(\w+)/);
@@ -380,7 +402,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
         }
       }
     }
-  }, [enableArtifacts, isStatusReady]);
+  }, [enableArtifacts, isStatusReady, props.children]);
 
   const copyCode = () => {
     copyToClipboard(originalCode);
@@ -459,10 +481,11 @@ export function PreCode(props: { children: any; status?: boolean }) {
               onClick={() => previewRef.current?.reload()}
             />
             <HTMLPreview
+              key={previewContent}
               ref={previewRef}
               code={previewContent}
               autoHeight={!document.fullscreenElement}
-              height={!document.fullscreenElement ? 600 : height}
+              height={!document.fullscreenElement ? "30vh" : height}
               minWidth="50vw"
             />
           </FullScreen>
@@ -528,11 +551,30 @@ function CustomCode(props: { children: any; className?: string }) {
   const [collapsed, setCollapsed] = useState(true);
   const [showToggle, setShowToggle] = useState(false);
 
+  const [foldHeight, setFoldHeight] = useState(280); // SSR/初始回退
   useEffect(() => {
-    if (ref.current) {
-      const codeHeight = ref.current.scrollHeight;
-      setShowToggle(codeHeight > 400);
-      ref.current.scrollTop = ref.current.scrollHeight;
+    const calc = () => {
+      if (typeof window !== "undefined") {
+        // 给一点下限，避免超小窗口难看
+        const h = Math.max(160, Math.round(window.innerHeight * 0.3));
+        setFoldHeight(h);
+      }
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, []);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const el = ref.current;
+    const codeHeight = el.scrollHeight;
+    const desired = codeHeight > foldHeight + 4; // +4px 缓冲，防抖边界抖动
+
+    setShowToggle((prev) => (prev === desired ? prev : desired)); // ← 只在变化时更新
+
+    if (el.scrollTop !== el.scrollHeight) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [props.children]);
 
@@ -566,7 +608,7 @@ function CustomCode(props: { children: any; className?: string }) {
         className={props?.className}
         ref={ref}
         style={{
-          maxHeight: enableCodeFold && collapsed ? "400px" : "none",
+          maxHeight: enableCodeFold && collapsed ? `${foldHeight}px` : "none",
           overflowY: enableCodeFold && collapsed ? "auto" : "visible",
         }}
       >
@@ -837,6 +879,8 @@ function R_MarkDownContent(props: {
   fontSize?: number;
   status?: boolean;
 }) {
+  const isStreaming = !!props.status;
+
   const escapedContent = useMemo(() => {
     const originalContent = autoFixLatexDisplayMode(
       formatBoldText(escapeBrackets(escapeDollarNumber(props.content))),
@@ -853,21 +897,53 @@ function R_MarkDownContent(props: {
     return tryWrapHtmlCode(content);
   }, [props.content, props.searchingTime, props.thinkingTime]);
 
+  const remarkPlugins = useMemo(
+    () =>
+      isStreaming
+        ? [RemarkGfm, RemarkBreaks]
+        : [RemarkMath, RemarkGfm, RemarkBreaks],
+    [isStreaming],
+  );
+  const rehypePlugins = useMemo(
+    () =>
+      isStreaming
+        ? [RehypeRaw, [rehypeSanitize, sanitizeOptions]]
+        : [
+            RehypeRaw,
+            RehypeKatex,
+            [rehypeSanitize, sanitizeOptions],
+            [
+              RehypeHighlight,
+              {
+                detect: true, // 无语言标注时自动识别
+                ignoreMissing: true, // 未注册语言跳过
+                subset: [
+                  "javascript",
+                  "typescript",
+                  "python",
+                  "json",
+                  "bash",
+                  "yaml",
+                  "markdown",
+                  "java",
+                  "c",
+                  "cpp",
+                  "go",
+                  "sql",
+                  "html",
+                  "xml",
+                  "css",
+                ],
+                plainText: ["plain", "text", "txt"],
+              },
+            ],
+          ],
+    [isStreaming],
+  );
   return (
     <ReactMarkdown
-      remarkPlugins={[RemarkMath, RemarkGfm, RemarkBreaks]}
-      rehypePlugins={[
-        RehypeRaw,
-        RehypeKatex,
-        [rehypeSanitize, sanitizeOptions],
-        [
-          RehypeHighlight,
-          {
-            detect: false,
-            ignoreMissing: true,
-          },
-        ],
-      ]}
+      remarkPlugins={remarkPlugins as any}
+      rehypePlugins={rehypePlugins as any}
       components={
         {
           pre: (preProps: any) => (
@@ -926,99 +1002,6 @@ function R_MarkDownContent(props: {
 
 export const MarkdownContent = React.memo(R_MarkDownContent);
 
-function detectCodeLanguage(code: string): string {
-  try {
-    const result = hljs.highlightAuto(code, [
-      "python",
-      "java",
-      "c",
-      "cpp",
-      "javascript",
-      "typescript",
-      "go",
-      "rust",
-      "html",
-      "css",
-      "sql",
-      "bash",
-      "json",
-      "yaml",
-      "xml",
-      "r",
-      "php",
-      "ruby",
-      "swift",
-      "kotlin",
-      "shell",
-      "perl",
-      "haskell",
-      "matlab",
-    ]);
-    return result.language || "text";
-  } catch (e) {
-    console.warn("Language detection failed:", e);
-    return "text";
-  }
-}
-function preprocessContent(content: string): string {
-  const lines = content.split("\n");
-  let inCodeBlock = false;
-  let codeBlockLines: string[] = [];
-  let result: string[] = [];
-  let hasLanguageTag = false; // 标记当前代码块是否有语言标注
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    if (line.trim().startsWith("```")) {
-      if (!inCodeBlock) {
-        // 开始新的代码块
-        inCodeBlock = true;
-        codeBlockLines = [];
-        hasLanguageTag = line.trim().length > 3;
-
-        if (hasLanguageTag) {
-          // 有语言标注，直接添加这一行
-          result.push(line);
-        }
-        // 无语言标注时不添加这一行，等待语言检测
-      } else {
-        // 代码块结束
-        inCodeBlock = false;
-        if (!hasLanguageTag && codeBlockLines.length > 0) {
-          // 只有在没有语言标注时才进行语言检测
-          const detectedLang = detectCodeLanguage(codeBlockLines.join("\n"));
-          result.push("```" + detectedLang);
-          result.push(...codeBlockLines);
-        }
-        result.push(line); // 添加结束标记
-      }
-    } else if (inCodeBlock) {
-      if (hasLanguageTag) {
-        // 有语言标注的代码块直接添加内容
-        result.push(line);
-      } else {
-        // 无语言标注的代码块先收集内容
-        codeBlockLines.push(line);
-      }
-    } else {
-      // 非代码块内容直接添加
-      result.push(line);
-    }
-  }
-
-  // 处理未闭合的代码块
-  if (inCodeBlock && !hasLanguageTag && codeBlockLines.length > 0) {
-    console.warn("Unclosed code block detected");
-    const detectedLang = detectCodeLanguage(codeBlockLines.join("\n"));
-    result.push("```" + detectedLang);
-    result.push(...codeBlockLines);
-    result.push("```");
-  }
-
-  return result.join("\n");
-}
-
 export function Markdown(
   props: {
     content: string;
@@ -1033,22 +1016,9 @@ export function Markdown(
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
 
-  // 使用 useMemo 缓存处理结果
-  const processedContent = useMemo(() => {
-    // 只在 key 为 "done" 时进行语言检测
-    if (!props.status) {
-      return preprocessContent(props.content);
-    }
-    // 其他情况直接返回原始内容
-    return props.content;
-  }, [props.content, props.status]);
-
   return (
     <div
       className="markdown-body"
-      // style={{
-      //   fontSize: `${props.fontSize ?? 14}px`,
-      // }}
       ref={mdRef}
       onContextMenu={props.onContextMenu}
       onDoubleClickCapture={props.onDoubleClickCapture}
@@ -1058,8 +1028,8 @@ export function Markdown(
         <LoadingIcon />
       ) : (
         <MarkdownContent
-          key={processedContent}
-          content={processedContent}
+          // key={processedContent}
+          content={props.content}
           searchingTime={props.searchingTime}
           thinkingTime={props.thinkingTime}
           fontSize={props.fontSize}

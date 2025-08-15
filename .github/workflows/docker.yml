@@ -6,7 +6,7 @@ on:
       docker_tag:
         description: 'Docker image tag'
         required: true
-        default: 'latest'
+        default: ''
   push:
     tags:
       - '*'
@@ -45,10 +45,10 @@ jobs:
             justma/chatgpt-next-chat
             ghcr.io/${{ github.repository_owner }}/chatgpt-next-chat
           tags: |
-            type=raw,value=latest
+            type=raw,value=${{ github.event.inputs.docker_tag }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.docker_tag != '' && github.event.inputs.docker_tag != 'latest' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.docker_tag == '' || github.event.inputs.docker_tag == 'latest') }}
+            type=ref,event=tag,enable=${{ github.event_name == 'push' }}
             type=semver,pattern={{version}}
-            type=ref,event=tag
-            type=raw,value=${{ github.event.inputs.docker_tag }}
 
       -
         name: Debug Tags

@@ -220,4 +220,11 @@
     white-space: pre-wrap;
     color: var(--black);
   }
+
+  .mermaid-error-message {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8;
+  }
 }

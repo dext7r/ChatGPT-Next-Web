@@ -12,7 +12,7 @@
   --primary: #315EF8;
   --second: rgb(231, 248, 255);
   --hover-color: #f3f3f3;
-  --bar-color: rgba(0, 0, 0, 0.1);
+  // --bar-color: rgba(0, 0, 0, 0.1);
   --theme-color: var(--gray);
   --highlight: #315EF8;
   --button: #B0B7B7;
@@ -39,7 +39,7 @@
   --highlight: #315EF8;
   --button: #464E4E;
 
-  --bar-color: rgba(255, 255, 255, 0.1);
+  // --bar-color: rgba(255, 255, 255, 0.1);
 
   --border-in-light: 1px solid rgba(255, 255, 255, 0.192);
 
@@ -144,10 +144,15 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--bar-color);
+  background-color: var(--second);
   border-radius: 20px;
   background-clip: content-box;
   border: 2px solid transparent;
+  transition: background-color 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--primary);
 }
 
 select {

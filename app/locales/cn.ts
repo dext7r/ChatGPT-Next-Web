@@ -35,6 +35,7 @@ const cn = {
       CompressedHistory: "查看压缩后的历史 Prompt",
       Export: "导出聊天记录",
       Copy: "复制",
+      CopyError: "复制错误内容",
       Download: "下载",
       Preview: "预览",
       ShowCode: "代码",
@@ -57,6 +58,7 @@ const cn = {
       FailTitleToast: "标题生成失败，检查压缩模型设置后点击🔄手动刷新标题",
       Speech: "朗读",
       StopSpeech: "停止",
+      Quote: "引用至输入框提问",
     },
     Commands: {
       new: "新建聊天",

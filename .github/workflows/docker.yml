@@ -8,6 +8,8 @@ on:
         required: true
         default: ''
   push:
+    branches:
+      - main
     tags:
       - '*'
   release:
@@ -48,6 +50,7 @@ jobs:
             type=raw,value=${{ github.event.inputs.docker_tag }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.docker_tag != '' && github.event.inputs.docker_tag != 'latest' }}
             type=raw,value=latest,enable=${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.docker_tag == '' || github.event.inputs.docker_tag == 'latest') }}
             type=ref,event=tag,enable=${{ github.event_name == 'push' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'push' }}
             type=semver,pattern={{version}}
 
       -

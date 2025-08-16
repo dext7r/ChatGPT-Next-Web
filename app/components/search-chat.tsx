@@ -14,6 +14,7 @@ type Item = {
   id: number;
   name: string;
   content: string;
+  firstIndex: number;
 };
 export function SearchChatPage() {
   const navigate = useNavigate();
@@ -34,12 +35,16 @@ export function SearchChatPage() {
 
       sessions.forEach((session, index) => {
         const fullTextContents: string[] = [];
+        let firstIndex = -1;
 
-        session.messages.forEach((message) => {
+        session.messages.forEach((message, mIndex) => {
           const content = message.content as string;
           if (!content.toLowerCase || content === "") return;
           const lowerCaseContent = content.toLowerCase();
 
+          if (firstIndex === -1 && lowerCaseContent.includes(lowerCaseText)) {
+            firstIndex = mIndex; // Store the first index where the text is found
+          }
           // full text search
           let pos = lowerCaseContent.indexOf(lowerCaseText);
           while (pos !== -1) {
@@ -61,6 +66,8 @@ export function SearchChatPage() {
             id: index,
             name: session.topic,
             content: fullTextContents.join("... "), // concat content with...
+            firstIndex:
+              firstIndex === -1 ? session.messages.length - 1 : firstIndex,
           });
         }
       });
@@ -144,8 +151,10 @@ export function SearchChatPage() {
                 className={styles["mask-item"]}
                 key={item.id}
                 onClick={() => {
-                  navigate(Path.Chat);
                   selectSession(item.id);
+                  navigate(Path.Chat, {
+                    state: { jumpToIndex: item.firstIndex },
+                  });
                 }}
                 style={{ cursor: "pointer" }}
               >

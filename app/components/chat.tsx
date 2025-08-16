@@ -115,7 +115,7 @@ import {
   showPrompt,
   showToast,
 } from "./ui-lib";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FileIcon, defaultStyles } from "react-file-icon";
 import type { DefaultExtensionType } from "react-file-icon";
 import {
@@ -1835,33 +1835,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { submitKey, shouldSubmit } = useSubmitHandler();
-  // const scrollRef = useRef<HTMLDivElement>(null);
-  // const isScrolledToBottom = scrollRef?.current
-  //   ? Math.abs(
-  //       scrollRef.current.scrollHeight -
-  //         (scrollRef.current.scrollTop + scrollRef.current.clientHeight),
-  //     ) <= 1
-  //   : false;
-  // const isAttachWithTop = useMemo(() => {
-  //   const lastMessage = scrollRef.current?.lastElementChild as HTMLElement;
-  //   // if scrolllRef is not ready or no message, return false
-  //   if (!scrollRef?.current || !lastMessage) return false;
-  //   const topDistance =
-  //     lastMessage!.getBoundingClientRect().top -
-  //     scrollRef.current.getBoundingClientRect().top;
-  //   // leave some space for user question
-  //   return topDistance < 100;
-  // }, [scrollRef?.current?.scrollHeight]);
 
-  // const isTyping = userInput !== "";
-
-  // // if user is typing, should auto scroll to bottom
-  // // if user is not typing, should auto scroll to bottom only if already at bottom
-
-  // const { setAutoScroll, scrollDomToBottom } = useScrollToBottom(
-  //   scrollRef,
-  //   (isScrolledToBottom || isAttachWithTop) && !isTyping,
-  // );
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [hitBottom, setHitBottom] = useState(true);
   const isMobileScreen = useMobileScreen();
@@ -2702,6 +2676,12 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
   const messages = renderMessages;
 
+  const location = useLocation() as { state?: { jumpToIndex?: number } };
+  const jumpToIndex =
+    typeof location.state?.jumpToIndex === "number"
+      ? Math.max(0, Math.min(location.state.jumpToIndex, messages.length - 1))
+      : undefined;
+
   function scrollToBottom(force?: boolean) {
     const v = virtuosoRef.current;
     if (!v) return;
@@ -3391,7 +3371,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
         <Virtuoso
           ref={virtuosoRef}
           data={messages}
-          initialTopMostItemIndex={messages.length - 1}
+          initialTopMostItemIndex={jumpToIndex ?? messages.length - 1}
           followOutput={hitBottom ? "smooth" : false}
           atBottomStateChange={setHitBottom}
           atBottomThreshold={64}

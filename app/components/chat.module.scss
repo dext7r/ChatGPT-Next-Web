@@ -601,6 +601,25 @@
   }
 }
 
+/* 命中项高亮：描边 + 淡出背景 */
+.hit-highlight {
+  outline: 2px solid var(--second);
+  border-radius: 8px;
+  background: var(--primary);
+  animation: hit-fade 3s ease forwards;
+}
+
+@keyframes hit-fade {
+  0% {
+    background: var(--primary);
+    outline-color: var(--second);
+  }
+  100% {
+    background: transparent;
+    outline-color: transparent;
+  }
+}
+
 .chat-message-user {
   display: flex;
   flex-direction: row-reverse;

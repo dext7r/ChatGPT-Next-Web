@@ -2681,6 +2681,25 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     typeof location.state?.jumpToIndex === "number"
       ? Math.max(0, Math.min(location.state.jumpToIndex, messages.length - 1))
       : undefined;
+  const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+
+  // 初始时滚到命中项并高亮 3 秒
+  useEffect(() => {
+    if (typeof jumpToIndex !== "number") return;
+    // 先别跟随底部
+    setHitBottom(false);
+    // 下一帧再滚，等 DOM 稳定
+    requestAnimationFrame(() => {
+      virtuosoRef.current?.scrollToIndex({
+        index: jumpToIndex,
+        align: "center",
+        behavior: "auto",
+      });
+    });
+    setHighlightIndex(jumpToIndex);
+    const t = setTimeout(() => setHighlightIndex(null), 3000);
+    return () => clearTimeout(t);
+  }, [jumpToIndex, messages.length]);
 
   function scrollToBottom(force?: boolean) {
     const v = virtuosoRef.current;
@@ -3404,11 +3423,12 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             return (
               <Fragment key={message.id}>
                 <div
-                  className={
+                  className={clsx(
                     isUser
                       ? styles["chat-message-user"]
-                      : styles["chat-message"]
-                  }
+                      : styles["chat-message"],
+                    index === highlightIndex && styles["hit-highlight"],
+                  )}
                 >
                   <div className={styles["chat-message-container"]}>
                     <div className={styles["chat-message-header"]}>

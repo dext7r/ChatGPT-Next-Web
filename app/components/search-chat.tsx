@@ -43,7 +43,7 @@ export function SearchChatPage() {
           const lowerCaseContent = content.toLowerCase();
 
           if (firstIndex === -1 && lowerCaseContent.includes(lowerCaseText)) {
-            firstIndex = mIndex; // Store the first index where the text is found
+            firstIndex = mIndex + 1; // Store the first index where the text is found
           }
           // full text search
           let pos = lowerCaseContent.indexOf(lowerCaseText);

@@ -551,28 +551,15 @@ function CustomCode(props: { children: any; className?: string }) {
   const [collapsed, setCollapsed] = useState(true);
   const [showToggle, setShowToggle] = useState(false);
 
-  const [foldHeight, setFoldHeight] = useState(280); // SSR/初始回退
-  useEffect(() => {
-    const calc = () => {
-      if (typeof window !== "undefined") {
-        // 给一点下限，避免超小窗口难看
-        const h = Math.max(160, Math.round(window.innerHeight * 0.3));
-        setFoldHeight(h);
-      }
-    };
-    calc();
-    window.addEventListener("resize", calc);
-    return () => window.removeEventListener("resize", calc);
-  }, []);
-
   useEffect(() => {
     if (!ref.current) return;
     const el = ref.current;
-    const codeHeight = el.scrollHeight;
-    const desired = codeHeight > foldHeight + 4; // +4px 缓冲，防抖边界抖动
 
-    setShowToggle((prev) => (prev === desired ? prev : desired)); // ← 只在变化时更新
+    // 当内容总高度大于可视高度时，才显示“展开/收起”
+    const desired = el.scrollHeight > el.clientHeight + 4;
+    setShowToggle((prev) => (prev === desired ? prev : desired));
 
+    // 折叠时保持滚动条在底部
     if (el.scrollTop !== el.scrollHeight) {
       el.scrollTop = el.scrollHeight;
     }
@@ -608,7 +595,7 @@ function CustomCode(props: { children: any; className?: string }) {
         className={props?.className}
         ref={ref}
         style={{
-          maxHeight: enableCodeFold && collapsed ? `${foldHeight}px` : "none",
+          maxHeight: enableCodeFold && collapsed ? "max(160px, 30vh)" : "none",
           overflowY: enableCodeFold && collapsed ? "auto" : "visible",
         }}
       >
@@ -907,7 +894,7 @@ function R_MarkDownContent(props: {
   const rehypePlugins = useMemo(
     () =>
       isStreaming
-        ? [RehypeRaw, [rehypeSanitize, sanitizeOptions]]
+        ? [[rehypeSanitize, sanitizeOptions]]
         : [
             RehypeRaw,
             RehypeKatex,
@@ -945,54 +932,72 @@ function R_MarkDownContent(props: {
       remarkPlugins={remarkPlugins as any}
       rehypePlugins={rehypePlugins as any}
       components={
-        {
-          pre: (preProps: any) => (
-            <PreCode {...preProps} status={props.status} />
-          ),
-          code: CustomCode,
-          p: (pProps: any) => <p {...pProps} dir="auto" />,
-          searchcollapse: ({
-            title,
-            children,
-          }: {
-            title?: string;
-            children: React.ReactNode;
-          }) => <SearchCollapse title={title}>{children}</SearchCollapse>,
-          thinkcollapse: ({
-            title,
-            children,
-          }: {
-            title: string;
-            children: React.ReactNode;
-          }) => (
-            <ThinkCollapse title={title} fontSize={props.fontSize}>
-              {children}
-            </ThinkCollapse>
-          ),
-          a: (aProps: any) => {
-            const href = aProps.href || "";
-            if (/\.(aac|mp3|opus|wav)$/.test(href)) {
-              return (
-                <figure>
-                  <audio controls src={href}></audio>
-                </figure>
-              );
+        isStreaming
+          ? {
+              // 预览/流式：最小化渲染，避免触发含 setState 的复杂组件
+              pre: (p: any) => <pre {...p} />,
+              code: (p: any) => <code {...p} />,
+              p: (pProps: any) => <p {...pProps} dir="auto" />,
+              a: (aProps: any) => {
+                const href = aProps.href || "";
+                const isInternal = /^\/#/i.test(href);
+                const target = isInternal ? "_self" : aProps.target ?? "_blank";
+                return <a {...aProps} target={target} />;
+              },
+              details: Details,
+              summary: Summary,
+              img: ({ src, ...props }: any) => (
+                <ImagePreview src={src as string} />
+              ),
             }
-            if (/\.(3gp|3g2|webm|ogv|mpeg|mp4|avi)$/.test(href)) {
-              return (
-                <video controls width="99.9%">
-                  <source src={href} />
-                </video>
-              );
-            }
-            const isInternal = /^\/#/i.test(href);
-            const target = isInternal ? "_self" : aProps.target ?? "_blank";
-            return <a {...aProps} target={target} />;
-          },
-          details: Details,
-          summary: Summary,
-          img: ({ src, ...props }: ImgProps) => <ImagePreview src={src} />,
-        } as any
+          : ({
+              pre: (preProps: any) => (
+                <PreCode {...preProps} status={props.status} />
+              ),
+              code: CustomCode,
+              p: (pProps: any) => <p {...pProps} dir="auto" />,
+              searchcollapse: ({
+                title,
+                children,
+              }: {
+                title?: string;
+                children: React.ReactNode;
+              }) => <SearchCollapse title={title}>{children}</SearchCollapse>,
+              thinkcollapse: ({
+                title,
+                children,
+              }: {
+                title: string;
+                children: React.ReactNode;
+              }) => (
+                <ThinkCollapse title={title} fontSize={props.fontSize}>
+                  {children}
+                </ThinkCollapse>
+              ),
+              a: (aProps: any) => {
+                const href = aProps.href || "";
+                if (/\.(aac|mp3|opus|wav)$/.test(href)) {
+                  return (
+                    <figure>
+                      <audio controls src={href}></audio>
+                    </figure>
+                  );
+                }
+                if (/\.(3gp|3g2|webm|ogv|mpeg|mp4|avi)$/.test(href)) {
+                  return (
+                    <video controls width="99.9%">
+                      <source src={href} />
+                    </video>
+                  );
+                }
+                const isInternal = /^\/#/i.test(href);
+                const target = isInternal ? "_self" : aProps.target ?? "_blank";
+                return <a {...aProps} target={target} />;
+              },
+              details: Details,
+              summary: Summary,
+              img: ({ src, ...props }: ImgProps) => <ImagePreview src={src} />,
+            } as any)
       }
     >
       {escapedContent}

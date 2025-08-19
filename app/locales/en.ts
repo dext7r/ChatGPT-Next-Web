@@ -359,6 +359,12 @@ const en: LocaleType = {
     SubTitle: "All Settings",
     ShowPassword: "ShowPassword",
     Danger: {
+      Fix: {
+        title: "Fix Error",
+        SubTitle: "Clear input box to fix rendering error",
+        Action: "Fix Error",
+        Confirm: "Confirm to clear input box?",
+      },
       Reset: {
         Title: "Reset All Settings",
         SubTitle: "Reset all setting items to default",

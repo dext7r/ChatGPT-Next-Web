@@ -338,6 +338,12 @@ const cn = {
     ShowPassword: "显示密码",
 
     Danger: {
+      Fix: {
+        title: "修复错误",
+        SubTitle: "清除输入框以修复渲染错误",
+        Action: "修复错误",
+        Confirm: "确认清除输入框？",
+      },
       Reset: {
         Title: "重置所有设置",
         SubTitle: "重置所有设置项回默认值（不包含聊天数据）",

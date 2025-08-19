@@ -2,11 +2,12 @@ import React from "react";
 import { IconButton } from "./button";
 import GithubIcon from "../icons/github.svg";
 import ResetIcon from "../icons/reload.svg";
-import { ISSUE_URL } from "../constant";
+import { ISSUE_URL, UNFINISHED_INPUT } from "../constant";
 import Locale from "../locales";
 import { showConfirm } from "./ui-lib";
 import { useSyncStore } from "../store/sync";
 import { useChatStore } from "../store/chat";
+import styles from "./error.module.scss";
 
 interface IErrorBoundaryState {
   hasError: boolean;
@@ -24,7 +25,15 @@ export class ErrorBoundary extends React.Component<any, IErrorBoundaryState> {
     // Update state with error details
     this.setState({ hasError: true, error, info });
   }
-
+  removeCurrentInput() {
+    try {
+      const session = useChatStore.getState().currentSession();
+      const key = UNFINISHED_INPUT(session.id);
+      localStorage.removeItem(key);
+    } catch (err) {
+      console.error("Failed to clear unfinished input:", err);
+    }
+  }
   clearAndSaveData() {
     try {
       useSyncStore.getState().export();
@@ -37,15 +46,19 @@ export class ErrorBoundary extends React.Component<any, IErrorBoundaryState> {
     if (this.state.hasError) {
       // Render error message
       return (
-        <div className="error">
-          <h2>Oops, something went wrong!</h2>
-          <pre>
-            <code>{this.state.error?.toString()}</code>
-            <code>{this.state.info?.componentStack}</code>
-          </pre>
+        <div className={styles.error}>
+          <h2 className={styles.title}>Oops, something went wrong!</h2>
 
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <a href={ISSUE_URL} className="report">
+          <div className={styles.panel}>
+            <pre className={styles.pre} aria-label="Error details">
+              <code>{this.state.error?.toString()}</code>
+              {"\n"}
+              <code>{this.state.info?.componentStack}</code>
+            </pre>
+          </div>
+
+          <div className={styles.actions}>
+            <a href={ISSUE_URL} className={styles.report}>
               <IconButton
                 text="Report This Error"
                 icon={<GithubIcon />}
@@ -53,11 +66,25 @@ export class ErrorBoundary extends React.Component<any, IErrorBoundaryState> {
               />
             </a>
             <IconButton
-              icon={<ResetIcon />}
-              text="Clear All Data"
+              // icon={<ResetIcon />}
+              text="🔨 Try To Fix Error"
+              bordered
+              type="info"
+              onClick={async () => {
+                if (await showConfirm(Locale.Settings.Danger.Fix.Confirm)) {
+                  this.removeCurrentInput();
+                  this.setState({ hasError: false, error: null, info: null });
+                }
+              }}
+            />
+            <IconButton
+              // icon={<ResetIcon />}
+              text="⚠ Clear All Data"
+              type="danger"
               onClick={async () => {
                 if (await showConfirm(Locale.Settings.Danger.Reset.Confirm)) {
                   this.clearAndSaveData();
+                  this.setState({ hasError: false, error: null, info: null });
                 }
               }}
               bordered

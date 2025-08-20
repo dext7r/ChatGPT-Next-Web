@@ -38,7 +38,29 @@ function getAvailableModelsTooltip(provider: userCustomProvider) {
   if (availableModels.length === 0) return "No available models";
   return availableModels.map((m) => m.name).join("\n");
 }
+function resolveKeys(provider: userCustomProvider) {
+  const en = new Set(
+    (provider.enableKeyList || []).map((k) => k.trim()).filter(Boolean),
+  );
+  const dis = new Set(
+    (provider.disableKeyList || []).map((k) => k.trim()).filter(Boolean),
+  );
+  // 禁用优先：从启用集合剔除重复
+  for (const k of dis) en.delete(k);
 
+  if (en.size > 0 || dis.size > 0) {
+    return {
+      enabled: Array.from(en),
+      disabled: Array.from(dis),
+      all: Array.from(new Set([...en, ...dis])),
+    };
+  }
+  const fromApi = (provider.apiKey || "")
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+  return { enabled: fromApi, disabled: [], all: fromApi };
+}
 export function CustomProvider() {
   const match = useMatch(`${Path.CustomProvider}/:providerId`);
   const providerId = match?.params?.providerId;
@@ -78,41 +100,6 @@ export function CustomProvider() {
       }
     }
   }, [providerId, providers]);
-
-  // // 从本地存储加载数据
-  // useEffect(() => {
-  //   const loadProviders = async () => {
-  //     setIsLoading(true);
-  //     // 从 localStorage 获取数据
-  //     const storedProviders = safeLocalStorage().getItem(
-  //       StoreKey.CustomProvider,
-  //     );
-
-  //     if (storedProviders) {
-  //       try {
-  //         setProviders(JSON.parse(storedProviders));
-  //       } catch (e) {
-  //         console.error("Failed to parse stored providers:", e);
-  //         setProviders([]);
-  //       }
-  //     } else {
-  //       setProviders([]);
-  //     }
-
-  //     setIsLoading(false);
-  //   };
-
-  //   loadProviders();
-  // }, []);
-  // // 保存提供商到本地存储
-  // const saveProvidersToStorage = (updatedProviders: userCustomProvider[]) => {
-  //   try {
-  //     const jsonString = JSON.stringify(updatedProviders);
-  //     safeLocalStorage().setItem(StoreKey.CustomProvider, jsonString);
-  //   } catch (error) {
-  //     console.error("保存到localStorage失败:", error);
-  //   }
-  // };
 
   // 导出服务提供商
   const handleExportProviders = () => {
@@ -273,27 +260,30 @@ export function CustomProvider() {
               // Check if baseUrl matches
               if (existingProvider.baseUrl === importedProvider.baseUrl) {
                 // Merge providers - combine API keys
-                const existingKeys = existingProvider.apiKey
-                  .split(",")
-                  .map((k) => k.trim())
-                  .filter(Boolean);
-                const importedKeys = importedProvider.apiKey
-                  .split(",")
-                  .map((k) => k.trim())
-                  .filter(Boolean);
+                const existingAll = resolveKeys(existingProvider).all;
+                const importedAll = resolveKeys(importedProvider).all;
+                const combinedAll = Array.from(
+                  new Set([...existingAll, ...importedAll]),
+                );
 
-                // Combine keys and remove duplicates
-                const combinedKeysSet = new Set([
-                  ...existingKeys,
-                  ...importedKeys,
-                ]);
-                const combinedKeys = Array.from(combinedKeysSet).join(",");
+                const existingDis = new Set(
+                  existingProvider.disableKeyList || [],
+                );
+                const importedDis = new Set(
+                  importedProvider.disableKeyList || [],
+                );
+                const combinedDis = new Set([...existingDis, ...importedDis]);
 
-                // Update the existing provider with merged keys
+                // 启用列表 = 全部 - 禁用
+                const combinedEn = combinedAll.filter(
+                  (k) => !combinedDis.has(k),
+                );
+
                 updatedProviders[existingProviderIndex] = {
                   ...existingProvider,
-                  apiKey: combinedKeys,
-                  // Optionally merge other fields if needed
+                  apiKey: combinedAll.join(","),
+                  enableKeyList: combinedEn,
+                  disableKeyList: Array.from(combinedDis),
                 };
 
                 mergedCount++;
@@ -904,17 +894,35 @@ export function CustomProvider() {
     return `${count} 个模型`;
   };
   const getKeyCountText = (provider: userCustomProvider) => {
-    const allKeys = provider.apiKey
-      .split(",")
-      .map((k) => k.trim())
-      .filter((k) => k);
-    const total = allKeys.length;
+    // 显式清单：去空、去重
+    const enRaw = new Set(
+      (provider.enableKeyList ?? []).map((k) => k.trim()).filter(Boolean),
+    );
+    const disRaw = new Set(
+      (provider.disableKeyList ?? []).map((k) => k.trim()).filter(Boolean),
+    );
 
-    const enabledKeys = provider.enableKeyList?.length
-      ? provider.enableKeyList.map((k) => k.trim()).filter((k) => k)
-      : allKeys;
-    const enabled = enabledKeys.length;
+    // 断开重叠：禁用优先，把重复从启用里剔掉
+    for (const k of disRaw) {
+      if (enRaw.has(k)) enRaw.delete(k);
+    }
 
+    // 如果显式清单非空，就完全相信它们
+    if (enRaw.size > 0 || disRaw.size > 0) {
+      const enabled = enRaw.size;
+      const total = enRaw.size + disRaw.size;
+      return `key: ${enabled}/${total}`;
+    }
+
+    // 兼容旧数据：两清单都空才回退 apiKey，并默认全启用
+    const keySet = new Set(
+      (provider.apiKey || "")
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean),
+    );
+    const enabled = keySet.size;
+    const total = keySet.size;
     return `key: ${enabled}/${total}`;
   };
 
@@ -928,10 +936,7 @@ export function CustomProvider() {
       return;
     }
 
-    const keys = apiKey
-      .split(",")
-      .map((k) => k.trim())
-      .filter(Boolean);
+    const { enabled: keys } = resolveKeys(provider);
     if (keys.length === 0) {
       showToast("没有可用的 API Key 来统计余额。");
       return;
@@ -1172,7 +1177,8 @@ export function CustomProvider() {
                       className={`${styles.metaItem} ${styles.keyCountItem}`}
                       style={{ backgroundColor: "#FFEDD5", color: "#C2410C" }}
                       onClick={() => {
-                        const keys = provider.apiKey;
+                        const { enabled } = resolveKeys(provider);
+                        const keys = enabled.join(",");
                         if (keys) {
                           navigator.clipboard
                             .writeText(keys)

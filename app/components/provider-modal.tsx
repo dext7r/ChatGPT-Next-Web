@@ -293,7 +293,9 @@ export function ProviderModal(props: ProviderModalProps) {
         id: props.provider.id,
         name: props.provider.name,
         apiKey: props.provider.apiKey,
-        baseUrl: props.provider.baseUrl,
+        baseUrl:
+          props.provider.baseUrl ||
+          providerTypeDefaultUrls[props.provider.type],
         type: props.provider.type,
         models: props.provider.models || [],
         status: props.provider.status || "active",
@@ -425,12 +427,12 @@ export function ProviderModal(props: ProviderModalProps) {
       models: selectedModels,
       status: (formData.status as "active" | "inactive") || "active",
       balance: formData.balance,
-      testModel: formData.testModel,
+      testModel:
+        formData.testModel || providerTypeDefaultTestModel[formData.type],
       paths: formData.paths,
       enableKeyList: formData.enableKeyList || [],
       disableKeyList: formData.disableKeyList || [],
     };
-
     props.onSave(saveData);
   };
 
@@ -771,49 +773,55 @@ export function ProviderModal(props: ProviderModalProps) {
         id: props.provider.id,
         name: props.provider.name,
         apiKey: props.provider.apiKey,
-        baseUrl: props.provider.baseUrl,
+        baseUrl:
+          props.provider.baseUrl ||
+          providerTypeDefaultUrls[props.provider.type],
         type: props.provider.type,
         models: props.provider.models || [],
         status: props.provider.status || "active",
         enableKeyList: props.provider.enableKeyList || [],
         disableKeyList: props.provider.disableKeyList || [],
         balance: props.provider.balance,
-        testModel: props.provider.testModel,
-        paths: props.provider.paths || {},
+        testModel:
+          props.provider.testModel ||
+          providerTypeDefaultTestModel[props.provider.type],
+        paths: props.provider.paths || {
+          ChatPath: "",
+          SpeechPath: "",
+          ImagePath: "",
+          ListModelPath: "",
+        },
       });
       if (props.provider.models) {
         setModels(props.provider.models);
       }
 
-      // Initialize key list from apiKey string
-      // if (props.provider.apiKey) {
-      //   setKeyList(
-      //     props.provider.apiKey
-      //       .split(/[\s,]+/)
-      //       .map((key) => key.trim())
-      //       .filter(Boolean),
-      //   );
-      // }
-      if (
-        props.provider.apiKey &&
-        (!props.provider.enableKeyList ||
-          !props.provider.enableKeyList.length) &&
-        (!props.provider.disableKeyList ||
-          !props.provider.disableKeyList.length)
-      ) {
-        const keys = props.provider.apiKey
+      const en = (props.provider.enableKeyList || [])
+        .map((k) => k.trim())
+        .filter(Boolean);
+      const dis = (props.provider.disableKeyList || [])
+        .map((k) => k.trim())
+        .filter(Boolean);
+      let allKeys: string[];
+
+      if (en.length > 0 || dis.length > 0) {
+        const disSet = new Set(dis);
+        const enPruned = en.filter((k) => !disSet.has(k));
+        allKeys = Array.from(new Set([...enPruned, ...dis]));
+        setKeyList(allKeys);
+      } else {
+        const fromApi = (props.provider.apiKey || "")
           .split(/[\s,]+/)
           .map((k) => k.trim())
           .filter(Boolean);
-
+        setKeyList(fromApi);
         setFormData((prev) => ({
           ...prev,
-          enableKeyList: keys,
+          enableKeyList: fromApi,
           disableKeyList: [],
         }));
       }
     } else {
-      // Reset for new provider
       setFormData({
         name: "",
         apiKey: "",
@@ -850,9 +858,9 @@ export function ProviderModal(props: ProviderModalProps) {
     }
 
     const keys = newKey
-      .split(/[\s,]+/) // 任何空白字符或逗号分割
+      .split(/[\s,]+/)
       .map((k) => k.trim())
-      .filter((k) => k.length > 0);
+      .filter(Boolean);
 
     if (keys.length === 0) {
       showToast("API Key cannot be empty");
@@ -864,7 +872,21 @@ export function ProviderModal(props: ProviderModalProps) {
       return;
     }
 
-    setKeyList([...keyList, ...uniqueNewKeys]);
+    const nextKeys = [...keyList, ...uniqueNewKeys];
+    setKeyList(nextKeys);
+
+    setFormData((prev) => {
+      const en = new Set([...(prev.enableKeyList || []), ...uniqueNewKeys]);
+      const dis = new Set(prev.disableKeyList || []);
+      uniqueNewKeys.forEach((k) => dis.delete(k));
+      return {
+        ...prev,
+        enableKeyList: Array.from(en),
+        disableKeyList: Array.from(dis),
+        apiKey: nextKeys.join(","),
+      };
+    });
+
     setNewKey("");
     showToast(`${uniqueNewKeys.length} Keys had added successfully`);
   };
@@ -898,6 +920,17 @@ export function ProviderModal(props: ProviderModalProps) {
       const updatedKeys = [...keyList];
       updatedKeys.splice(index, 1);
       setKeyList(updatedKeys);
+
+      setFormData((prev) => ({
+        ...prev,
+        enableKeyList: (prev.enableKeyList || []).filter(
+          (k) => k !== keyToDelete,
+        ),
+        disableKeyList: (prev.disableKeyList || []).filter(
+          (k) => k !== keyToDelete,
+        ),
+        apiKey: updatedKeys.join(","),
+      }));
     }
   };
 
@@ -1298,6 +1331,15 @@ export function ProviderModal(props: ProviderModalProps) {
     // Update key list to only include valid keys
     setKeyList(validKeys);
 
+    setFormData((prev) => ({
+      ...prev,
+      apiKey: validKeys.join(","),
+      enableKeyList: validKeys,
+      disableKeyList: (prev.disableKeyList || []).filter(
+        (k) => validKeys.includes(k) === false,
+      ),
+    }));
+
     // Show results
     const removedCount = invalidKeys.length;
     if (removedCount > 0) {
@@ -1485,6 +1527,16 @@ export function ProviderModal(props: ProviderModalProps) {
       );
       setKeyList(remainingKeys);
 
+      setFormData((prev) => ({
+        ...prev,
+        apiKey: remainingKeys.join(","),
+        enableKeyList: (prev.enableKeyList || []).filter(
+          (k) => !filteredKeys.includes(k),
+        ),
+        disableKeyList: (prev.disableKeyList || []).filter(
+          (k) => !filteredKeys.includes(k),
+        ),
+      }));
       // 清空搜索输入
       setNewKey("");
 
@@ -1975,22 +2027,27 @@ export function ProviderModal(props: ProviderModalProps) {
               onClick={() => {
                 if (!isKeyListViewMode) {
                   // 切换到密钥列表视图时，将当前输入解析到keyList
-                  const newKeys = formData.apiKey
-                    .split(/[\s,]+/)
-                    .map((k) => k.trim())
-                    .filter(Boolean);
-                  setKeyList(newKeys);
-                  setFormData((prev) => ({
-                    ...prev,
-                    apiKey: newKeys.join(","),
-                  }));
+                  const newApiKey = keyList.join(",");
+                  setFormData((prev) => ({ ...prev, apiKey: newApiKey }));
                 } else {
                   // 切换回普通视图时，将keyList合并为字符串
-                  const newApiKey = keyList.join(",");
-                  setFormData((prev) => ({
-                    ...prev,
-                    apiKey: newApiKey,
-                  }));
+                  setKeyList(() => {
+                    const en = (formData.enableKeyList || [])
+                      .map((k) => k.trim())
+                      .filter(Boolean);
+                    const dis = (formData.disableKeyList || [])
+                      .map((k) => k.trim())
+                      .filter(Boolean);
+                    if (en.length > 0 || dis.length > 0) {
+                      const disSet = new Set(dis);
+                      const enPruned = en.filter((k) => !disSet.has(k));
+                      return Array.from(new Set([...enPruned, ...dis]));
+                    }
+                    return (formData.apiKey || "")
+                      .split(/[\s,]+/)
+                      .map((k) => k.trim())
+                      .filter(Boolean);
+                  });
                 }
                 setIsKeyListViewMode(!isKeyListViewMode);
               }}

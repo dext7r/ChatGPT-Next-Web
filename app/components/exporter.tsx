@@ -832,6 +832,7 @@ export function ImagePreviewer(props: {
             ]}
           >
             <div className={styles["export-share-options"]}>
+              <span>{Locale.Export.Artifacts.Warning}</span>
               <label>{Locale.Export.Artifacts.ExpirationLabel}</label>
               <select
                 value={selectedTtlOption}

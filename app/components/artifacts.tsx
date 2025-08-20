@@ -267,7 +267,8 @@ export function ArtifactsShareButton({
             ]}
           >
             <div className={styles["artifacts-share-options"]}>
-              <label>{Locale.Export.Artifacts.ExpirationLabel}</label>{" "}
+              <span>{Locale.Export.Artifacts.Warning}</span>
+              <label>{Locale.Export.Artifacts.ExpirationLabel}</label>
               {/* And this */}
               <select
                 value={selectedTtlOption}

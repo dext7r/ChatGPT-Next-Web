@@ -328,6 +328,8 @@ const en: LocaleType = {
         "The shared link has expired or the requested ID does not exist.",
       SetExpiration: "Set the Expiration Time",
       ExpirationLabel: "Expiration Tile:",
+      Warning:
+        "⚠️ The shared link will be public, anyone with the link can access it.",
     },
   },
   Select: {

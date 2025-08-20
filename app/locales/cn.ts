@@ -307,6 +307,7 @@ const cn = {
       Expired: "分享链接已过期或请求ID不存在",
       SetExpiration: "设置分享过期时间",
       ExpirationLabel: "过期时间:",
+      Warning: "⚠️ 分享链接将公开，拿到链接的任何人都可以访问",
     },
   },
   Select: {

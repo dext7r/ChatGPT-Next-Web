@@ -432,6 +432,41 @@ export function ImagePreviewer(props: {
 
   // Share related state and logic
   const [loading, setLoading] = useState(false);
+  // 拟态进度：复制/导出/分享共用
+  const [working, setWorking] = useState<null | {
+    type: "copy" | "download" | "share";
+    label: string;
+  }>(null);
+  const [progress, setProgress] = useState(0);
+  const progressTimer = useRef<number | null>(null);
+  const startProgress = (info: {
+    type: "copy" | "download" | "share";
+    label: string;
+  }) => {
+    if (progressTimer.current) window.clearInterval(progressTimer.current);
+    setWorking(info);
+    setProgress(0);
+    // 慢-中-慢推进，最多到 90%
+    progressTimer.current = window.setInterval(() => {
+      setProgress((p) => {
+        const step = p < 60 ? 7 : p < 85 ? 3 : 1;
+        return Math.min(p + step, 90);
+      });
+    }, 120);
+  };
+  const endProgress = () => {
+    if (progressTimer.current) {
+      window.clearInterval(progressTimer.current);
+      progressTimer.current = null;
+    }
+    // 冲到 100%，稍等一下再收起
+    setProgress(100);
+    window.setTimeout(() => {
+      setWorking(null);
+      setProgress(0);
+    }, 350);
+  };
+
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [shareResult, setShareResult] = useState<
@@ -471,6 +506,7 @@ export function ImagePreviewer(props: {
       return;
 
     setLoading(true);
+    startProgress({ type: "share", label: "share..." });
     setShowOptionsModal(false);
     setShowResultModal(true);
     setShareResult(null);
@@ -509,7 +545,10 @@ export function ImagePreviewer(props: {
         setShareResult({ error: errorMsg });
         showToast(errorMsg);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        endProgress();
+      });
   };
 
   const ttlOptions = [
@@ -522,32 +561,41 @@ export function ImagePreviewer(props: {
   ];
 
   const copy = () => {
+    if (working) return;
+    startProgress({ type: "copy", label: "Copy.." });
     showToast(Locale.Export.Image.Toast);
     const dom = previewRef.current;
     if (!dom) return;
-    toBlob(dom).then((blob) => {
-      if (!blob) return;
-      try {
-        navigator.clipboard
-          .write([
-            new ClipboardItem({
-              "image/png": blob,
-            }),
-          ])
-          .then(() => {
-            showToast(Locale.Copy.Success);
-            refreshPreview();
-          });
-      } catch (e) {
-        console.error("[Copy Image] ", e);
-        showToast(Locale.Copy.Failed);
-      }
-    });
+    toBlob(dom)
+      .then((blob) => {
+        if (!blob) {
+          showToast(Locale.Copy.Failed);
+          return;
+        }
+        try {
+          navigator.clipboard
+            .write([
+              new ClipboardItem({
+                "image/png": blob,
+              }),
+            ])
+            .then(() => {
+              showToast(Locale.Copy.Success);
+              refreshPreview();
+            });
+        } catch (e) {
+          console.error("[Copy Image] ", e);
+          showToast(Locale.Copy.Failed);
+        }
+      })
+      .finally(() => endProgress());
   };
 
   const isMobile = useMobileScreen();
 
   const download = async () => {
+    if (working) return;
+    startProgress({ type: "download", label: "Export.." });
     showToast(Locale.Export.Image.Toast);
     const dom = previewRef.current;
     if (!dom) return;
@@ -595,6 +643,8 @@ export function ImagePreviewer(props: {
       }
     } catch (error) {
       showToast(Locale.Download.Failed);
+    } finally {
+      endProgress();
     }
   };
 
@@ -637,6 +687,34 @@ export function ImagePreviewer(props: {
   };
   return (
     <div className={styles["image-previewer"]}>
+      {/* 进度条：复制/导出/分享时显示 */}
+      {working && (
+        <div
+          className={styles["working-overlay"]}
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+          aria-label={working.label}
+          aria-busy={true}
+        >
+          <div className={styles["wo-card"]}>
+            <div className={styles["wo-spinner"]} />
+            <div className={styles["wo-percent"]}>
+              {Math.max(0, Math.min(100, Math.round(progress)))}%
+            </div>
+            <div className={styles["wo-bar"]}>
+              <div
+                className={`${styles["wo-fill"]} ${
+                  progress >= 100 ? styles["done"] : ""
+                }`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className={styles["wo-label"]}>{working.label}</div>
+          </div>
+        </div>
+      )}
       {!props.notShowActions && (
         <PreviewActions
           copy={copy}

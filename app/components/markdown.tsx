@@ -31,6 +31,15 @@ import { useAppConfig } from "../store/config";
 import Collapse from "antd/es/collapse";
 import styles from "./markdown.module.scss";
 
+type CodeFoldCtx = {
+  collapsed: boolean;
+  setCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  enable: boolean;
+  showToggle: boolean;
+  setShowToggle: React.Dispatch<React.SetStateAction<boolean>>;
+};
+const CodeFoldContext = React.createContext<CodeFoldCtx | null>(null);
+
 interface SearchCollapseProps {
   title?: string | React.ReactNode;
   children: React.ReactNode;
@@ -357,6 +366,9 @@ export function PreCode(props: { children: any; status?: boolean }) {
     "html" | "mermaid" | "svg" | null
   >(null);
 
+  const [collapsed, setCollapsed] = useState(true);
+  const [showToggle, setShowToggle] = useState(false);
+
   const isStatusReady = !props.status;
 
   const chatStore = useChatStore();
@@ -364,6 +376,8 @@ export function PreCode(props: { children: any; status?: boolean }) {
   const config = useAppConfig();
   const enableArtifacts =
     session.mask?.enableArtifacts !== false && config.enableArtifacts;
+  const enableCodeFold =
+    session.mask?.enableCodeFold !== false && config.enableCodeFold;
 
   useEffect(() => {
     if (!isStatusReady) return;
@@ -404,6 +418,23 @@ export function PreCode(props: { children: any; status?: boolean }) {
     }
   }, [enableArtifacts, isStatusReady, props.children]);
 
+  useEffect(() => {
+    if (!ref.current) return;
+    const codeEl = ref.current.querySelector("code") as HTMLElement | null;
+    if (!codeEl) return;
+
+    // 以“折叠最大高度”作为阈值：max(160px, 30vh)
+    const collapsedMax = Math.max(160, 0.3 * height);
+    const needed = codeEl.scrollHeight > collapsedMax + 4;
+    setShowToggle((prev) => (prev === needed ? prev : needed));
+  }, [props.children, height]);
+  useEffect(() => {
+    const codeEl = ref.current?.querySelector("code") as HTMLElement | null;
+    if (!codeEl) return;
+    if (collapsed && codeEl.scrollTop !== codeEl.scrollHeight) {
+      codeEl.scrollTop = codeEl.scrollHeight;
+    }
+  }, [collapsed]);
   const copyCode = () => {
     copyToClipboard(originalCode);
   };
@@ -521,6 +552,19 @@ export function PreCode(props: { children: any; status?: boolean }) {
               ? Locale.Chat.Actions.ShowCode
               : Locale.Chat.Actions.Preview}
           </button>
+          {enableCodeFold && (
+            <button
+              className={`${styles["code-header-btn"]} ${
+                !showToggle ? styles["btn-disabled"] : ""
+              }`}
+              onClick={() => setCollapsed((v) => !v)}
+              disabled={!showToggle}
+              title={collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
+              aria-label={collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
+            >
+              {collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
+            </button>
+          )}
         </div>
       </div>
       <div className={styles["code-content"]}>
@@ -533,7 +577,17 @@ export function PreCode(props: { children: any; status?: boolean }) {
             {renderPreview()}
           </div>
         ) : (
-          <pre ref={ref}>{props.children}</pre>
+          <CodeFoldContext.Provider
+            value={{
+              collapsed,
+              setCollapsed,
+              enable: enableCodeFold,
+              showToggle,
+              setShowToggle,
+            }}
+          >
+            <pre ref={ref}>{props.children}</pre>
+          </CodeFoldContext.Provider>
         )}
       </div>
     </div>
@@ -548,46 +602,50 @@ function CustomCode(props: { children: any; className?: string }) {
     session.mask?.enableCodeFold !== false && config.enableCodeFold;
 
   const ref = useRef<HTMLPreElement>(null);
-  const [collapsed, setCollapsed] = useState(true);
-  const [showToggle, setShowToggle] = useState(false);
+  // const [collapsed, setCollapsed] = useState(true);
+  // const [showToggle, setShowToggle] = useState(false);
+  const codeFoldCtx = React.useContext(CodeFoldContext);
+  const { height } = useWindowSize();
 
   useEffect(() => {
     if (!ref.current) return;
     const el = ref.current;
 
-    // 当内容总高度大于可视高度时，才显示“展开/收起”
-    const desired = el.scrollHeight > el.clientHeight + 4;
-    setShowToggle((prev) => (prev === desired ? prev : desired));
-
-    // 折叠时保持滚动条在底部
-    if (el.scrollTop !== el.scrollHeight) {
+    if (!codeFoldCtx) return;
+    const collapsedMax = Math.max(160, 0.3 * height);
+    const needed = el.scrollHeight > collapsedMax + 4;
+    if (codeFoldCtx.showToggle !== needed) {
+      codeFoldCtx.setShowToggle(needed);
+    }
+    // 仅在折叠时把滚动保持在底部
+    if (codeFoldCtx.collapsed && el.scrollTop !== el.scrollHeight) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [props.children]);
+  }, [props.children, codeFoldCtx?.collapsed, height]);
 
-  const toggleCollapsed = () => {
-    setCollapsed((collapsed) => !collapsed);
-  };
-  const renderShowMoreButton = () => {
-    if (showToggle && enableCodeFold) {
-      return (
-        <div
-          className={`show-hide-button ${collapsed ? "collapsed" : "expanded"}`}
-          style={{
-            position: "absolute",
-            right: "12px",
-            bottom: "12px",
-            zIndex: 1,
-          }}
-        >
-          <button onClick={toggleCollapsed} className="code-fold-btn">
-            {collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
-          </button>
-        </div>
-      );
-    }
-    return null;
-  };
+  // const toggleCollapsed = () => {
+  //   setCollapsed((collapsed) => !collapsed);
+  // };
+  // const renderShowMoreButton = () => {
+  //   if (showToggle && enableCodeFold) {
+  //     return (
+  //       <div
+  //         className={`show-hide-button ${collapsed ? "collapsed" : "expanded"}`}
+  //         style={{
+  //           position: "absolute",
+  //           right: "12px",
+  //           bottom: "12px",
+  //           zIndex: 1,
+  //         }}
+  //       >
+  //         <button onClick={toggleCollapsed} className="code-fold-btn">
+  //           {collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
+  //         </button>
+  //       </div>
+  //     );
+  //   }
+  //   return null;
+  // };
 
   return (
     <>
@@ -595,13 +653,23 @@ function CustomCode(props: { children: any; className?: string }) {
         className={props?.className}
         ref={ref}
         style={{
-          maxHeight: enableCodeFold && collapsed ? "max(160px, 30vh)" : "none",
-          overflowY: enableCodeFold && collapsed ? "auto" : "visible",
+          // maxHeight: enableCodeFold && collapsed ? "max(160px, 30vh)" : "none",
+          // overflowY: enableCodeFold && collapsed ? "auto" : "visible",
+          maxHeight:
+            (codeFoldCtx?.enable ?? enableCodeFold) &&
+            (codeFoldCtx?.collapsed ?? true)
+              ? "max(160px, 30vh)"
+              : "none",
+          overflowY:
+            (codeFoldCtx?.enable ?? enableCodeFold) &&
+            (codeFoldCtx?.collapsed ?? true)
+              ? "auto"
+              : "visible",
         }}
       >
         {props.children}
       </code>
-      {renderShowMoreButton()}
+      {/* {renderShowMoreButton()} */}
     </>
   );
 }

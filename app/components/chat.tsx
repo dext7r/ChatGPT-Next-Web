@@ -2602,16 +2602,18 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           {images?.length > 0 && (
             <div className={styles["attach-images"]} style={{ marginTop: 6 }}>
               {images.map((src, i) => (
-                <img
+                <Image
                   key={i}
                   src={src}
+                  width={80}
+                  height={80}
+                  alt="attachment"
+                  className={styles["chat-message-item-image"]}
                   style={{
-                    width: 96,
-                    height: 96,
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    marginRight: 6,
+                    maxWidth: "100%",
+                    height: "auto",
                   }}
+                  unoptimized
                 />
               ))}
             </div>
@@ -3607,8 +3609,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                           className={styles["chat-message-item-image"]}
                           src={getMessageImages(message)[0]}
                           alt=""
-                          width={400}
-                          height={400}
+                          width={80}
+                          height={80}
                           style={{ maxWidth: "100%", height: "auto" }}
                         />
                       )}
@@ -3630,8 +3632,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                                 key={index}
                                 src={image}
                                 alt=""
-                                width={400}
-                                height={400}
+                                width={80}
+                                height={80}
                                 style={{ maxWidth: "100%", height: "auto" }}
                               />
                             );
@@ -4151,51 +4153,167 @@ export function Chat() {
     if (!modelTable || modelTable.length === 0) return;
     console.log("modelTable changed, updating session model...");
 
-    const modelConfig = { ...session.mask.modelConfig };
+    // const modelConfig = { ...session.mask.modelConfig };
 
-    if (!modelConfig.textProcessModel) {
-      if (access.textProcessModel) {
-        let textProcessModel, providerNameStr;
-        [textProcessModel, providerNameStr] =
-          access.textProcessModel.split("/@(?=[^@]*$)/");
-        modelConfig.textProcessModel = textProcessModel;
-        modelConfig.textProcessProviderName =
-          providerNameStr as ServiceProvider;
-      } else {
-        modelConfig.textProcessModel = modelTable[0].name;
-        modelConfig.textProcessProviderName = modelTable[0].provider
-          ?.providerName as ServiceProvider;
+    // if (!modelConfig.textProcessModel) {
+    //   if (access.textProcessModel) {
+    //     let textProcessModel, providerNameStr;
+    //     [textProcessModel, providerNameStr] =
+    //       access.textProcessModel.split("/@(?=[^@]*$)/");
+    //     modelConfig.textProcessModel = textProcessModel;
+    //     modelConfig.textProcessProviderName =
+    //       providerNameStr as ServiceProvider;
+    //   } else {
+    //     modelConfig.textProcessModel = modelTable[0].name;
+    //     modelConfig.textProcessProviderName = modelTable[0].provider
+    //       ?.providerName as ServiceProvider;
+    //   }
+    // }
+    // if (!modelConfig.ocrModel) {
+    //   if (access.ocrModel) {
+    //     let ocrModel, providerNameStr;
+    //     [ocrModel, providerNameStr] = access.ocrModel.split("/@(?=[^@]*$)/");
+    //     modelConfig.ocrModel = ocrModel;
+    //     modelConfig.ocrProviderName = providerNameStr as ServiceProvider;
+    //   } else {
+    //     modelConfig.ocrModel = modelTable[0].name;
+    //     modelConfig.ocrProviderName = modelTable[0].provider
+    //       ?.providerName as ServiceProvider;
+    //   }
+    // }
+    // if (!modelConfig.compressModel) {
+    //   if (access.compressModel) {
+    //     let compressModel, providerNameStr;
+    //     [compressModel, providerNameStr] =
+    //       access.compressModel.split("/@(?=[^@]*$)/");
+    //     modelConfig.compressModel = compressModel;
+    //     modelConfig.compressProviderName = providerNameStr as ServiceProvider;
+    //   } else {
+    //     modelConfig.compressModel = modelTable[0].name;
+    //     modelConfig.compressProviderName = modelTable[0].provider
+    //       ?.providerName as ServiceProvider;
+    //   }
+    // }
+    // chatStore.updateTargetSession(
+    //   session,
+    //   (session) => (session.mask.modelConfig = modelConfig),
+    // );
+
+    // 工具函数：检查某个 (model, providerName) 是否在可用表里
+    const findByModelAndProvider = (model?: string, providerName?: string) =>
+      modelTable.find(
+        (m) => m.name === model && m.provider?.providerName === providerName,
+      ) ?? null;
+
+    // 从 access 的 "model/@provider" 字符串里解析
+    const parseAccessPref = (s?: string) => {
+      if (!s)
+        return {
+          model: undefined as string | undefined,
+          providerName: undefined as string | undefined,
+        };
+      // 允许 "model/@providerName" 或仅 "model"
+      const sep = "/@";
+      const pos = s.lastIndexOf(sep);
+      if (pos >= 0) {
+        return {
+          model: s.slice(0, pos),
+          providerName: s.slice(pos + sep.length),
+        };
+      }
+      return { model: s, providerName: undefined };
+    };
+
+    // 给定“当前值 + access 偏好”，挑一个可用的
+    const pickAvailable = (
+      currentModel?: string,
+      currentProviderName?: string,
+      accessPrefStr?: string,
+    ) => {
+      // 1) 当前值可用 -> 保留
+      const current = findByModelAndProvider(currentModel, currentProviderName);
+      if (current) return current;
+
+      // 2) access 偏好（若提供） -> 解析后寻找完全匹配；若无 providerName，则按 model 名先匹配（取第一个满足的）
+      const pref = parseAccessPref(accessPrefStr);
+      if (pref.model) {
+        const byBoth = findByModelAndProvider(pref.model, pref.providerName);
+        if (byBoth) return byBoth;
+        const byNameOnly = modelTable.find((m) => m.name === pref.model);
+        if (byNameOnly) return byNameOnly;
+      }
+
+      // 3) 兜底：第一个可用项
+      return modelTable[0];
+    };
+
+    // 复制一份，避免直接改动引用
+    const nextConfig = { ...session.mask.modelConfig };
+
+    // 逐项校验/回填：textProcess / ocr / compress
+    {
+      const previousTextProcessModel = nextConfig.textProcessModel;
+      const pick = pickAvailable(
+        nextConfig.textProcessModel,
+        nextConfig.textProcessProviderName as any,
+        access.textProcessModel,
+      );
+      nextConfig.textProcessModel = pick.name;
+      nextConfig.textProcessProviderName = pick.provider?.providerName as any;
+      if (previousTextProcessModel !== nextConfig.textProcessModel) {
+        console.log(
+          `Text Process Model changed: from 【${previousTextProcessModel}】 to 【${nextConfig.textProcessModel}】`,
+        );
       }
     }
-    if (!modelConfig.ocrModel) {
-      if (access.ocrModel) {
-        let ocrModel, providerNameStr;
-        [ocrModel, providerNameStr] = access.ocrModel.split("/@(?=[^@]*$)/");
-        modelConfig.ocrModel = ocrModel;
-        modelConfig.ocrProviderName = providerNameStr as ServiceProvider;
-      } else {
-        modelConfig.ocrModel = modelTable[0].name;
-        modelConfig.ocrProviderName = modelTable[0].provider
-          ?.providerName as ServiceProvider;
+
+    {
+      const previousOcrModel = nextConfig.ocrModel;
+      const pick = pickAvailable(
+        nextConfig.ocrModel,
+        nextConfig.ocrProviderName as any,
+        access.ocrModel,
+      );
+      nextConfig.ocrModel = pick.name;
+      nextConfig.ocrProviderName = pick.provider?.providerName as any;
+      if (previousOcrModel !== nextConfig.ocrModel) {
+        console.log(
+          `OCR Model changed: from 【${previousOcrModel}】 to 【${nextConfig.ocrModel}】`,
+        );
       }
     }
-    if (!modelConfig.compressModel) {
-      if (access.compressModel) {
-        let compressModel, providerNameStr;
-        [compressModel, providerNameStr] =
-          access.compressModel.split("/@(?=[^@]*$)/");
-        modelConfig.compressModel = compressModel;
-        modelConfig.compressProviderName = providerNameStr as ServiceProvider;
-      } else {
-        modelConfig.compressModel = modelTable[0].name;
-        modelConfig.compressProviderName = modelTable[0].provider
-          ?.providerName as ServiceProvider;
+
+    {
+      const previousCompressModel = nextConfig.compressModel;
+      const pick = pickAvailable(
+        nextConfig.compressModel,
+        nextConfig.compressProviderName as any,
+        access.compressModel,
+      );
+      nextConfig.compressModel = pick.name;
+      nextConfig.compressProviderName = pick.provider?.providerName as any;
+      if (previousCompressModel !== nextConfig.compressModel) {
+        console.log(
+          `Compress Model changed: from 【${previousCompressModel}】 to 【${nextConfig.compressModel}】`,
+        );
       }
     }
-    chatStore.updateTargetSession(
-      session,
-      (session) => (session.mask.modelConfig = modelConfig),
-    );
+
+    // 只有真的有变更时才写回，避免无谓重渲染
+    const prev = session.mask.modelConfig;
+    const changed =
+      prev.textProcessModel !== nextConfig.textProcessModel ||
+      prev.textProcessProviderName !== nextConfig.textProcessProviderName ||
+      prev.ocrModel !== nextConfig.ocrModel ||
+      prev.ocrProviderName !== nextConfig.ocrProviderName ||
+      prev.compressModel !== nextConfig.compressModel ||
+      prev.compressProviderName !== nextConfig.compressProviderName;
+
+    if (changed) {
+      chatStore.updateTargetSession(session, (s) => {
+        s.mask.modelConfig = nextConfig;
+      });
+    }
   }, [modelTable]);
   return (
     <ChatComponent key={session.id} modelTable={modelTable}></ChatComponent>

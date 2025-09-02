@@ -621,7 +621,7 @@ function CustomCode(props: { children: any; className?: string }) {
     if (codeFoldCtx.collapsed && el.scrollTop !== el.scrollHeight) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [props.children, codeFoldCtx?.collapsed, height]);
+  }, [props.children, codeFoldCtx?.collapsed, height, codeFoldCtx]);
 
   // const toggleCollapsed = () => {
   //   setCollapsed((collapsed) => !collapsed);
@@ -913,8 +913,8 @@ function ImagePreview({ src }: { src: string }) {
       onClick={handleClick}
       style={{
         cursor: "zoom-in",
-        maxWidth: "200px",
-        maxHeight: "200px",
+        maxWidth: "160px",
+        maxHeight: "160px",
         objectFit: "contain", // 保持图片比例
         borderRadius: "8px", // 添加圆角
         transition: "transform 0.2s ease",

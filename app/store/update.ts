@@ -8,8 +8,6 @@ import { getClientConfig } from "../config/client";
 import { createPersistStore } from "../utils/store";
 import ChatGptIcon from "../icons/chatgpt.png";
 import Locale from "../locales";
-import { use } from "react";
-import { useAppConfig } from ".";
 import { ClientApi } from "../client/api";
 
 const ONE_MINUTE = 60 * 1000;
@@ -31,22 +29,26 @@ function formatVersionDate(t: string) {
 type VersionType = "date" | "tag";
 
 async function getVersion(type: VersionType) {
-  if (type === "date") {
-    const data = (await (await fetch(FETCH_COMMIT_URL)).json()) as {
-      commit: {
-        author: { name: string; date: string };
-      };
-      sha: string;
-    }[];
-    const remoteCommitTime = data[0].commit.author.date;
-    const remoteId = new Date(remoteCommitTime).getTime().toString();
-    return remoteId;
-  } else if (type === "tag") {
-    const data = (await (await fetch(FETCH_TAG_URL)).json()) as {
-      commit: { sha: string; url: string };
-      name: string;
-    }[];
-    return data.at(0)?.name;
+  try {
+    let data;
+    if (type === "date") {
+      data = await (await fetch(FETCH_COMMIT_URL)).json();
+      if (!data || !data[0]?.commit?.author?.date) {
+        throw new Error("Invalid data format: commit date missing");
+      }
+      const remoteCommitTime = data[0].commit.author.date;
+      const remoteId = new Date(remoteCommitTime).getTime().toString();
+      return remoteId;
+    } else if (type === "tag") {
+      data = await (await fetch(FETCH_TAG_URL)).json();
+      if (!data || !data[0]?.name) {
+        throw new Error("Invalid data format: tag name missing");
+      }
+      return data.at(0)?.name;
+    }
+  } catch (error) {
+    console.error("[getVersion error]", error);
+    return null; // Return a safe value (null or something else) on failure
   }
 }
 
@@ -105,7 +107,7 @@ export const useUpdateStore = createPersistStore(
                   .requestPermission()
                   .then((permission) => {
                     if (permission === "granted") {
-                      if (version === remoteId) {
+                      if (version === remoteId || !remoteId) {
                         // Show a notification using Tauri
                         window.__TAURI__?.notification.sendNotification({
                           title: "NextChat",

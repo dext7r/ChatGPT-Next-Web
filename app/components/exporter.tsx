@@ -666,7 +666,12 @@ export function ImagePreviewer(props: {
     } else {
       return mask.modelConfig.model;
     }
-  }, [allModels, mask.modelConfig.model, mask.modelConfig.providerName]);
+  }, [
+    allModels,
+    mask.modelConfig.model,
+    mask.modelConfig.providerName,
+    props.useDisplayName,
+  ]);
 
   const estimateMessagesToken = (messages: ChatMessage[]): number => {
     let total = 0;

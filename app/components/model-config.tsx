@@ -81,13 +81,15 @@ export function ModelConfigList(props: {
   );
 
   useEffect(() => {
+    const { updateConfig, modelConfig } = props;
+
     const [chatModel, chatProviderName] = chatModelValue.split(/@(?=[^@]*$)/);
     const matchedChatProviderName = findMatchingProvider(
       chatModel,
       chatProviderName,
       groupModels,
     );
-    props.updateConfig((config) => {
+    updateConfig((config) => {
       config.model = ModalConfigValidator.model(chatModel);
       config.providerName = matchedChatProviderName as ServiceProvider;
     });
@@ -100,7 +102,7 @@ export function ModelConfigList(props: {
       compressProviderName,
       groupModels,
     );
-    props.updateConfig((config) => {
+    updateConfig((config) => {
       config.compressModel = ModalConfigValidator.model(compressModel);
       config.compressProviderName =
         matchedCompressProviderName as ServiceProvider;
@@ -113,7 +115,7 @@ export function ModelConfigList(props: {
       ocrProviderName,
       groupModels,
     );
-    props.updateConfig((config) => {
+    updateConfig((config) => {
       config.ocrModel = ModalConfigValidator.model(ocrModel);
       config.ocrProviderName = matchedOcrProviderName as ServiceProvider;
     });
@@ -126,7 +128,7 @@ export function ModelConfigList(props: {
       textProcessProviderName,
       groupModels,
     );
-    props.updateConfig((config) => {
+    updateConfig((config) => {
       config.textProcessModel = ModalConfigValidator.model(textProcessModel);
       config.textProcessProviderName =
         matchedTextProcessProviderName as ServiceProvider;
@@ -134,7 +136,12 @@ export function ModelConfigList(props: {
     setTextProcessModelValue(
       `${textProcessModel}@${matchedTextProcessProviderName}`,
     );
-  }, []);
+  }, [
+    chatModelValue,
+    compressModelValue,
+    ocrModelValue,
+    textProcessModelValue,
+  ]);
 
   return (
     <>

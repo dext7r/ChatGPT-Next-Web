@@ -990,7 +990,7 @@ export function ProviderModal(props: ProviderModalProps) {
       }));
     }
     // }
-  }, [formData.type]);
+  }, [formData.type, props.provider]);
 
   // Add this helper function to test a single key
   const testKeyConnectivity = async (apiKey: string) => {

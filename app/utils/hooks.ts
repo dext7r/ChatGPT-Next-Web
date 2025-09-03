@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useAccessStore, useAppConfig, useCustomProviderStore } from "../store";
 import { collectModelsWithDefaultModel } from "./model";
-import { Model, userCustomProvider } from "../client/api";
+import { Model } from "../client/api";
 
 export function useAllModels() {
   const accessStore = useAccessStore();
@@ -21,7 +21,7 @@ export function useAllModels() {
       accessStore,
     );
   }, [
-    accessStore.customModels,
+    // accessStore.customModels,
     // accessStore.defaultModel,
     configStore.customModels,
     configStore.models,

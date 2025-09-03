@@ -1,7 +1,7 @@
 // app/components/CustomCssProvider.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCustomCssStore } from "../store/customCss";
 import { useAppConfig } from "../store";
 
@@ -15,18 +15,21 @@ export function CustomCssProvider() {
     if (customCss.content.trim().length > 0 && !customCss.enabled) {
       customCss.enable();
     }
-  }, []);
+  }, [customCss]);
 
   // 将 fontSize 注入到 customCss.content 中的 :root 块，若无则前置创建
-  const injectFontSize = (css: string): string => {
-    const fontRule = `\nfont-size: ${config.fontSize}px;`;
-    if (/(:root\s*\{)/.test(css)) {
-      // 在第一个 :root { 后插入 font-size
-      return css.replace(/(:root\s*\{)/, `$1 ${fontRule}`);
-    }
-    // 若没有 :root 定义，则新建一个
-    return `:root { ${fontRule} }\n` + css;
-  };
+  const injectFontSize = useCallback(
+    (css: string): string => {
+      const fontRule = `\nfont-size: ${config.fontSize}px;`;
+      if (/(:root\s*\{)/.test(css)) {
+        // 在第一个 :root { 后插入 font-size
+        return css.replace(/(:root\s*\{)/, `$1 ${fontRule}`);
+      }
+      // 若没有 :root 定义，则新建一个
+      return `:root { ${fontRule} }\n` + css;
+    },
+    [config.fontSize],
+  );
 
   useEffect(() => {
     if (mounted && customCss.enabled && customCss.content) {
@@ -41,7 +44,7 @@ export function CustomCssProvider() {
     customCss.enabled,
     customCss.content,
     config.theme,
-    config.fontSize,
+    injectFontSize,
   ]);
 
   if (!mounted || !customCss.enabled || !customCss.content) {

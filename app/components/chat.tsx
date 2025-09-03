@@ -4230,18 +4230,17 @@ export function Chat() {
       currentProviderName?: string,
       accessPrefStr?: string,
     ) => {
-      // 1) 当前值可用 -> 保留
+      if (accessPrefStr) {
+        // accessStore 提供的值，直接解析并返回 "假模型" 对象
+        const pref = parseAccessPref(accessPrefStr);
+        return {
+          name: pref.model!,
+          provider: { providerName: pref.providerName } as any,
+        };
+      }
+
       const current = findByModelAndProvider(currentModel, currentProviderName);
       if (current) return current;
-
-      // 2) access 偏好（若提供） -> 解析后寻找完全匹配；若无 providerName，则按 model 名先匹配（取第一个满足的）
-      const pref = parseAccessPref(accessPrefStr);
-      if (pref.model) {
-        const byBoth = findByModelAndProvider(pref.model, pref.providerName);
-        if (byBoth) return byBoth;
-        const byNameOnly = modelTable.find((m) => m.name === pref.model);
-        if (byNameOnly) return byNameOnly;
-      }
 
       // 3) 兜底：第一个可用项
       return modelTable[0];

@@ -792,10 +792,31 @@ function escapeBrackets(text: string) {
   );
 }
 function formatBoldText(text: string) {
-  const pattern = /\*\*(.*?)([:：])\*\*/g;
-  return text.replace(pattern, (match, boldText, colon) => {
-    return `**${boldText}**${colon}`;
-  });
+  // 先处理加粗文本间冒号连接问题 - 优先处理复杂情况
+  let processed = text.replace(
+    /\*\*(.*?)\*\*([:：])\*\*(.*?)\*\*/g,
+    (match, text1, colon, text2) => {
+      return `**${text1}**${colon} **${text2}**`;
+    },
+  );
+
+  // 然后处理单个冒号后加粗问题
+  processed = processed.replace(
+    /\*\*(.*?)([:：])\*\*/g,
+    (match, boldText, colon) => {
+      return `**${boldText}**${colon}`;
+    },
+  );
+
+  // 最后处理引号加粗后紧跟文本的问题 - 包含完整的中英文引号
+  processed = processed.replace(
+    /\*\*(".*?"|'.*?'|“.*?”|‘.*?’|「.*?」|『.*?』)\*\*([^\s])/g,
+    (match, quotedText, nextChar) => {
+      return `**${quotedText}** ${nextChar}`;
+    },
+  );
+
+  return processed;
 }
 
 function formatSearchText(
@@ -1004,7 +1025,11 @@ function R_MarkDownContent(props: {
           ? {
               // 预览/流式：最小化渲染，避免触发含 setState 的复杂组件
               pre: (p: any) => <pre {...p} />,
-              code: (p: any) => <code {...p} />,
+              code: ({ inline, className, children, ...rest }: any) => (
+                <code className={className} {...rest}>
+                  {children}
+                </code>
+              ),
               p: (pProps: any) => <p {...pProps} dir="auto" />,
               a: (aProps: any) => {
                 const href = aProps.href || "";

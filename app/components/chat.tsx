@@ -2291,7 +2291,39 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   };
   const selectedRef = useRef<HTMLDivElement>(null); //引用当前所选项
   // check if should send message
+  const wrapSelection = (wrapper: string) => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    const { selectionStart, selectionEnd, value } = textarea;
+
+    const selectedText = value.slice(selectionStart, selectionEnd);
+    const wlen = wrapper.length;
+
+    const startsWithWrapper =
+      selectedText.startsWith(wrapper) && selectedText.endsWith(wrapper);
+
+    let newText: string;
+
+    if (startsWithWrapper) {
+      // 如果已经有包裹，去掉
+      newText = selectedText.slice(wlen, selectedText.length - wlen);
+    } else {
+      // 如果没有，添加包裹
+      newText = `${wrapper}${selectedText}${wrapper}`;
+    }
+
+    textarea.setRangeText(newText, selectionStart, selectionEnd, "end");
+  };
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // 支持快捷切换加粗和斜体标记
+    if (e.ctrlKey && e.key.toLowerCase() === "b") {
+      e.preventDefault();
+      wrapSelection("**");
+    } else if (e.ctrlKey && e.key.toLowerCase() === "i") {
+      e.preventDefault();
+      wrapSelection("_");
+    }
+
     if (showModelAtSelector) {
       const filteredModels = getFilteredModels();
 

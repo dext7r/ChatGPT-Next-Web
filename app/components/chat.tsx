@@ -2297,7 +2297,21 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     const { selectionStart, selectionEnd, value } = textarea;
 
     const selectedText = value.slice(selectionStart, selectionEnd);
-    const wlen = wrapper.length;
+    const wrapperLength = wrapper.length;
+
+    // 如果没有选中文本，则在光标处插入两个包裹符，并将光标置于中间
+    if (selectionStart === selectionEnd) {
+      const insert = wrapper + wrapper;
+      textarea.setRangeText(insert, selectionStart, selectionEnd, "end");
+      setUserInput(textarea.value);
+
+      const caret = selectionStart + wrapperLength;
+      requestAnimationFrame(() => {
+        textarea.setSelectionRange(caret, caret);
+        textarea.focus();
+      });
+      return;
+    }
 
     const startsWithWrapper =
       selectedText.startsWith(wrapper) && selectedText.endsWith(wrapper);
@@ -2306,13 +2320,17 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
     if (startsWithWrapper) {
       // 如果已经有包裹，去掉
-      newText = selectedText.slice(wlen, selectedText.length - wlen);
+      newText = selectedText.slice(
+        wrapperLength,
+        selectedText.length - wrapperLength,
+      );
     } else {
       // 如果没有，添加包裹
       newText = `${wrapper}${selectedText}${wrapper}`;
     }
 
     textarea.setRangeText(newText, selectionStart, selectionEnd, "end");
+    setUserInput(textarea.value);
   };
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // 支持快捷切换加粗和斜体标记
@@ -2321,7 +2339,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       wrapSelection("**");
     } else if (e.ctrlKey && e.key.toLowerCase() === "i") {
       e.preventDefault();
-      wrapSelection("_");
+      wrapSelection("*");
     }
 
     if (showModelAtSelector) {

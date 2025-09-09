@@ -91,7 +91,7 @@ export const DEFAULT_CONFIG = {
     textProcessProviderName: "" as ServiceProvider,
     ocrModel: "" as ModelType,
     ocrProviderName: "" as ServiceProvider,
-    enableInjectSystemPrompts: false,
+    enableInjectSystemPrompts: true,
     enableStreamUsageOptions: false,
     template: config?.template ?? DEFAULT_INPUT_TEMPLATE,
     // 参数覆盖变量

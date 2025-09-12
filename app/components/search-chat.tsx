@@ -12,10 +12,56 @@ import { useChatStore } from "../store";
 
 type Item = {
   id: number;
+  sessionId: number;
   name: string;
   content: string;
-  firstIndex: number;
+  jumpIndex: number;
 };
+
+type Grouped = {
+  sessionId: number;
+  sessionName: string;
+  items: Item[];
+};
+
+function highlightText(text: string, keyword: string) {
+  if (!keyword) return text;
+  const regex = new RegExp(`(${keyword})`, "gi");
+  return text.split(regex).map((part, i) =>
+    regex.test(part) ? (
+      <mark key={i} style={{ backgroundColor: "yellow" }}>
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
+
+function groupBySession(
+  results: Item[],
+  fallbackName = "未命名会话",
+): Grouped[] {
+  const map = new Map<number, Grouped>();
+  for (const r of results) {
+    const g = map.get(r.sessionId);
+    if (g) {
+      g.items.push(r);
+    } else {
+      map.set(r.sessionId, {
+        sessionId: r.sessionId,
+        sessionName: r.name || fallbackName,
+        items: [r],
+      });
+    }
+  }
+  // 组内和组间的排序都给一下：组间按“组内首条命中长度总和/最近命中”随便挑一个
+  // 这里简单点：按组内命中条数降序；组内按 jumpIndex 升序（越早的消息排前）
+  const grouped = Array.from(map.values());
+  grouped.forEach((g) => g.items.sort((a, b) => a.jumpIndex - b.jumpIndex));
+  grouped.sort((a, b) => b.items.length - a.items.length);
+  return grouped;
+}
 export function SearchChatPage() {
   const navigate = useNavigate();
 
@@ -32,20 +78,19 @@ export function SearchChatPage() {
     (text: string) => {
       const lowerCaseText = text.toLowerCase();
       const results: Item[] = [];
+      let uid = 1;
 
       sessions.forEach((session, index) => {
-        const fullTextContents: string[] = [];
-        let firstIndex = -1;
+        // const fullTextContents: string[] = [];
+        // let firstIndex = -1;
 
         session.messages.forEach((message, mIndex) => {
           const content = message.content as string;
-          if (!content.toLowerCase || content === "") return;
-          const lowerCaseContent = content.toLowerCase();
+          if (!content || typeof content !== "string") return;
+          const lowerCaseContent = content.toLowerCase?.() ?? "";
+          if (!lowerCaseContent.includes(lowerCaseText)) return;
 
-          if (firstIndex === -1 && lowerCaseContent.includes(lowerCaseText)) {
-            firstIndex = mIndex + 1; // Store the first index where the text is found
-          }
-          // full text search
+          const snippets: string[] = [];
           let pos = lowerCaseContent.indexOf(lowerCaseText);
           while (pos !== -1) {
             const start = Math.max(0, pos - 35);
@@ -53,23 +98,21 @@ export function SearchChatPage() {
               content.length,
               pos + lowerCaseText.length + 35,
             );
-            fullTextContents.push(content.substring(start, end));
+            snippets.push(content.substring(start, end));
             pos = lowerCaseContent.indexOf(
               lowerCaseText,
               pos + lowerCaseText.length,
             );
           }
-        });
 
-        if (fullTextContents.length > 0) {
           results.push({
-            id: index,
+            id: uid++,
+            sessionId: index,
             name: session.topic,
-            content: fullTextContents.join("... "), // concat content with...
-            firstIndex:
-              firstIndex === -1 ? session.messages.length - 1 : firstIndex,
+            content: snippets.join("... "),
+            jumpIndex: mIndex + 1,
           });
-        }
+        });
       });
 
       // sort by length of matching content
@@ -88,6 +131,8 @@ export function SearchChatPage() {
           if (currentValue.length > 0) {
             const result = doSearch(currentValue);
             setSearchResults(result);
+          } else {
+            setSearchResults([]);
           }
           previousValueRef.current = currentValue;
         }
@@ -98,6 +143,7 @@ export function SearchChatPage() {
     return () => clearInterval(intervalId);
   }, [doSearch]);
 
+  const groupedResults = groupBySession(searchResults);
   return (
     <ErrorBoundary>
       <div className={styles["mask-page"]}>
@@ -139,6 +185,8 @@ export function SearchChatPage() {
                   if (searchText.length > 0) {
                     const result = doSearch(searchText);
                     setSearchResults(result);
+                  } else {
+                    setSearchResults([]);
                   }
                 }
               }}
@@ -146,32 +194,55 @@ export function SearchChatPage() {
           </div>
 
           <div>
-            {searchResults.map((item) => (
-              <div
-                className={styles["mask-item"]}
-                key={item.id}
-                onClick={() => {
-                  selectSession(item.id);
-                  navigate(Path.Chat, {
-                    state: { jumpToIndex: item.firstIndex },
-                  });
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                {/** 搜索匹配的文本 */}
-                <div className={styles["mask-header"]}>
-                  <div className={styles["mask-title"]}>
-                    <div className={styles["mask-name"]}>{item.name}</div>
-                    {item.content.slice(0, 70)}
+            {groupedResults.map((group) => (
+              <div key={group.sessionId} style={{ marginBottom: 10 }}>
+                {/* 分组标题（会话名） */}
+                <div
+                  className={styles["mask-header"]}
+                  style={{ padding: "4px 0" }}
+                >
+                  <div
+                    className={styles["mask-title"]}
+                    style={{ fontWeight: 600 }}
+                  >
+                    {group.sessionName}
+                    <span
+                      style={{ fontWeight: 400, opacity: 0.6, marginLeft: 8 }}
+                    >
+                      ({group.items.length} matches)
+                    </span>
                   </div>
                 </div>
-                {/** 操作按钮 */}
-                <div className={styles["mask-actions"]}>
-                  <IconButton
-                    icon={<EyeIcon />}
-                    text={Locale.SearchChat.Item.View}
-                  />
-                </div>
+
+                {/* 该会话下的所有命中项 */}
+                {group.items.map((item) => (
+                  <div
+                    className={styles["mask-item"]}
+                    key={item.id}
+                    onClick={() => {
+                      selectSession(group.sessionId);
+                      navigate(Path.Chat, {
+                        state: { jumpToIndex: item.jumpIndex },
+                      });
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className={styles["mask-header"]}>
+                      <div>
+                        {highlightText(
+                          item.content.slice(0, 70),
+                          searchInputRef.current?.value || "",
+                        )}
+                      </div>
+                    </div>
+                    <div className={styles["mask-actions"]}>
+                      <IconButton
+                        icon={<EyeIcon />}
+                        text={Locale.SearchChat.Item.View}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>

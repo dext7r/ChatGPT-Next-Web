@@ -92,14 +92,10 @@ export function useSwitchTheme() {
   const config = useAppConfig();
 
   useEffect(() => {
-    document.body.classList.remove("light");
-    document.body.classList.remove("dark");
-
-    if (config.theme === "dark") {
-      document.body.classList.add("dark");
-    } else if (config.theme === "light") {
-      document.body.classList.add("light");
-    }
+    const applyBodyClass = (mode: "light" | "dark") => {
+      document.body.classList.toggle("dark", mode === "dark");
+      document.body.classList.toggle("light", mode === "light");
+    };
 
     const metaDescriptionDark = document.querySelector(
       'meta[name="theme-color"][media*="dark"]',
@@ -108,20 +104,36 @@ export function useSwitchTheme() {
       'meta[name="theme-color"][media*="light"]',
     );
 
-    if (config.theme === "auto") {
-      metaDescriptionDark?.setAttribute("content", "#151515");
-      metaDescriptionLight?.setAttribute("content", "#fafafa");
-    } else {
+    const setMetaFromCSSVar = () => {
       const themeColor = getCSSVar("--theme-color");
       metaDescriptionDark?.setAttribute("content", themeColor);
       metaDescriptionLight?.setAttribute("content", themeColor);
+    };
+
+    document.body.classList.remove("light");
+    document.body.classList.remove("dark");
+
+    if (config.theme === "dark" || config.theme === "light") {
+      applyBodyClass(config.theme);
+      setMetaFromCSSVar();
+      // 同步 custom-css 的 data-theme（你已有）
+      document
+        .getElementById("custom-css")
+        ?.setAttribute("data-theme", config.theme);
+      return;
     }
 
-    // 更新自定义CSS的主题属性
-    const customCssElem = document.getElementById("custom-css");
-    if (customCssElem) {
-      customCssElem.setAttribute("data-theme", config.theme);
-    }
+    // === auto: 跟随系统，并监听变更 ===
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => {
+      applyBodyClass(mq.matches ? "dark" : "light");
+      setMetaFromCSSVar();
+      document.getElementById("custom-css")?.setAttribute("data-theme", "auto");
+    };
+
+    sync(); // 立即执行一次
+    mq.addEventListener?.("change", sync);
+    return () => mq.removeEventListener?.("change", sync);
   }, [config.theme]);
 }
 

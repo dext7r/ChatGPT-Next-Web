@@ -90,9 +90,10 @@ function CustomCssModal(props: { onClose?: () => void }) {
     customCss.update((state) => {
       state.content = cssContent;
       state.lastUpdated = Date.now();
-      if (cssContent.trim().length > 0 && !state.enabled) {
-        state.enabled = true;
-      }
+      // 不再强制启用/禁用；纯粹保存内容
+      // if (cssContent.trim().length > 0 && !state.enabled) {
+      //   state.enabled = true;
+      // }
     });
     props.onClose?.();
   };

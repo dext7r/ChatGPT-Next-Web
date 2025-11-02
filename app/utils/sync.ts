@@ -3,10 +3,12 @@ import {
   useAccessStore,
   useAppConfig,
   useChatStore,
+  useCustomCssStore,
   useCustomProviderStore,
+  useExpansionRulesStore,
+  useMaskStore,
+  usePromptStore,
 } from "../store";
-import { useMaskStore } from "../store/mask";
-import { usePromptStore } from "../store/prompt";
 import { StoreKey } from "../constant";
 import { merge } from "./merge";
 
@@ -38,6 +40,8 @@ const LocalStateSetters = {
   [StoreKey.Mask]: useMaskStore.setState,
   [StoreKey.Prompt]: usePromptStore.setState,
   [StoreKey.CustomProvider]: useCustomProviderStore.setState,
+  [StoreKey.CustomCSS]: useCustomCssStore.setState,
+  [StoreKey.ExpansionRules]: useExpansionRulesStore.setState,
 } as const;
 
 const LocalStateGetters = {
@@ -48,6 +52,10 @@ const LocalStateGetters = {
   [StoreKey.Prompt]: () => getNonFunctionFileds(usePromptStore.getState()),
   [StoreKey.CustomProvider]: () =>
     getNonFunctionFileds(useCustomProviderStore.getState()),
+  [StoreKey.CustomCSS]: () =>
+    getNonFunctionFileds(useCustomCssStore.getState()),
+  [StoreKey.ExpansionRules]: () =>
+    getNonFunctionFileds(useExpansionRulesStore.getState()),
 } as const;
 
 export type AppState = {
@@ -121,6 +129,8 @@ const MergeStates: StateMerger = {
   [StoreKey.Config]: mergeWithUpdate<AppState[StoreKey.Config]>,
   [StoreKey.Access]: mergeWithUpdate<AppState[StoreKey.Access]>,
   [StoreKey.CustomProvider]: mergeWithUpdate<AppState[StoreKey.CustomProvider]>,
+  [StoreKey.CustomCSS]: mergeWithUpdate<AppState[StoreKey.CustomCSS]>,
+  [StoreKey.ExpansionRules]: mergeWithUpdate<AppState[StoreKey.ExpansionRules]>,
 };
 
 export function getLocalAppState() {

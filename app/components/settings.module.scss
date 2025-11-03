@@ -1,6 +1,62 @@
 .settings {
   padding: 20px;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--second);
+  border-radius: 12px;
+  border: var(--border-in-light);
+}
+
+.settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--black);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--hover-color);
+  }
+}
+
+.settings-tab-active {
+  background: var(--primary);
+  color: white;
+
+  &:hover {
+    background: var(--primary);
+  }
+}
+
+.tab-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.tab-label {
+  font-weight: 500;
+}
+
+.settings-content {
+  flex: 1;
+  overflow: auto;
 }
 
 .avatar {
@@ -71,7 +127,6 @@
         column-gap: 2px;
 
         .user-prompt-button {
-          //height: 100%;
           padding: 7px;
         }
       }
@@ -303,7 +358,6 @@
   }
 }
 
-// settings.module.scss 添加
 .custom-css-hint {
   font-size: var(--text-sm);
   color: var(--black);
@@ -328,5 +382,188 @@
   input {
     font-size: var(--text-sm);
     margin-right: 8px;
+  }
+}
+
+// 服务提供商卡片样式
+.provider-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.provider-card {
+  border: var(--border-in-light);
+  border-radius: 12px;
+  background: var(--white);
+  transition: all 0.2s ease;
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.provider-card-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(67, 133, 245, 0.2);
+}
+
+.provider-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--second);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: var(--hover-color);
+  }
+}
+
+.provider-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.provider-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.provider-name-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.provider-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--primary);
+  color: white;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: badge-appear 0.3s ease;
+}
+
+@keyframes badge-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.provider-description {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: var(--black);
+  opacity: 0.7;
+}
+
+.provider-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.provider-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.provider-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.collapse-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  color: var(--black);
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+    background: var(--hover-color);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+  }
+
+  &.collapsed svg {
+    transform: rotate(-90deg);
+  }
+}
+
+.provider-config {
+  border-top: var(--border-in-light);
+  background: var(--white);
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 16px;
+  }
+
+  &.expanded {
+    max-height: 2000px;
+    opacity: 1;
+    padding: 16px;
+  }
+
+  .list {
+    margin: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .list-item {
+    padding: 12px 0;
+    border-bottom: var(--border-in-light);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:first-child {
+      padding-top: 8px;
+    }
   }
 }

@@ -360,6 +360,13 @@ const en: LocaleType = {
     Title: "Settings",
     SubTitle: "All Settings",
     ShowPassword: "ShowPassword",
+    Tabs: {
+      General: "General Settings",
+      ModelService: "Model Service",
+      Sync: "Data Backup",
+      QuickInput: "Quick Input",
+      Voice: "Voice Settings",
+    },
     Danger: {
       Fix: {
         title: "Fix Error",

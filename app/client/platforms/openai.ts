@@ -30,7 +30,7 @@ import {
 import { prettyObject } from "@/app/utils/format";
 import { getClientConfig } from "@/app/config/client";
 import { makeAzurePath } from "@/app/azure";
-import { isVisionModel, isThinkingModel, wrapThinkingPart } from "@/app/utils";
+import { isThinkingModel, wrapThinkingPart } from "@/app/utils";
 import { preProcessMultimodalContent } from "@/app/utils/chat";
 import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
@@ -271,12 +271,18 @@ export class ChatGPTApi implements LLMApi {
     const isGrokThink = model_name.startsWith("grok-3-mini-");
     const thinkingModel = isThinkingModel(model_name);
 
+    // 保留推理细节回传，Interleaved thinking 实现 M2 完整性能：https://platform.minimaxi.com/docs/guides/text-m2-function-call
+    const retainReasoningDetails = model_name.includes("minimax-m2");
+
     // const isThinking =
     //   model_name.includes("thinking") || isO1 || isO3 || isDeepseekReasoner;
 
     const messages: ChatOptions["messages"] = [];
     for (const v of options.messages) {
-      const content = await preProcessMultimodalContent(v);
+      const content = await preProcessMultimodalContent(
+        v,
+        retainReasoningDetails,
+      );
       if (!(isO1orO3 && v.role === "system"))
         messages.push({ role: v.role, content });
     }

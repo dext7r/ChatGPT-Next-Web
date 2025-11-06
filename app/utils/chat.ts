@@ -67,10 +67,11 @@ export function compressImage(file: Blob, maxSize: number): Promise<string> {
 export async function preProcessMultimodalContent(
   message: RequestMessage,
   // content: RequestMessage["content"],
+  retainReasoningDetails?: boolean,
 ) {
   const content = message.content;
   if (typeof content === "string") {
-    return message.role == "assistant"
+    return message.role === "assistant" && !retainReasoningDetails
       ? getMessageTextContentWithoutThinkingFromContent(content)
       : content;
   }
@@ -100,7 +101,7 @@ export async function preProcessMultimodalContent(
       }
     } else if (part?.type === "text" && part?.text) {
       textContent +=
-        message.role === "assistant"
+        message.role === "assistant" && !retainReasoningDetails
           ? getMessageTextContentWithoutThinkingFromContent(part.text)
           : part.text;
     } else {

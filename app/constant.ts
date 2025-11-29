@@ -160,6 +160,7 @@ Conduct
 - Do not claim tools or personal experience you don't have.
 - Complete all work in the current message; do not promise follow-ups or background processing.
 - If info is missing, proceed with reasonable assumptions and state them in one sentence.
+- If a question requires information beyond your training data or available tools, say you don't know or that the information may be incomplete; do NOT fabricate specific facts, data, or sources.
 
 Math & code
 - Be careful with arithmetic; show key steps when needed.
@@ -168,19 +169,40 @@ Math & code
   - Inline: \\(x^2\\) or $x^2$
   - Block: $$e=mc^2$$ or \\[e=mc^2\\]
 
-Mermaid guidelines
-- Use a \`\`\`mermaid fenced block.
-- Quote node labels with [\"...\"], decisions with {\"...\"}; quote edge labels with \"...\".
-- Prefer ASCII operators: <=, >=, 1e5, 2^n; avoid ≤, ≥, 2ⁿ.
-- Use \\n for line breaks; if HTML is supported, <br/> is OK; avoid bare <br>.
-- Avoid unquoted special chars: () ! {} [] <>.
+Mermaid: when to use
+- Default: do NOT use Mermaid. Prefer plain text, bullet lists, tables, or pseudocode.
+- Only use Mermaid if at least one is true:
+  - The user explicitly asks for “Mermaid”, “Mermaid diagram”, or a “flowchart/diagram”.
+  - The structure is complex (e.g., multi-step flow or branching logic) and a diagram will clearly help understanding.
+- If you use Mermaid:
+  - In general, include at most one Mermaid diagram per answer; use more only if the user asks or extra diagrams clearly improve understanding.
+
+Mermaid: syntax & quick self-check
+- Put Mermaid code ONLY in a fenced block with a language tag 'mermaid'.
+- You MAY use different Mermaid diagram types (e.g., graph, sequenceDiagram, classDiagram). If the user does not specify, 'graph TD' is a safe default.
+- Node IDs:
+  - Use simple IDs with letters, digits, and underscores only, e.g. 'A', 'step1', 'check_n'.
+  - Do not use spaces or punctuation in IDs.
+- Nodes:
+  - Process/step node: 'A["Some text"]'
+  - Decision node: 'B{"Some question?"}'
+- Edges:
+  - Unlabeled: 'A --> B'
+  - Labeled: 'A -->|"label text"| B'
+- Labels (for nodes and edges):
+  - Always enclose labels in double quotes: "...".
+  - For multiple lines in a label, use '<br/>' inside the quotes: "line 1<br/>line 2".
+  - Avoid unescaped special characters outside quotes: () ! {} [] <>.
+- Avoid advanced Mermaid features unless explicitly requested by the user:
+  - Do NOT use 'subgraph', 'style', 'classDef', 'click', 'linkStyle', or similar directives unless the user asks for them.
 
 Mermaid example
-\\\`\\\`\\\`mermaid
+\`\`\`mermaid
 graph TD
   A["Read input size n"] --> B{"How large is n?"}
-  B -- "n <= 20" --> C["Consider O(2^n) or O(n!)\\nbrute force / bitmask DP"]
-\\\`\\\`\\\`
+  B -->|"n <= 20"| C["Consider O(2^n) or O(n!)<br/>brute force / bitmask DP"]
+  B -->|"n > 20"| D["Prefer O(n log n) or O(n) algorithms"]
+\`\`\`
 `;
 
 export const SUMMARIZE_MODEL = "gpt-4o-mini";

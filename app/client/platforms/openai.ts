@@ -271,6 +271,16 @@ export class ChatGPTApi implements LLMApi {
     const isGrokThink = model_name.startsWith("grok-3-mini-");
     const thinkingModel = isThinkingModel(model_name);
 
+    // 检测是否为图像生成模型
+    const isImageModel =
+      model_name.includes("image") ||
+      model_name.includes("dall-e") ||
+      model_name.includes("flux") ||
+      model_name.includes("stability") ||
+      model_name.includes("kolors") ||
+      model_name.startsWith("mj-") ||
+      model_name.includes("midjourney");
+
     // 保留推理细节回传，Interleaved thinking 实现 M2 完整性能：https://platform.minimaxi.com/docs/guides/text-m2-function-call
     const retainReasoningDetails = model_name.includes("minimax-m2");
 
@@ -283,7 +293,8 @@ export class ChatGPTApi implements LLMApi {
         v,
         retainReasoningDetails,
       );
-      if (!(isO1orO3 && v.role === "system"))
+      // 对于O1/O3模型和图像生成模型，移除system消息
+      if (!((isO1orO3 || isImageModel) && v.role === "system"))
         messages.push({ role: v.role, content });
     }
 

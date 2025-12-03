@@ -468,6 +468,7 @@ export function isImageGenerationModel(model: string) {
     model_name.includes("flux") ||
     model_name.includes("stability") ||
     model_name.includes("kolors") ||
+    model_name.includes("cogview") ||
     model_name.startsWith("mj-") ||
     model_name.includes("midjourney");
   return isImageModel;

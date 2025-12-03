@@ -52,6 +52,14 @@ declare global {
 
       // website title
       SITE_TITLE?: string;
+
+      // image upload config
+      IMG_UPLOAD_API_URL?: string;
+      IMG_UPLOAD_AUTH_CODE?: string;
+      IMG_UPLOAD_CHANNEL?: string;
+      IMG_UPLOAD_FOLDER?: string;
+      IMG_UPLOAD_NAME_TYPE?: string;
+      IMG_UPLOAD_RETURN_FORMAT?: string;
     }
   }
 }
@@ -219,5 +227,12 @@ export const getServerSideConfig = () => {
     iconPosition: process.env.ICON_POSITION || "down",
 
     modelParams: Object.fromEntries(MODEL_PARAMS_MAP),
+
+    imgUploadApiUrl: process.env.IMG_UPLOAD_API_URL,
+    imgUploadAuthCode: process.env.IMG_UPLOAD_AUTH_CODE,
+    imgUploadChannel: process.env.IMG_UPLOAD_CHANNEL,
+    imgUploadFolder: process.env.IMG_UPLOAD_FOLDER || "NextChat",
+    imgUploadNameType: process.env.IMG_UPLOAD_NAME_TYPE,
+    imgUploadReturnFormat: process.env.IMG_UPLOAD_RETURN_FORMAT,
   };
 };

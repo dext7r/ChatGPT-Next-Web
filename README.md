@@ -155,7 +155,7 @@
 
 <img src="./docs/images/expansion-rules.gif"/>
 
-- **支持将artifacts、聊天对话上传至 cf kv 空间生成分享页面，其中聊天对话保持交互属性**
+- **支持将artifacts、聊天对话上传至 cf kv 空间生成分享页面，其中聊天对话保持交互属性，注意分享与隐私保护**
 
 
 ### 模型自定义功能增强
@@ -191,6 +191,10 @@
   </div>
 </details>
 
+### 🖼️ 图床功能（可选）
+  - **⚠️ 警告：开启后会增加响应延迟，默认不配置**
+  - 支持将 AI 响应中的 base64 图片自动上传到图床服务转成 url
+  - 基于 [cf-imgBed](https://cfbed.sanyue.de) 图床服务，需要部署相关项目
 
 ## 环境变量
 
@@ -235,6 +239,15 @@
 | CLOUDFLARE_KV_API_KEY      | cloudflare 令牌（需要有kv操作权限）| -                       |
 | CLOUDFLARE_KV_TTL          | kv 数据保存时间 （单位：秒）       | -                        |
 
+### 图床功能（可选）
+| 环境变量名称               | 描述                                                                                | 默认值 | 必需 |
+|----------------------------|-------------------------------------------------------------------------------------|--------|------|
+| IMG_UPLOAD_API_URL         | 图床服务 API 地址                                                                   | -      | 是   |
+| IMG_UPLOAD_AUTH_CODE       | 图床服务认证码                                                                      | -      | 视部署服务是否需要   |
+| IMG_UPLOAD_CHANNEL         | 上传渠道（telegram、cfr2、s3）                                                      | -      | 否   |
+| IMG_UPLOAD_FOLDER          | 上传目录分类                                                                        | -      | 否   |
+| IMG_UPLOAD_NAME_TYPE       | 文件命名方式（default、index、origin、short）                                       | -      | 否   |
+| IMG_UPLOAD_RETURN_FORMAT   | 返回格式（default、full），设为 full 时返回完整 URL                                  | -      | 否   |
 
 ### 关键配置配置示例
 

@@ -82,6 +82,9 @@ const DEFAULT_ACCESS_STATE = {
   selectLabels: "",
 
   modelParams: {},
+
+  // image upload config
+  imgUploadApiUrl: "",
 };
 
 export const useAccessStore = createPersistStore(
@@ -143,6 +146,10 @@ export const useAccessStore = createPersistStore(
     getModelParams() {
       this.fetch();
       return get().modelParams;
+    },
+    getImgUploadApiUrl() {
+      this.fetch();
+      return get().imgUploadApiUrl;
     },
     isValidOpenAI() {
       return ensure(get(), ["openaiApiKey"]);

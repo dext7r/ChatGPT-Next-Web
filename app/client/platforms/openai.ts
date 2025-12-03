@@ -37,6 +37,7 @@ import {
 } from "@/app/utils";
 import { preProcessMultimodalContent } from "@/app/utils/chat";
 import { estimateTokenLengthInLLM } from "@/app/utils/token";
+import { imageUploadManager } from "@/app/utils/image-upload";
 
 export interface OpenAIListModelResponse {
   object: string;
@@ -515,7 +516,7 @@ export class ChatGPTApi implements LLMApi {
         // start animaion
         animateResponseText();
 
-        const finish = () => {
+        const finish = async () => {
           if (!finished || controller.signal.aborted) {
             finished = true;
             if (isInThinking || !totalThinkingLatency) {
@@ -531,6 +532,20 @@ export class ChatGPTApi implements LLMApi {
 
             let full_reply = responseText + remainText + citationsContent;
             full_reply = wrapThinkingPart(full_reply);
+
+            // 处理图片上传
+            try {
+              if (imageUploadManager.containsBase64Image(full_reply)) {
+                console.log("[ImageUpload] 检测到base64图片，开始上传...");
+                full_reply =
+                  await imageUploadManager.processTextWithImages(full_reply);
+                console.log("[ImageUpload] 图片上传完成");
+              }
+            } catch (error) {
+              console.error("[ImageUpload] 图片上传失败:", error);
+              // 继续处理，不中断流程
+            }
+
             if (completionTokens == 0) {
               completionTokens = estimateTokenLengthInLLM(full_reply);
             }
@@ -800,7 +815,24 @@ export class ChatGPTApi implements LLMApi {
         clearTimeout(requestTimeoutId);
 
         const resJson = await res.json();
-        const message = await this.extractMessage(resJson);
+        let message = await this.extractMessage(resJson);
+
+        // 处理图片上传
+        try {
+          if (message && typeof message === "object" && message.content) {
+            if (imageUploadManager.containsBase64Image(message.content)) {
+              console.log("[ImageUpload] 检测到base64图片，开始上传...");
+              message.content = await imageUploadManager.processTextWithImages(
+                message.content,
+              );
+              console.log("[ImageUpload] 图片上传完成");
+            }
+          }
+        } catch (error) {
+          console.error("[ImageUpload] 图片上传失败:", error);
+          // 继续处理，不中断流程
+        }
+
         let finishRequestTime = Date.now();
         if (
           message &&

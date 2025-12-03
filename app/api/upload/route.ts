@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSideConfig } from "../../config/server";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 const serverConfig = getServerSideConfig();
 
@@ -13,21 +13,14 @@ export async function OPTIONS() {
 export async function POST(request: NextRequest) {
   try {
     // 获取access store的配置
-    const imgUploadApiUrl = serverConfig.imgUploadApiUrl;
-    const imgUploadAuthCode = serverConfig.imgUploadAuthCode;
-    const imgUploadChannel = serverConfig.imgUploadChannel;
-    const imgUploadFolder = serverConfig.imgUploadFolder;
-    const imgUploadNameType = serverConfig.imgUploadNameType;
-    const imgUploadReturnFormat = serverConfig.imgUploadReturnFormat;
-
-    // console.log("[Upload] 收到上传请求，配置:", {
-    //   imgUploadApiUrl: !!imgUploadApiUrl,
-    //   imgUploadAuthCode: !!imgUploadAuthCode,
-    //   imgUploadChannel,
-    //   imgUploadFolder,
-    //   imgUploadNameType,
-    //   imgUploadReturnFormat,
-    // });
+    const {
+      imgUploadApiUrl,
+      imgUploadAuthCode,
+      imgUploadChannel,
+      imgUploadFolder,
+      imgUploadNameType,
+      imgUploadReturnFormat,
+    } = serverConfig;
 
     if (!imgUploadApiUrl) {
       console.error("[Upload] 图片上传服务未配置");
@@ -49,7 +42,7 @@ export async function POST(request: NextRequest) {
     console.log("[Upload] 收到文件:", file.name, file.type, file.size);
 
     // 构建目标URL
-    const url = new URL(imgUploadApiUrl + "/upload");
+    const url = new URL("/upload", imgUploadApiUrl);
 
     // 添加查询参数 - 只添加有值的参数
     if (imgUploadAuthCode) {

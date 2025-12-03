@@ -608,12 +608,19 @@ export class ChatGPTApi implements LLMApi {
                   reasoning_content: string | null; // 兼容 deepseek 字段
                   reasoning: string | null; // 兼容 openRouter 字段
                   citations: string[] | null; // 兼容 openRouter 字段
+                  images: Array<{
+                    type: string;
+                    image_url: {
+                      url: string;
+                    };
+                  }> | null; // 兼容 openRouter/Gemini 生图字段
                 };
               }>;
               const reasoning =
                 choices[0]?.delta?.reasoning_content ||
                 choices[0]?.delta?.reasoning;
               const content = choices[0]?.delta?.content;
+              const images = choices[0]?.delta?.images;
               const citations = json?.citations;
 
               const textmoderation = json?.prompt_filter_results;
@@ -754,6 +761,14 @@ export class ChatGPTApi implements LLMApi {
                   completionContent = response_content
                     .replace(searchContent, "")
                     .replace(thinkContent, "");
+                }
+              } else if (images && images.length > 0) {
+                // 处理生图内容
+                for (const image of images) {
+                  if (image?.image_url?.url) {
+                    // 将图片以 ![image](data:image/xxx) 的形式添加到 remainText
+                    remainText += `![image](${image.image_url.url})\n`;
+                  }
                 }
               }
 

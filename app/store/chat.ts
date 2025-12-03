@@ -2,6 +2,7 @@ import {
   trimTopic,
   getMessageTextContent,
   getMessageTextContentWithoutThinking,
+  isImageGenerationModel,
 } from "../utils";
 
 import Locale, { getLang } from "../locales";
@@ -646,7 +647,9 @@ export const useChatStore = createPersistStore(
         const contextPrompts = session.mask.context.slice();
 
         // system prompts, to get close to OpenAI Web ChatGPT
-        const shouldInjectSystemPrompts = modelConfig.enableInjectSystemPrompts;
+        const shouldInjectSystemPrompts =
+          modelConfig.enableInjectSystemPrompts &&
+          !isImageGenerationModel(modelConfig.model);
         // && (session.mask.modelConfig.model.startsWith("gpt-") ||
         //   session.mask.modelConfig.model.startsWith("chatgpt-"));
 
@@ -663,10 +666,11 @@ export const useChatStore = createPersistStore(
             ]
           : [];
         if (shouldInjectSystemPrompts) {
-          console.log(
-            "[Global System Prompt] ",
-            systemPrompts.at(0)?.content ?? "empty",
-          );
+          // console.log(
+          //   "[Global System Prompt] ",
+          //   systemPrompts.at(0)?.content ?? "empty",
+          // );
+          console.log("[System Prompt Injected]");
         }
         const memoryPrompt = get().getMemoryPrompt();
         // long term memory

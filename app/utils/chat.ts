@@ -5,7 +5,6 @@ import {
   getMessageTextContentWithoutThinkingFromContent,
 } from "@/app/utils";
 import mammoth from "mammoth";
-import { showToast, showModal } from "../components/ui-lib";
 
 export function compressImage(file: Blob, maxSize: number): Promise<string> {
   return new Promise((resolve, reject) => {

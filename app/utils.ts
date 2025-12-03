@@ -458,7 +458,20 @@ export function isVisionModel(model: string) {
     VISION_MODEL_REGEXES.some((regex) => regex.test(model))
   );
 }
-
+export function isImageGenerationModel(model: string) {
+  const model_name = model.toLowerCase();
+  // 检测是否为图像生成模型
+  const isImageModel =
+    model_name.includes("image") ||
+    model_name.includes("banana") ||
+    model_name.includes("dall-e") ||
+    model_name.includes("flux") ||
+    model_name.includes("stability") ||
+    model_name.includes("kolors") ||
+    model_name.startsWith("mj-") ||
+    model_name.includes("midjourney");
+  return isImageModel;
+}
 export function isThinkingModel(model: string | undefined) {
   if (!model) {
     return false;

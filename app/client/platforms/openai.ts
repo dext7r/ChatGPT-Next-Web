@@ -30,7 +30,11 @@ import {
 import { prettyObject } from "@/app/utils/format";
 import { getClientConfig } from "@/app/config/client";
 import { makeAzurePath } from "@/app/azure";
-import { isThinkingModel, wrapThinkingPart } from "@/app/utils";
+import {
+  isImageGenerationModel,
+  isThinkingModel,
+  wrapThinkingPart,
+} from "@/app/utils";
 import { preProcessMultimodalContent } from "@/app/utils/chat";
 import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
@@ -272,14 +276,7 @@ export class ChatGPTApi implements LLMApi {
     const thinkingModel = isThinkingModel(model_name);
 
     // 检测是否为图像生成模型
-    const isImageModel =
-      model_name.includes("image") ||
-      model_name.includes("dall-e") ||
-      model_name.includes("flux") ||
-      model_name.includes("stability") ||
-      model_name.includes("kolors") ||
-      model_name.startsWith("mj-") ||
-      model_name.includes("midjourney");
+    const isImageModel = isImageGenerationModel(model_name);
 
     // 保留推理细节回传，Interleaved thinking 实现 M2 完整性能：https://platform.minimaxi.com/docs/guides/text-m2-function-call
     const retainReasoningDetails = model_name.includes("minimax-m2");

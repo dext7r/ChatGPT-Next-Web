@@ -28,6 +28,8 @@ const DANGER_CONFIG = {
   siteTitle: siderbarConfig.siteTitle,
   selectLabels: serverConfig.selectLabels,
   modelParams: serverConfig.modelParams,
+  // imageBed config
+  imgUploadApiUrl: serverConfig.imgUploadApiUrl,
 };
 
 declare global {

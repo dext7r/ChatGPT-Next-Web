@@ -282,9 +282,50 @@ export function ProviderModal(props: ProviderModalProps) {
   const [isKeyListViewMode, setIsKeyListViewMode] = useState(true);
   const [keyList, setKeyList] = useState<string[]>([]);
   const [newKey, setNewKey] = useState("");
+  const [keyInputError, setKeyInputError] = useState<string | null>(null);
 
   // 高级设置显示
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+
+  // 检测 API Key 中的非标准字符
+  const validateApiKey = (key: string): string | null => {
+    if (!key) return null;
+
+    // 检测非 ASCII 字符 (超出 0x00-0x7F 范围)
+    const nonAsciiChars: { char: string; code: number; position: number }[] =
+      [];
+    for (let i = 0; i < key.length; i++) {
+      const code = key.charCodeAt(i);
+      if (code > 127) {
+        nonAsciiChars.push({ char: key[i], code, position: i + 1 });
+      }
+    }
+
+    if (nonAsciiChars.length > 0) {
+      const details = nonAsciiChars
+        .slice(0, 3) // 只显示前3个
+        .map(
+          (c) =>
+            `"${c.char}" (U+${c.code
+              .toString(16)
+              .toUpperCase()
+              .padStart(4, "0")})`,
+        )
+        .join(", ");
+      const moreText =
+        nonAsciiChars.length > 3 ? ` 等${nonAsciiChars.length}个` : "";
+      return `检测到异常字符: ${details}${moreText}。可能是复制时带入的特殊符号，请检查并重新输入。`;
+    }
+
+    return null;
+  };
+
+  // 处理 API Key 输入变化
+  const handleNewKeyChange = (value: string) => {
+    setNewKey(value);
+    const error = validateApiKey(value);
+    setKeyInputError(error);
+  };
 
   // 当编辑现有提供商时，加载数据
   useEffect(() => {
@@ -854,6 +895,13 @@ export function ProviderModal(props: ProviderModalProps) {
   const addKeyToList = () => {
     if (!newKey.trim()) {
       showToast("API Key cannot be empty");
+      return;
+    }
+
+    // 检查是否有非标准字符
+    const validationError = validateApiKey(newKey);
+    if (validationError) {
+      showToast("API Key 包含非标准字符，请先修正后再添加");
       return;
     }
 
@@ -1573,14 +1621,23 @@ export function ProviderModal(props: ProviderModalProps) {
           </div>
 
           <div className={styles.keyInputContainer}>
-            <input
-              type="text"
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value)}
-              placeholder={Locale.CustomProvider.ApiKeyPlaceholder}
-              className={styles.keyInput}
-              onKeyDown={handleKeyInputKeyDown}
-            />
+            <div className={styles.keyInputWrapper}>
+              <input
+                type="text"
+                value={newKey}
+                onChange={(e) => handleNewKeyChange(e.target.value)}
+                placeholder={Locale.CustomProvider.ApiKeyPlaceholder}
+                className={`${styles.keyInput} ${
+                  keyInputError ? styles.keyInputError : ""
+                }`}
+                onKeyDown={handleKeyInputKeyDown}
+              />
+              {keyInputError && (
+                <div className={styles.keyInputErrorMessage}>
+                  {keyInputError}
+                </div>
+              )}
+            </div>
 
             <div className={styles.actions}>
               <IconButton
@@ -1590,7 +1647,10 @@ export function ProviderModal(props: ProviderModalProps) {
               />
               <IconButton
                 text={Locale.CustomProvider.ClearInput}
-                onClick={() => setNewKey("")}
+                onClick={() => {
+                  setNewKey("");
+                  setKeyInputError(null);
+                }}
                 bordered
               />
               <IconButton

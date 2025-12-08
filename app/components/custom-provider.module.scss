@@ -1441,3 +1441,43 @@
   color: #b91c1c;
   background-color: #fef2f2;
 }
+
+// ===== 12. API Key Input Validation =====
+.keyInputWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+}
+
+.keyInputError {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+
+  &:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+  }
+}
+
+.keyInputErrorMessage {
+  margin-top: 6px;
+  padding: 8px 12px;
+  font-size: var(--text-xs);
+  color: #b91c1c;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  line-height: 1.4;
+
+  &::before {
+    content: "⚠️ ";
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .keyInputWrapper {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+}

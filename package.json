@@ -20,7 +20,7 @@
   "dependencies": {
     "@fortaine/fetch-event-source": "^3.0.6",
     "@hello-pangea/dnd": "^16.5.0",
-    "@next/third-parties": "15.2.6",
+    "@next/third-parties": "15.2.8",
     "@svgr/webpack": "^6.5.1",
     "@types/react-file-icon": "^1.0.4",
     "@vercel/analytics": "^0.1.11",
@@ -43,7 +43,7 @@
     "markdown-to-txt": "^2.0.1",
     "mermaid": "11.11.0",
     "nanoid": "^5.0.3",
-    "next": "15.2.6",
+    "next": "15.2.8",
     "node-fetch": "^3.3.1",
     "openapi-client-axios": "^7.5.5",
     "pdfjs-dist": "^4.10.38",

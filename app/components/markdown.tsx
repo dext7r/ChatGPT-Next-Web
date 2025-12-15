@@ -269,6 +269,79 @@ function Summary(props: { children: React.ReactNode }) {
   return <summary>{props.children}</summary>;
 }
 
+// Dangerous patterns for Python code - check before execution
+const DANGEROUS_PATTERNS: Array<{ pattern: RegExp; type: string }> = [
+  // Network operations
+  {
+    pattern:
+      /\bimport\s+(?:urllib|requests|httpx|aiohttp|socket|http\.client|ftplib|smtplib|poplib|imaplib|nntplib|telnetlib)/,
+    type: "network",
+  },
+  {
+    pattern:
+      /\bfrom\s+(?:urllib|requests|httpx|aiohttp|socket|http|ftplib|smtplib|poplib|imaplib|nntplib|telnetlib)\b/,
+    type: "network",
+  },
+  {
+    pattern: /\bsocket\s*\.\s*(?:socket|create_connection|getaddrinfo)/,
+    type: "network",
+  },
+  { pattern: /\burllib\s*\.\s*request/, type: "network" },
+
+  // File system operations
+  { pattern: /\bopen\s*\(\s*['"]/, type: "filesystem" }, // open() with string path
+  { pattern: /\bopen\s*\(\s*[a-zA-Z_]/, type: "filesystem" }, // open() with variable
+  {
+    pattern:
+      /\bos\s*\.\s*(?:remove|unlink|rmdir|makedirs|mkdir|rename|replace|chmod|chown|link|symlink|truncate)/,
+    type: "filesystem",
+  },
+  {
+    pattern: /\bshutil\s*\.\s*(?:rmtree|copy|copy2|copytree|move)/,
+    type: "filesystem",
+  },
+  {
+    pattern:
+      /\bpathlib\s*\..*\.\s*(?:read_|write_|unlink|rmdir|mkdir|rename|replace|chmod|touch)/,
+    type: "filesystem",
+  },
+
+  // System operations
+  {
+    pattern: /\bos\s*\.\s*(?:system|popen|spawn|exec|fork|kill|killpg)/,
+    type: "system",
+  },
+  {
+    pattern:
+      /\bsubprocess\s*\.\s*(?:run|call|Popen|check_output|check_call|getoutput|getstatusoutput)/,
+    type: "system",
+  },
+  { pattern: /\beval\s*\(\s*(?:input|raw_input)/, type: "system" },
+  { pattern: /\bexec\s*\(\s*(?:input|raw_input)/, type: "system" },
+  { pattern: /\b__import__\s*\(/, type: "system" },
+
+  // Dangerous modules import
+  {
+    pattern:
+      /\bimport\s+(?:subprocess|multiprocessing|threading|ctypes|_thread)/,
+    type: "system",
+  },
+  {
+    pattern:
+      /\bfrom\s+(?:subprocess|multiprocessing|threading|ctypes|_thread)\s+import/,
+    type: "system",
+  },
+];
+
+function checkDangerousCode(code: string): string | null {
+  for (const { pattern, type } of DANGEROUS_PATTERNS) {
+    if (pattern.test(code)) {
+      return type;
+    }
+  }
+  return null;
+}
+
 export function Mermaid(props: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
   // const [hasError, setHasError] = useState(false);
@@ -363,8 +436,26 @@ export function PreCode(props: { children: any; status?: boolean }) {
   const [originalCode, setOriginalCode] = useState("");
   const [language, setLanguage] = useState("");
   const [contentType, setContentType] = useState<
-    "html" | "mermaid" | "svg" | null
+    "html" | "mermaid" | "svg" | "python" | null
   >(null);
+
+  // Python execution states
+  const [showPythonPanel, setShowPythonPanel] = useState(false);
+  const [pythonStdin, setPythonStdin] = useState("");
+  const [showStdinInput, setShowStdinInput] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionResult, setExecutionResult] = useState<{
+    success: boolean;
+    stdout?: string;
+    stderr?: string;
+    code?: number;
+    error?: string;
+    blocked?: boolean;
+    blockedReason?: string;
+  } | null>(null);
+  const [hasInputCall, setHasInputCall] = useState(false);
+  const [hasOutputCall, setHasOutputCall] = useState(true);
+  const [dangerousType, setDangerousType] = useState<string | null>(null);
 
   const [collapsed, setCollapsed] = useState(true);
   const [showToggle, setShowToggle] = useState(false);
@@ -407,6 +498,19 @@ export function PreCode(props: { children: any; status?: boolean }) {
           setLanguage("html");
           setContentType("html");
           setPreviewContent(code);
+        } else if (lang === "python" || lang === "py") {
+          setLanguage("python");
+          setContentType("python");
+          setPreviewContent(code);
+          // Check if code contains input() calls
+          const hasInput = /\binput\s*\(/.test(code);
+          setHasInputCall(hasInput);
+          // Check if code contains output behavior (print, sys.stdout, logging)
+          const hasOutput = /\b(print\s*\(|sys\.stdout|logging\.)/.test(code);
+          setHasOutputCall(hasOutput);
+          // Check for dangerous code patterns
+          const dangerCheck = checkDangerousCode(code);
+          setDangerousType(dangerCheck);
         }
         if (
           enableArtifacts &&
@@ -526,6 +630,187 @@ export function PreCode(props: { children: any; status?: boolean }) {
     }
   };
 
+  // Python execution function
+  const executePython = async () => {
+    if (isExecuting || !originalCode) return;
+
+    setIsExecuting(true);
+    setExecutionResult(null);
+
+    try {
+      const response = await fetch("/api/piston", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: originalCode,
+          stdin: pythonStdin,
+          language: "python",
+          version: "3.10",
+        }),
+      });
+
+      const result = await response.json();
+      setExecutionResult(result);
+    } catch (error: any) {
+      setExecutionResult({
+        success: false,
+        error: error.message || "Execution failed",
+      });
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
+  // Get blocked reason message
+  const getBlockedMessage = (reason?: string) => {
+    switch (reason) {
+      case "network":
+        return Locale.Chat.Actions.BlockedNetwork;
+      case "filesystem":
+        return Locale.Chat.Actions.BlockedFilesystem;
+      case "system":
+        return Locale.Chat.Actions.BlockedSystem;
+      default:
+        return Locale.Chat.Actions.CodeBlocked;
+    }
+  };
+
+  // Render Python execution panel
+  const renderPythonPanel = () => {
+    if (!showPythonPanel) return null;
+
+    return (
+      <div className={styles["python-execution-panel"]}>
+        {/* Control bar: Input toggle + Execute button */}
+        <div className={styles["python-control-bar"]}>
+          <div className={styles["python-control-left"]}>
+            <button
+              className={`${styles["python-toggle-btn"]} ${
+                showStdinInput ? styles["active"] : ""
+              }`}
+              onClick={() => setShowStdinInput(!showStdinInput)}
+            >
+              {showStdinInput
+                ? Locale.Chat.Actions.HideStdin
+                : Locale.Chat.Actions.ShowStdin}
+            </button>
+            {hasInputCall && !showStdinInput && (
+              <span className={styles["python-input-hint"]}>
+                {Locale.Chat.Actions.StdinHint}
+              </span>
+            )}
+            {!hasOutputCall && !dangerousType && (
+              <span className={styles["python-no-output-hint"]}>
+                {Locale.Chat.Actions.NoOutputHint}
+              </span>
+            )}
+            {dangerousType && (
+              <span className={styles["python-danger-hint"]}>
+                {dangerousType === "network"
+                  ? Locale.Chat.Actions.BlockedNetwork
+                  : dangerousType === "filesystem"
+                  ? Locale.Chat.Actions.BlockedFilesystem
+                  : Locale.Chat.Actions.BlockedSystem}
+              </span>
+            )}
+          </div>
+          <button
+            className={`${styles["python-execute-btn"]} ${
+              isExecuting ? styles["executing"] : ""
+            } ${dangerousType ? styles["disabled"] : ""}`}
+            onClick={executePython}
+            disabled={isExecuting || !!dangerousType}
+          >
+            {isExecuting
+              ? Locale.Chat.Actions.Running
+              : executionResult
+              ? Locale.Chat.Actions.Rerun
+              : Locale.Chat.Actions.RunCode}
+          </button>
+        </div>
+
+        {/* Stdin input */}
+        {showStdinInput && (
+          <div className={styles["python-stdin-section"]}>
+            <textarea
+              className={styles["python-stdin-input"]}
+              value={pythonStdin}
+              onChange={(e) => setPythonStdin(e.target.value)}
+              placeholder={Locale.Chat.Actions.StdinPlaceholder}
+              rows={3}
+            />
+          </div>
+        )}
+
+        {/* Execution result */}
+        {executionResult && (
+          <div
+            className={`${styles["python-result"]} ${
+              executionResult.blocked
+                ? styles["blocked"]
+                : executionResult.success && executionResult.code === 0
+                ? styles["success"]
+                : styles["error"]
+            }`}
+          >
+            <div className={styles["python-result-header"]}>
+              <span>
+                {executionResult.blocked
+                  ? getBlockedMessage(executionResult.blockedReason)
+                  : executionResult.success && executionResult.code === 0
+                  ? Locale.Chat.Actions.ExecutionSuccess
+                  : Locale.Chat.Actions.ExecutionFailed}
+              </span>
+              {!executionResult.blocked && executionResult.stdout && (
+                <button
+                  className={styles["python-copy-btn"]}
+                  onClick={() => copyToClipboard(executionResult.stdout || "")}
+                >
+                  {Locale.Chat.Actions.Copy}
+                </button>
+              )}
+            </div>
+
+            {!executionResult.blocked && (
+              <>
+                {/* Stdout */}
+                {(executionResult.stdout || !executionResult.stderr) && (
+                  <div className={styles["python-output-section"]}>
+                    <pre className={styles["python-output"]}>
+                      {executionResult.stdout || Locale.Chat.Actions.NoOutput}
+                    </pre>
+                  </div>
+                )}
+
+                {/* Stderr */}
+                {executionResult.stderr && (
+                  <div className={styles["python-output-section"]}>
+                    <div className={styles["python-output-label"]}>
+                      {Locale.Chat.Actions.Stderr}:
+                    </div>
+                    <pre
+                      className={`${styles["python-output"]} ${styles["stderr"]}`}
+                    >
+                      {executionResult.stderr}
+                    </pre>
+                  </div>
+                )}
+              </>
+            )}
+
+            {executionResult.error && !executionResult.blocked && (
+              <div className={styles["python-error"]}>
+                {executionResult.error}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className={styles["code-block-wrapper"]}>
       <div className={styles["code-header"]}>
@@ -541,17 +826,39 @@ export function PreCode(props: { children: any; status?: boolean }) {
           <button className={styles["code-header-btn"]} onClick={downloadCode}>
             {Locale.Chat.Actions.Download}
           </button>
-          <button
-            className={`${styles["code-header-btn"]} ${
-              !contentType ? styles["btn-disabled"] : ""
-            }`}
-            onClick={() => contentType && setShowPreview(!showPreview)}
-            disabled={!contentType}
-          >
-            {showPreview
-              ? Locale.Chat.Actions.ShowCode
-              : Locale.Chat.Actions.Preview}
-          </button>
+          {contentType === "python" ? (
+            <button
+              className={`${styles["code-header-btn"]} ${styles["btn-run"]} ${
+                isExecuting ? styles["btn-executing"] : ""
+              }`}
+              onClick={() => {
+                if (showPythonPanel) {
+                  setShowPythonPanel(false);
+                } else {
+                  setShowPythonPanel(true);
+                  if (hasInputCall) {
+                    setShowStdinInput(true);
+                  }
+                }
+              }}
+            >
+              {showPythonPanel
+                ? Locale.Chat.Actions.ShowCode
+                : Locale.Chat.Actions.Run}
+            </button>
+          ) : (
+            <button
+              className={`${styles["code-header-btn"]} ${
+                !contentType ? styles["btn-disabled"] : ""
+              }`}
+              onClick={() => contentType && setShowPreview(!showPreview)}
+              disabled={!contentType}
+            >
+              {showPreview
+                ? Locale.Chat.Actions.ShowCode
+                : Locale.Chat.Actions.Preview}
+            </button>
+          )}
           {enableCodeFold && (
             <button
               className={`${styles["code-header-btn"]} ${
@@ -576,6 +883,21 @@ export function PreCode(props: { children: any; status?: boolean }) {
           >
             {renderPreview()}
           </div>
+        ) : showPythonPanel ? (
+          <>
+            <CodeFoldContext.Provider
+              value={{
+                collapsed,
+                setCollapsed,
+                enable: enableCodeFold,
+                showToggle,
+                setShowToggle,
+              }}
+            >
+              <pre ref={ref}>{props.children}</pre>
+            </CodeFoldContext.Provider>
+            {renderPythonPanel()}
+          </>
         ) : (
           <CodeFoldContext.Provider
             value={{

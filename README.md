@@ -255,6 +255,12 @@
 | IMG_UPLOAD_NAME_TYPE       | 文件命名方式（default、index、origin、short）                                       | -      | 否   |
 | IMG_UPLOAD_RETURN_FORMAT   | 返回格式（default、full），设为 full 时返回完整 URL                                  | -      | 否   |
 
+### Piston 代码执行功能（可选）
+| 环境变量名称               | 描述                                                                                | 默认值                                      |
+|----------------------------|-------------------------------------------------------------------------------------|---------------------------------------------|
+| PISTON_API_URL             | Piston API 服务地址                                                                 | `https://emkc.org/api/v2/piston/execute`    |
+| PISTON_TIMEOUT             | 代码执行超时时间（单位：毫秒）                                                       | `10000`                                     |
+
 ### 关键配置配置示例
 
 #### `CUSTOM_MODELS`：支持通过<>设置模型描述

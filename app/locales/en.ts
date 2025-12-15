@@ -86,6 +86,8 @@ const en: LocaleType = {
       BlockedSystem: "Code contains system calls, execution blocked",
       NoOutput: "(no output)",
       NoOutputHint: "No output statement detected (e.g. print)",
+      SignalError: (signal: string) =>
+        `Process terminated by signal: ${signal} (possibly timeout or memory limit)`,
     },
     Commands: {
       new: "Start a new chat",

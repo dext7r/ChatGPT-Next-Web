@@ -98,6 +98,7 @@ async function handle(req: NextRequest): Promise<NextResponse<PistonResponse>> {
     );
   }
 
+  console.log("[Piston] New code execution request received");
   // Auth check
   const authResult = auth(req, ModelProvider.System);
   if (authResult.error) {

@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/api/auth";
 import { ModelProvider } from "@/app/constant";
 
-const PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
-const EXECUTION_TIMEOUT = 30000; // 30 seconds
+const PISTON_API_URL =
+  process.env.PISTON_API_URL || "https://emkc.org/api/v2/piston/execute";
+const EXECUTION_TIMEOUT = process.env.PISTON_TIMEOUT || 10000; // 10 seconds
 
 // Dangerous patterns that should block execution
 const DANGEROUS_PATTERNS = [
@@ -44,6 +45,7 @@ interface PistonResponse {
   stdout?: string;
   stderr?: string;
   code?: number;
+  signal?: string;
   output?: string;
   error?: string;
   blocked?: boolean;
@@ -187,6 +189,7 @@ async function handle(req: NextRequest): Promise<NextResponse<PistonResponse>> {
         stdout: runResult.stdout || "",
         stderr: runResult.stderr || "",
         code: runResult.code ?? 0,
+        signal: runResult.signal || "",
         output: runResult.output || "",
       });
     } catch (fetchError: any) {

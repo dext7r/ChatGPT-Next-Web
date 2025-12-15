@@ -82,6 +82,8 @@ const cn = {
       BlockedSystem: "代码包含系统调用操作，禁止执行",
       NoOutput: "(无输出)",
       NoOutputHint: "代码中未检测到输出语句 (如 print)",
+      SignalError: (signal: string) =>
+        `进程被信号终止: ${signal}（可能是超时或内存超限）`,
     },
     Commands: {
       new: "新建聊天",

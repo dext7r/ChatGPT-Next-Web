@@ -71,6 +71,8 @@ const tw = {
       BlockedSystem: "程式碼包含系統呼叫操作，禁止執行",
       NoOutput: "(無輸出)",
       NoOutputHint: "程式碼中未偵測到輸出語句 (如 print)",
+      SignalError: (signal: string) =>
+        `程序被信號終止: ${signal}（可能是超時或記憶體超限）`,
       Download: "下載",
       Preview: "預覽",
       ShowCode: "程式碼",

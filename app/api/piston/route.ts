@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/app/api/auth";
+import { ModelProvider } from "@/app/constant";
 
 const PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
 const EXECUTION_TIMEOUT = 30000; // 30 seconds
@@ -91,6 +93,15 @@ async function handle(req: NextRequest): Promise<NextResponse<PistonResponse>> {
     return NextResponse.json(
       { success: false, error: "Method not allowed" },
       { status: 405 },
+    );
+  }
+
+  // Auth check
+  const authResult = auth(req, ModelProvider.System);
+  if (authResult.error) {
+    return NextResponse.json(
+      { success: false, error: authResult.msg },
+      { status: 401 },
     );
   }
 

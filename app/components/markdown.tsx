@@ -25,7 +25,7 @@ import {
 } from "./artifacts";
 import { useChatStore } from "../store";
 import { IconButton } from "./button";
-
+import { getHeaders } from "../client/api";
 import { useAppConfig } from "../store/config";
 
 import Collapse from "antd/es/collapse";
@@ -641,13 +641,14 @@ export function PreCode(props: { children: any; status?: boolean }) {
       const response = await fetch("/api/piston", {
         method: "POST",
         headers: {
+          ...getHeaders(),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           code: originalCode,
           stdin: pythonStdin,
           language: "python",
-          version: "3.10",
+          version: "*",
         }),
       });
 

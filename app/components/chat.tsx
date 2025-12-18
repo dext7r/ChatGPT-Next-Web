@@ -161,6 +161,9 @@ const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
 });
 
+// 导入消息编辑上下文
+import { MessageEditContext } from "./markdown";
+
 export function SessionConfigModel(props: { onClose: () => void }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
@@ -1875,6 +1878,53 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   function hideQuoteBubble() {
     setQuoteBubble((q) => ({ ...q, visible: false, text: "" }));
   }
+
+  // 代码块编辑处理函数
+  const handleEditCodeBlock = useCallback(
+    (
+      messageId: string,
+      originalCode: string,
+      newCode: string,
+      language: string,
+    ) => {
+      if (originalCode === newCode) return;
+
+      chatStore.updateTargetSession(session, (session) => {
+        const msg = session.messages.find((m) => m.id === messageId);
+        if (!msg) return;
+
+        const content = getMessageTextContent(msg);
+
+        // 转义正则特殊字符
+        const escapeRegExp = (str: string) =>
+          str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+        // 标准化换行符
+        const normalizedContent = content.replace(/\r\n/g, "\n");
+        const normalizedOriginal = originalCode.replace(/\r\n/g, "\n").trim();
+
+        // 构建匹配模式：```lang\ncode\n``` 或 ```\ncode\n```
+        // 使用更宽松的匹配：代码前后的空白字符都是可选的
+        const langPattern = language ? language : "\\w*";
+        const patternStr =
+          "```" +
+          langPattern +
+          "\\s*\\n" +
+          escapeRegExp(normalizedOriginal) +
+          "\\s*\\n?```";
+
+        const newContent = normalizedContent.replace(
+          new RegExp(patternStr),
+          "```" + (language || "") + "\n" + newCode + "\n```",
+        );
+
+        if (newContent !== normalizedContent) {
+          msg.content = newContent;
+        }
+      });
+    },
+    [chatStore, session],
+  );
 
   // 将选中文本转为逐行 Markdown 引用
   function toMarkdownQuote(raw: string) {
@@ -3630,30 +3680,43 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                       className={styles["chat-message-item"]}
                       onMouseUp={onMessageMouseUp}
                     >
-                      <Markdown
-                        key={message.streaming ? "loading" : "done"}
-                        status={showTyping}
-                        content={
-                          !message.streaming && isThinkingModel(message.model)
-                            ? wrapThinkingPart(getMessageTextContent(message))
-                            : getMessageTextContent(message)
-                        }
-                        loading={
-                          (message.preview || message.streaming) &&
-                          message.content.length === 0 &&
-                          !isUser
-                        }
-                        // onContextMenu={(e) => onRightClick(e, message)}  //don't copy message to input area when right click
-                        onDoubleClickCapture={() => {
-                          if (!isMobileScreen) return;
-                          setUserInput(getMessageTextContent(message));
+                      <MessageEditContext.Provider
+                        value={{
+                          messageId: message.id,
+                          onEditCodeBlock: (originalCode, newCode, language) =>
+                            handleEditCodeBlock(
+                              message.id,
+                              originalCode,
+                              newCode,
+                              language,
+                            ),
                         }}
-                        // fontSize={fontSize}
-                        // parentRef={scrollRef}
-                        defaultShow={i >= messages.length - 6}
-                        searchingTime={message.statistic?.searchingLatency}
-                        thinkingTime={message.statistic?.reasoningLatency}
-                      />
+                      >
+                        <Markdown
+                          key={message.streaming ? "loading" : "done"}
+                          status={showTyping}
+                          content={
+                            !message.streaming && isThinkingModel(message.model)
+                              ? wrapThinkingPart(getMessageTextContent(message))
+                              : getMessageTextContent(message)
+                          }
+                          loading={
+                            (message.preview || message.streaming) &&
+                            message.content.length === 0 &&
+                            !isUser
+                          }
+                          // onContextMenu={(e) => onRightClick(e, message)}  //don't copy message to input area when right click
+                          onDoubleClickCapture={() => {
+                            if (!isMobileScreen) return;
+                            setUserInput(getMessageTextContent(message));
+                          }}
+                          // fontSize={fontSize}
+                          // parentRef={scrollRef}
+                          defaultShow={i >= messages.length - 6}
+                          searchingTime={message.statistic?.searchingLatency}
+                          thinkingTime={message.statistic?.reasoningLatency}
+                        />
+                      </MessageEditContext.Provider>
                       {getMessageImages(message).length == 1 && (
                         <Image
                           className={styles["chat-message-item-image"]}

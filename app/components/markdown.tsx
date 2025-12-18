@@ -344,32 +344,60 @@ function checkDangerousCode(code: string): string | null {
 
 export function Mermaid(props: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  // const [hasError, setHasError] = useState(false);
+  const [svg, setSvg] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState("");
   const [copied, setCopied] = useState(false);
+  // 使用 useRef 存储唯一 ID，避免每次渲染变化
+  const idRef = useRef(
+    `mermaid-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  );
 
   useEffect(() => {
-    if (props.code && ref.current) {
-      mermaid
-        .run({
-          nodes: [ref.current],
-          suppressErrors: false,
-        })
-        .catch((e) => {
-          // setHasError(true);
-          // console.error("[Mermaid] ", e.message);
+    if (!props.code) return;
+
+    let cancelled = false;
+
+    // 清理 mermaid 可能创建的临时 DOM 元素
+    const cleanupTempElements = () => {
+      // mermaid.render() 会在 document.body 中创建临时元素，需要手动清理
+      const tempElement = document.getElementById(idRef.current);
+      if (tempElement) {
+        tempElement.remove();
+      }
+      // 同时清理可能的 d-xxx 格式的临时元素
+      const dElements = document.querySelectorAll(`[id^="d${idRef.current}"]`);
+      dElements.forEach((el) => el.remove());
+    };
+
+    // 使用 mermaid.render() 代替 mermaid.run()
+    // render() 返回 SVG 字符串，避免多个图表并发渲染时的 DOM 竞态问题
+    mermaid
+      .render(idRef.current, props.code)
+      .then(({ svg: svgContent }) => {
+        cleanupTempElements();
+        if (!cancelled) {
+          setSvg(svgContent);
+          setErrorMessage("");
+        }
+      })
+      .catch((e) => {
+        cleanupTempElements();
+        if (!cancelled) {
           const errorMsg = e.message || "Mermaid rendering error";
           setErrorMessage(errorMsg);
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+          setSvg("");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      cleanupTempElements();
+    };
   }, [props.code]);
 
   function viewSvgInNewWindow() {
-    const svg = ref.current?.querySelector("svg");
     if (!svg) return;
-    const text = new XMLSerializer().serializeToString(svg);
-    const blob = new Blob([text], { type: "image/svg+xml" });
+    const blob = new Blob([svg], { type: "image/svg+xml" });
     const fileName = `mermaid-${Date.now()}.svg`;
     showImageModal(URL.createObjectURL(blob), fileName);
   }
@@ -386,7 +414,6 @@ export function Mermaid(props: { code: string }) {
   }
 
   if (errorMessage) {
-    // return null;
     return (
       <div className={styles["mermaid-error"]}>
         <div className={styles["mermaid-error-message"]}>
@@ -411,7 +438,7 @@ export function Mermaid(props: { code: string }) {
 
   return (
     <div
-      className="no-dark mermaid"
+      className="no-dark"
       style={{
         cursor: "pointer",
         overflow: "auto",
@@ -419,9 +446,8 @@ export function Mermaid(props: { code: string }) {
       }}
       ref={ref}
       onClick={() => viewSvgInNewWindow()}
-    >
-      {props.code}
-    </div>
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   );
 }
 
@@ -449,6 +475,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
     stdout?: string;
     stderr?: string;
     code?: number;
+    signal?: string;
     error?: string;
     blocked?: boolean;
     blockedReason?: string;
@@ -780,7 +807,12 @@ export function PreCode(props: { children: any; status?: boolean }) {
                 {(executionResult.stdout || !executionResult.stderr) && (
                   <div className={styles["python-output-section"]}>
                     <pre className={styles["python-output"]}>
-                      {executionResult.stdout || Locale.Chat.Actions.NoOutput}
+                      {executionResult.stdout ||
+                        (executionResult.signal
+                          ? Locale.Chat.Actions.SignalError(
+                              executionResult.signal,
+                            )
+                          : Locale.Chat.Actions.NoOutput)}
                     </pre>
                   </div>
                 )}

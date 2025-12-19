@@ -649,6 +649,7 @@ export function ChatActions(props: {
   // model
 
   // 监听用户输入变化，如果输入改变则重置撤销状态
+  // 注意：这里故意只依赖 props.userInput，其他状态变化不应触发此 effect
   useEffect(() => {
     // 当用户输入变化时，检查是否需要重置撤销状态
     if (
@@ -677,6 +678,7 @@ export function ChatActions(props: {
       setOriginalTextForPrivacy(null);
       setPrivacyProcessedText(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.userInput]);
 
   const handleTranslate = async () => {
@@ -978,6 +980,7 @@ export function ChatActions(props: {
     }
   };
   // Add this to the useEffect monitoring userInput
+  // 注意：这里故意只依赖 props.userInput，其他状态变化不应触发此 effect
   useEffect(() => {
     // When user input changes, check if we need to reset replacement state
     if (
@@ -988,6 +991,7 @@ export function ChatActions(props: {
       setOriginalTextForReplace(null);
       setReplacedText(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.userInput]);
   function maskSensitiveInfo(text: string): string {
     // 手机号: 保留前3位和后4位
@@ -1875,9 +1879,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     text: string;
   }>({ visible: false, x: 0, y: 0, text: "" });
 
-  function hideQuoteBubble() {
+  const hideQuoteBubble = useCallback(() => {
     setQuoteBubble((q) => ({ ...q, visible: false, text: "" }));
-  }
+  }, []);
 
   // 代码块编辑处理函数
   const handleEditCodeBlock = useCallback(
@@ -2675,7 +2679,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     const [view, setView] = React.useState(text);
     // 打字去抖，别每个键都跑 Markdown 和高亮
     const update = useDebouncedCallback((v: string) => setView(v), 120);
-    React.useEffect(() => update(text), [text]);
+    React.useEffect(() => update(text), [text, update]);
 
     if (!text && images.length === 0 && files.length === 0) return null;
 
@@ -2739,20 +2743,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       attachImages.length > 0 ||
       attachFiles.length > 0);
 
-  useEffect(() => {
-    if (!hitBottom) return; // 用户不在底部就别打扰他
-    if (!previewVisible) return;
-    // 等一帧，等 DOM 测量完 Footer 新高度
-    const id = requestAnimationFrame(() => scrollToBottom());
-    return () => cancelAnimationFrame(id);
-  }, [
-    userInput,
-    attachImages.length,
-    attachFiles.length,
-    previewVisible,
-    hitBottom,
-  ]);
-
   // preview messages
   const renderMessages = useMemo(() => {
     return context.concat(session.messages as RenderMessage[]).concat(
@@ -2768,15 +2758,44 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           ]
         : [],
     );
-  }, [
-    config.sendPreviewBubble,
-    context,
-    isLoading,
-    session.messages,
-    userInput,
-  ]);
+  }, [context, isLoading, session.messages]);
 
   const messages = renderMessages;
+
+  const scrollToBottom = useCallback(
+    (force?: boolean) => {
+      const v = virtuosoRef.current;
+      if (!v) return;
+      // Footer 内有预览，或者强制要求到底，就直接滚到最底（含 Footer）
+      if (previewVisible || force) {
+        // 大数即可；Virtuoso 内部会 clamp 到 scrollHeight
+        v.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" });
+      } else {
+        // 无预览时仍可对齐最后一项
+        v.scrollToIndex({
+          index: messages.length - 1,
+          align: "end",
+          behavior: "smooth",
+        });
+      }
+    },
+    [previewVisible, messages.length],
+  );
+
+  useEffect(() => {
+    if (!hitBottom) return; // 用户不在底部就别打扰他
+    if (!previewVisible) return;
+    // 等一帧，等 DOM 测量完 Footer 新高度
+    const id = requestAnimationFrame(() => scrollToBottom());
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    userInput,
+    attachImages.length,
+    attachFiles.length,
+    previewVisible,
+    hitBottom,
+  ]);
 
   const location = useLocation() as { state?: { jumpToIndex?: number } };
   const jumpToIndex =
@@ -2803,22 +2822,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     return () => clearTimeout(t);
   }, [jumpToIndex, messages.length]);
 
-  function scrollToBottom(force?: boolean) {
-    const v = virtuosoRef.current;
-    if (!v) return;
-    // Footer 内有预览，或者强制要求到底，就直接滚到最底（含 Footer）
-    if (previewVisible || force) {
-      // 大数即可；Virtuoso 内部会 clamp 到 scrollHeight
-      v.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" });
-    } else {
-      // 无预览时仍可对齐最后一项
-      v.scrollToIndex({
-        index: messages.length - 1,
-        align: "end",
-        behavior: "smooth",
-      });
-    }
-  }
   // clear context index = context length + index in messages
   const clearContextIndex =
     (session.clearContextIndex ?? -1) >= 0
@@ -3077,7 +3080,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
         }
       }
     },
-    [attachImages, attachFiles, canUploadImage],
+    [attachImages, attachFiles],
   );
 
   function supportFileType(filename: string) {
@@ -3307,6 +3310,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, chatStore, navigate]);
 
   const handleModelNameClick = (providerId?: string) => {
@@ -4259,7 +4263,8 @@ export function Chat() {
         }
       }
     }
-  }, [session.messages[session.messages.length - 1]?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.messages[session.messages.length - 1]?.id, modelTable]);
 
   // update session model
   useEffect(() => {
@@ -4426,6 +4431,7 @@ export function Chat() {
         s.mask.modelConfig = nextConfig;
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelTable]);
   return (
     <ChatComponent key={session.id} modelTable={modelTable}></ChatComponent>

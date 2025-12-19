@@ -165,12 +165,11 @@
 
   &.btn-run {
     color: var(--white);
-    background: #52c41a;
-    border-color: #52c41a;
+    background: var(--primary);
+    border-color: var(--primary);
 
     &:hover {
-      background: #73d13d;
-      border-color: #73d13d;
+      opacity: 0.85;
     }
   }
 }
@@ -225,6 +224,7 @@
   color: red;
   padding: 10px;
   border: 1px solid red;
+  border-radius: 6px;
 
   .mermaid-code {
     display: block;
@@ -235,8 +235,9 @@
   .mermaid-error-message {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
   }
 }
 
@@ -249,6 +250,14 @@
   font-size: var(--text-sm);
 }
 
+.python-hints {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
 .python-control-bar {
   display: flex;
   justify-content: space-between;
@@ -256,12 +265,45 @@
   gap: 12px;
 }
 
-.python-control-left {
+.python-control-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   flex: 1;
   min-width: 0;
+}
+
+.python-status-text {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.success {
+    color: #52c41a;
+  }
+
+  &.error {
+    color: #ff4d4f;
+  }
+}
+
+.python-copy-result-btn {
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--primary);
+  background: var(--white);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--primary);
+    color: var(--white);
+  }
 }
 
 .python-toggle-btn {

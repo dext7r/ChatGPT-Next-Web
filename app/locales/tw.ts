@@ -56,6 +56,7 @@ const tw = {
       ExecutionResult: "執行結果",
       ExecutionSuccess: "執行成功",
       ExecutionFailed: "執行失敗",
+      CopyOutput: "複製輸出結果",
       ExitCode: "退出碼",
       Stdout: "標準輸出",
       Stderr: "錯誤輸出",

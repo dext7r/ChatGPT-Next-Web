@@ -370,32 +370,35 @@ export function Mermaid(props: { code: string }) {
   const [svg, setSvg] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState("");
   const [copied, setCopied] = useState(false);
-  // 使用 useRef 存储唯一 ID，避免每次渲染变化
-  const idRef = useRef(
-    `mermaid-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-  );
 
   useEffect(() => {
     if (!props.code) return;
 
     let cancelled = false;
 
+    // 每次渲染生成新的唯一 ID
+    const renderId = `mermaid-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+
     // 清理 mermaid 可能创建的临时 DOM 元素
     const cleanupTempElements = () => {
-      // mermaid.render() 会在 document.body 中创建临时元素，需要手动清理
-      const tempElement = document.getElementById(idRef.current);
-      if (tempElement) {
-        tempElement.remove();
+      try {
+        const tempElement = document.getElementById(renderId);
+        if (tempElement) {
+          tempElement.remove();
+        }
+        // 同时清理可能的 d-xxx 格式的临时元素
+        const dElements = document.querySelectorAll(`[id^="d${renderId}"]`);
+        dElements.forEach((el) => el.remove());
+      } catch (e) {
+        // 忽略清理错误
       }
-      // 同时清理可能的 d-xxx 格式的临时元素
-      const dElements = document.querySelectorAll(`[id^="d${idRef.current}"]`);
-      dElements.forEach((el) => el.remove());
     };
 
     // 使用 mermaid.render() 代替 mermaid.run()
-    // render() 返回 SVG 字符串，避免多个图表并发渲染时的 DOM 竞态问题
     mermaid
-      .render(idRef.current, props.code)
+      .render(renderId, props.code)
       .then(({ svg: svgContent }) => {
         cleanupTempElements();
         if (!cancelled) {
@@ -468,9 +471,13 @@ export function Mermaid(props: { code: string }) {
         maxHeight: "50vh",
       }}
       ref={ref}
-      onClick={() => viewSvgInNewWindow()}
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
+      onClick={viewSvgInNewWindow}
+    >
+      <div
+        style={{ pointerEvents: "none" }}
+        dangerouslySetInnerHTML={{ __html: svg }}
+      />
+    </div>
   );
 }
 
@@ -481,6 +488,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
 
   const { height } = useWindowSize();
   const [showPreview, setShowPreview] = useState(false);
+  const [previewKey, setPreviewKey] = useState(0);
   const [previewContent, setPreviewContent] = useState("");
   const [originalCode, setOriginalCode] = useState("");
   const [language, setLanguage] = useState("");
@@ -509,6 +517,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
 
   const [collapsed, setCollapsed] = useState(true);
   const [showToggle, setShowToggle] = useState(false);
+  const prevCollapsedRef = useRef<boolean | undefined>(undefined);
 
   // 代码编辑相关状态
   const [showEditModal, setShowEditModal] = useState(false);
@@ -587,12 +596,18 @@ export function PreCode(props: { children: any; status?: boolean }) {
     const needed = codeEl.scrollHeight > collapsedMax + 4;
     setShowToggle((prev) => (prev === needed ? prev : needed));
   }, [props.children, height]);
+
+  // 仅在折叠状态从展开变为折叠时，滚动到底部
   useEffect(() => {
     const codeEl = ref.current?.querySelector("code") as HTMLElement | null;
     if (!codeEl) return;
-    if (collapsed && codeEl.scrollTop !== codeEl.scrollHeight) {
+    const wasCollapsed = prevCollapsedRef.current;
+
+    // 只在从展开变为折叠时滚动到底部
+    if (collapsed && wasCollapsed === false) {
       codeEl.scrollTop = codeEl.scrollHeight;
     }
+    prevCollapsedRef.current = collapsed;
   }, [collapsed]);
   const copyCode = () => {
     copyToClipboard(originalCode);
@@ -668,13 +683,21 @@ export function PreCode(props: { children: any; status?: boolean }) {
 
     switch (contentType) {
       case "mermaid":
-        return <Mermaid code={previewContent} />;
+        return <Mermaid code={previewContent} key={`mermaid-${previewKey}`} />;
       case "svg":
         return (
           <div
-            dangerouslySetInnerHTML={{ __html: previewContent }}
-            style={{ maxWidth: "100%", overflow: "auto" }}
-          />
+            style={{
+              maxWidth: "100%",
+              overflow: "auto",
+              cursor: "pointer",
+            }}
+          >
+            <div
+              style={{ pointerEvents: "none" }}
+              dangerouslySetInnerHTML={{ __html: previewContent }}
+            />
+          </div>
         );
       case "html":
         return (
@@ -759,20 +782,10 @@ export function PreCode(props: { children: any; status?: boolean }) {
 
     return (
       <div className={styles["python-execution-panel"]}>
-        {/* Control bar: Input toggle + Execute button */}
-        <div className={styles["python-control-bar"]}>
-          <div className={styles["python-control-left"]}>
-            <button
-              className={`${styles["python-toggle-btn"]} ${
-                showStdinInput ? styles["active"] : ""
-              }`}
-              onClick={() => setShowStdinInput(!showStdinInput)}
-            >
-              {showStdinInput
-                ? Locale.Chat.Actions.HideStdin
-                : Locale.Chat.Actions.ShowStdin}
-            </button>
-            {hasInputCall && !showStdinInput && (
+        {/* 提示信息 */}
+        {(hasInputCall || !hasOutputCall || dangerousType) && (
+          <div className={styles["python-hints"]}>
+            {hasInputCall && (
               <span className={styles["python-input-hint"]}>
                 {Locale.Chat.Actions.StdinHint}
               </span>
@@ -792,19 +805,71 @@ export function PreCode(props: { children: any; status?: boolean }) {
               </span>
             )}
           </div>
-          <button
-            className={`${styles["python-execute-btn"]} ${
-              isExecuting ? styles["executing"] : ""
-            } ${dangerousType ? styles["disabled"] : ""}`}
-            onClick={executePython}
-            disabled={isExecuting || !!dangerousType}
-          >
-            {isExecuting
-              ? Locale.Chat.Actions.Running
-              : executionResult
-              ? Locale.Chat.Actions.Rerun
-              : Locale.Chat.Actions.RunCode}
-          </button>
+        )}
+
+        {/* Control bar: 4个元素均匀分布 */}
+        <div className={styles["python-control-bar"]}>
+          {/* 1. 显示输入框 */}
+          <div className={styles["python-control-item"]}>
+            <button
+              className={`${styles["python-toggle-btn"]} ${
+                showStdinInput ? styles["active"] : ""
+              }`}
+              onClick={() => setShowStdinInput(!showStdinInput)}
+            >
+              {showStdinInput
+                ? Locale.Chat.Actions.HideStdin
+                : Locale.Chat.Actions.ShowStdin}
+            </button>
+          </div>
+
+          {/* 2. 执行成功/失败 */}
+          <div className={styles["python-control-item"]}>
+            {executionResult && !executionResult.blocked && (
+              <span
+                className={`${styles["python-status-text"]} ${
+                  executionResult.success && executionResult.code === 0
+                    ? styles["success"]
+                    : styles["error"]
+                }`}
+              >
+                {executionResult.success && executionResult.code === 0
+                  ? Locale.Chat.Actions.ExecutionSuccess
+                  : Locale.Chat.Actions.ExecutionFailed}
+              </span>
+            )}
+          </div>
+
+          {/* 3. 复制输出结果 */}
+          <div className={styles["python-control-item"]}>
+            {executionResult &&
+              !executionResult.blocked &&
+              executionResult.stdout && (
+                <button
+                  className={styles["python-copy-result-btn"]}
+                  onClick={() => copyToClipboard(executionResult.stdout || "")}
+                >
+                  {Locale.Chat.Actions.CopyOutput}
+                </button>
+              )}
+          </div>
+
+          {/* 4. 运行代码 */}
+          <div className={styles["python-control-item"]}>
+            <button
+              className={`${styles["python-execute-btn"]} ${
+                isExecuting ? styles["executing"] : ""
+              } ${dangerousType ? styles["disabled"] : ""}`}
+              onClick={executePython}
+              disabled={isExecuting || !!dangerousType}
+            >
+              {isExecuting
+                ? Locale.Chat.Actions.Running
+                : executionResult
+                ? Locale.Chat.Actions.Rerun
+                : Locale.Chat.Actions.RunCode}
+            </button>
+          </div>
         </div>
 
         {/* Stdin input */}
@@ -820,7 +885,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
           </div>
         )}
 
-        {/* Execution result */}
+        {/* Execution result - 只显示输出内容 */}
         {executionResult && (
           <div
             className={`${styles["python-result"]} ${
@@ -831,23 +896,11 @@ export function PreCode(props: { children: any; status?: boolean }) {
                 : styles["error"]
             }`}
           >
-            <div className={styles["python-result-header"]}>
-              <span>
-                {executionResult.blocked
-                  ? getBlockedMessage(executionResult.blockedReason)
-                  : executionResult.success && executionResult.code === 0
-                  ? Locale.Chat.Actions.ExecutionSuccess
-                  : Locale.Chat.Actions.ExecutionFailed}
-              </span>
-              {!executionResult.blocked && executionResult.stdout && (
-                <button
-                  className={styles["python-copy-btn"]}
-                  onClick={() => copyToClipboard(executionResult.stdout || "")}
-                >
-                  {Locale.Chat.Actions.Copy}
-                </button>
-              )}
-            </div>
+            {executionResult.blocked && (
+              <div className={styles["python-result-header"]}>
+                <span>{getBlockedMessage(executionResult.blockedReason)}</span>
+              </div>
+            )}
 
             {!executionResult.blocked && (
               <>
@@ -935,26 +988,25 @@ export function PreCode(props: { children: any; status?: boolean }) {
                 ? Locale.Chat.Actions.ShowCode
                 : Locale.Chat.Actions.Run}
             </button>
-          ) : (
+          ) : contentType ? (
             <button
-              className={`${styles["code-header-btn"]} ${
-                !contentType ? styles["btn-disabled"] : ""
-              }`}
-              onClick={() => contentType && setShowPreview(!showPreview)}
-              disabled={!contentType}
+              className={styles["code-header-btn"]}
+              onClick={() => {
+                if (!showPreview) {
+                  setPreviewKey((k) => k + 1);
+                }
+                setShowPreview(!showPreview);
+              }}
             >
               {showPreview
                 ? Locale.Chat.Actions.ShowCode
                 : Locale.Chat.Actions.Preview}
             </button>
-          )}
-          {enableCodeFold && (
+          ) : null}
+          {enableCodeFold && showToggle && !showPreview && (
             <button
-              className={`${styles["code-header-btn"]} ${
-                !showToggle ? styles["btn-disabled"] : ""
-              }`}
+              className={styles["code-header-btn"]}
               onClick={() => setCollapsed((v) => !v)}
-              disabled={!showToggle}
               title={collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
               aria-label={collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
             >
@@ -1070,7 +1122,9 @@ function CustomCode(props: { children: any; className?: string }) {
   // const [showToggle, setShowToggle] = useState(false);
   const codeFoldCtx = React.useContext(CodeFoldContext);
   const { height } = useWindowSize();
+  const prevCollapsedRef = React.useRef<boolean | undefined>(undefined);
 
+  // 检查是否需要显示折叠按钮
   useEffect(() => {
     if (!ref.current) return;
     const el = ref.current;
@@ -1081,11 +1135,21 @@ function CustomCode(props: { children: any; className?: string }) {
     if (codeFoldCtx.showToggle !== needed) {
       codeFoldCtx.setShowToggle(needed);
     }
-    // 仅在折叠时把滚动保持在底部
-    if (codeFoldCtx.collapsed && el.scrollTop !== el.scrollHeight) {
+  }, [props.children, height, codeFoldCtx]);
+
+  // 仅在折叠状态从展开变为折叠时，滚动到底部
+  useEffect(() => {
+    if (!ref.current || !codeFoldCtx) return;
+    const el = ref.current;
+    const wasCollapsed = prevCollapsedRef.current;
+    const isCollapsed = codeFoldCtx.collapsed;
+
+    // 只在从展开变为折叠时滚动到底部
+    if (isCollapsed && wasCollapsed === false) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [props.children, codeFoldCtx?.collapsed, height, codeFoldCtx]);
+    prevCollapsedRef.current = isCollapsed;
+  }, [codeFoldCtx?.collapsed]);
 
   // const toggleCollapsed = () => {
   //   setCollapsed((collapsed) => !collapsed);

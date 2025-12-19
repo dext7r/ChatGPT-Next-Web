@@ -67,6 +67,7 @@ const cn = {
       ExecutionResult: "执行结果",
       ExecutionSuccess: "执行成功",
       ExecutionFailed: "执行失败",
+      CopyOutput: "复制输出结果",
       ExitCode: "退出码",
       Stdout: "标准输出",
       Stderr: "错误输出",

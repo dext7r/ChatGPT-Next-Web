@@ -70,6 +70,7 @@ const en: LocaleType = {
       ExecutionResult: "Execution Result",
       ExecutionSuccess: "Success",
       ExecutionFailed: "Failed",
+      CopyOutput: "Copy Output",
       ExitCode: "Exit Code",
       Stdout: "Output",
       Stderr: "Error",

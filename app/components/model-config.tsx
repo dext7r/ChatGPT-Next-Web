@@ -136,6 +136,7 @@ export function ModelConfigList(props: {
     setTextProcessModelValue(
       `${textProcessModel}@${matchedTextProcessProviderName}`,
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     chatModelValue,
     compressModelValue,

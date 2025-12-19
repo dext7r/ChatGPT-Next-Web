@@ -360,6 +360,7 @@ export function FloatingButton() {
       window.removeEventListener("touchmove", handleTouchMove as EventListener);
       window.removeEventListener("touchend", handleTouchEnd as EventListener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging, dragOffset]);
 
   // 保存位置到本地存储

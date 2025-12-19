@@ -533,6 +533,145 @@ export function wrapThinkingPart(full_reply: string) {
   // 如果没有匹配到 thinking part，则返回原字符串
   return searchText + remainText;
 }
+/**
+ * 从选中的 DOM 范围中提取原始 Markdown 格式
+ * 主要处理：代码块、行内代码、加粗、斜体等
+ */
+export function extractMarkdownFromSelection(): string | null {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+    return null;
+  }
+
+  const range = sel.getRangeAt(0);
+  const fragment = range.cloneContents();
+
+  // 创建临时容器处理 DOM
+  const container = document.createElement("div");
+  container.appendChild(fragment);
+
+  return domToMarkdown(container);
+}
+
+/**
+ * 将 DOM 节点转换为 Markdown 文本
+ */
+function domToMarkdown(node: Node): string {
+  // 文本节点直接返回
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent || "";
+  }
+
+  // 非元素节点
+  if (node.nodeType !== Node.ELEMENT_NODE) {
+    return "";
+  }
+
+  const el = node as HTMLElement;
+  const tagName = el.tagName?.toLowerCase();
+
+  // 1. 代码块处理 (pre > code)
+  if (tagName === "pre") {
+    const codeEl = el.querySelector("code");
+    if (codeEl) {
+      const code = codeEl.textContent || "";
+      // 尝试获取语言
+      const langMatch = codeEl.className?.match(/language-(\w+)/);
+      const lang = langMatch ? langMatch[1] : "";
+      return `\n\`\`\`${lang}\n${code}\n\`\`\`\n`;
+    }
+    return `\n\`\`\`\n${el.textContent || ""}\n\`\`\`\n`;
+  }
+
+  // 2. 行内代码
+  if (
+    tagName === "code" &&
+    el.parentElement?.tagName?.toLowerCase() !== "pre"
+  ) {
+    return `\`${el.textContent || ""}\``;
+  }
+
+  // 3. 加粗
+  if (tagName === "strong" || tagName === "b") {
+    const inner = childrenToMarkdown(el);
+    return `**${inner}**`;
+  }
+
+  // 4. 斜体
+  if (tagName === "em" || tagName === "i") {
+    const inner = childrenToMarkdown(el);
+    return `*${inner}*`;
+  }
+
+  // 5. 删除线
+  if (tagName === "del" || tagName === "s") {
+    const inner = childrenToMarkdown(el);
+    return `~~${inner}~~`;
+  }
+
+  // 6. 链接
+  if (tagName === "a") {
+    const href = el.getAttribute("href") || "";
+    const text = childrenToMarkdown(el);
+    return `[${text}](${href})`;
+  }
+
+  // 7. 图片
+  if (tagName === "img") {
+    const src = el.getAttribute("src") || "";
+    const alt = el.getAttribute("alt") || "";
+    return `![${alt}](${src})`;
+  }
+
+  // 8. 标题
+  const headingMatch = tagName?.match(/^h([1-6])$/);
+  if (headingMatch) {
+    const level = parseInt(headingMatch[1]);
+    const inner = childrenToMarkdown(el);
+    return `\n${"#".repeat(level)} ${inner}\n`;
+  }
+
+  // 9. 列表项
+  if (tagName === "li") {
+    const inner = childrenToMarkdown(el);
+    return `- ${inner}\n`;
+  }
+
+  // 10. 段落
+  if (tagName === "p") {
+    const inner = childrenToMarkdown(el);
+    return `${inner}\n`;
+  }
+
+  // 11. 换行
+  if (tagName === "br") {
+    return "\n";
+  }
+
+  // 12. 引用块
+  if (tagName === "blockquote") {
+    const inner = childrenToMarkdown(el);
+    return inner
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n");
+  }
+
+  // 默认：递归处理子节点
+  return childrenToMarkdown(el);
+}
+
+/**
+ * 递归处理所有子节点
+ */
+function childrenToMarkdown(el: Element): string {
+  let result = "";
+  for (const child of Array.from(el.childNodes)) {
+    result += domToMarkdown(child);
+  }
+  return result;
+}
+
 export function safeLocalStorage(): {
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;

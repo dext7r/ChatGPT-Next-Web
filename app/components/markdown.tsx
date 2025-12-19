@@ -1202,67 +1202,66 @@ function CustomCode(props: { children: any; className?: string }) {
   );
 }
 
-function escapeDollarNumber(text: string) {
-  let escapedText = "";
+function escapeDollarNumber(text: string): string {
+  const result: string[] = [];
   let isInMathExpression = false;
   let isInCodeBlock = false;
   let isInInlineCode = false;
   let isInLatexBlock = false;
 
   for (let i = 0; i < text.length; i++) {
-    let char = text[i];
+    const char = text[i];
     const prevChar = text[i - 1] || " ";
     const nextChar = text[i + 1] || " ";
 
-    // Toggle the isInCodeBlock flag when encountering a code block start or end indicator
+    // 代码块 ```
     if (text.substring(i, i + 3) === "```") {
       isInCodeBlock = !isInCodeBlock;
-      escapedText += "```";
-      i += 2; // Skip the next two characters since we have already included them
+      result.push("```");
+      i += 2;
       continue;
     }
 
-    // Toggle the isInInlineCode flag when encountering a single backtick
+    // 行内代码 `
     if (char === "`" && !isInCodeBlock) {
       isInInlineCode = !isInInlineCode;
-      escapedText += "`";
+      result.push("`");
       continue;
     }
 
-    // Toggle the isInLatexBlock flag when encountering \[ or \]
+    // LaTeX 块 \[ \]
     if (char === "\\" && nextChar === "[" && !isInLatexBlock) {
       isInLatexBlock = true;
-      escapedText += "\\[";
-      i++; // Skip the next character since we have already included it
+      result.push("\\[");
+      i++;
       continue;
-    } else if (char === "\\" && nextChar === "]" && isInLatexBlock) {
+    }
+    if (char === "\\" && nextChar === "]" && isInLatexBlock) {
       isInLatexBlock = false;
-      escapedText += "\\]";
-      i++; // Skip the next character since we have already included it
+      result.push("\\]");
+      i++;
       continue;
     }
 
-    // If inside a code block, preserve the character as is
+    // 保护区域内直接添加
     if (isInCodeBlock || isInInlineCode || isInLatexBlock) {
-      escapedText += char;
+      result.push(char);
       continue;
     }
 
-    // Toggle the isInMathExpression flag when encountering a dollar sign
-    if (char === "$" && nextChar !== "$" && !isInMathExpression) {
-      isInMathExpression = true;
-    } else if (char === "$" && nextChar !== "$" && isInMathExpression) {
-      isInMathExpression = false;
+    // 数学表达式状态切换
+    if (char === "$" && nextChar !== "$") {
+      isInMathExpression = !isInMathExpression;
     }
 
-    // Preserve the double dollar sign in math expressions
+    // 双美元符号
     if (char === "$" && nextChar === "$") {
-      escapedText += "$$"; // Preserve the double dollar sign
-      i++; // Skip the next dollar sign since we have already included it
+      result.push("$$");
+      i++;
       continue;
     }
 
-    // Escape a single dollar sign followed by a number outside of math expressions
+    // 转义 $数字
     if (
       char === "$" &&
       nextChar >= "0" &&
@@ -1270,19 +1269,20 @@ function escapeDollarNumber(text: string) {
       !isInMathExpression &&
       !isInLatexBlock
     ) {
-      escapedText += "&#36;"; // Use HTML entity &#36; to represent the dollar sign
-      continue;
-    }
-    // Process single tildes only if not in code block or inline code
-    if (char === "~" && prevChar !== "~" && nextChar !== "~") {
-      escapedText += "\\~"; // Escape single tilde
+      result.push("&#36;");
       continue;
     }
 
-    escapedText += char; // Add the character as is
+    // 转义单独波浪号
+    if (char === "~" && prevChar !== "~" && nextChar !== "~") {
+      result.push("\\~");
+      continue;
+    }
+
+    result.push(char);
   }
 
-  return escapedText;
+  return result.join("");
 }
 
 function autoFixLatexDisplayMode(text: string): string {
@@ -1347,86 +1347,83 @@ function formatBoldText(text: string) {
   return processed;
 }
 
+// 通用标签块格式化函数
+type TagLocale = {
+  ing: string; // 进行中状态 (Searching / Thinking)
+  done: string; // 完成状态 (Search / Think)
+  none: string; // 空内容状态 (NoSearch / NoThink)
+};
+
+function formatTaggedBlock(
+  text: string,
+  tagName: string,
+  time: number | undefined,
+  locale: TagLocale,
+): { tagText: string; remainText: string } {
+  text = text.trimStart();
+  const openTag = `<${tagName}>`;
+  const closeTag = `</${tagName}>`;
+  const collapseTag = `${tagName}collapse`;
+
+  // 未闭合标签 - 进行中状态
+  if (text.startsWith(openTag) && !text.includes(closeTag)) {
+    const content = text.slice(openTag.length);
+    return {
+      tagText: `<${collapseTag} title="${locale.ing}">\n${content}\n\n</${collapseTag}>\n`,
+      remainText: "",
+    };
+  }
+
+  // 完整标签
+  const pattern = new RegExp(`^<${tagName}>([\\s\\S]*?)</${tagName}>`);
+  const match = text.match(pattern);
+  if (match) {
+    const content = match[1];
+    const title =
+      content.trim() === ""
+        ? locale.none
+        : `${locale.done}${Locale.NewChat.ThinkFormat(time)}`;
+    return {
+      tagText: `<${collapseTag} title="${title}">\n${content}\n\n</${collapseTag}>\n`,
+      remainText: text.substring(match[0].length),
+    };
+  }
+
+  return { tagText: "", remainText: text };
+}
+
 function formatSearchText(
   text: string,
   searchingTime?: number,
-): {
-  searchText: string;
-  remainText: string;
-} {
-  text = text.trimStart();
-
-  // 检查是否以 <search> 开头但没有结束标签
-  if (text.startsWith("<search>") && !text.includes("</search>")) {
-    // 获取 <search> 后的所有内容
-    const searchContent = text.slice("<search>".length);
-    // 渲染为"搜索中"状态
-    const searchText = `<searchcollapse title="${Locale.NewChat.Searching}">\n${searchContent}\n\n</searchcollapse>\n`;
-    const remainText = ""; // 剩余文本为空
-    return { searchText, remainText };
-  }
-  const pattern = /^<search>([\s\S]*?)<\/search>/;
-  const match = text.match(pattern);
-
-  if (match) {
-    const searchContent = match[1];
-    let searchText = "";
-    if (searchContent.trim() === "") {
-      searchText = `<searchcollapse title="${Locale.NewChat.NoSearch}">\n\n</searchcollapse>\n`;
-    } else {
-      searchText = `<searchcollapse title="${
-        Locale.NewChat.Search
-      }${Locale.NewChat.ThinkFormat(
-        searchingTime,
-      )}">\n${searchContent}\n\n</searchcollapse>\n`;
-    }
-    const remainText = text.substring(match[0].length); // 提取剩余文本
-    return { searchText, remainText };
-  }
-
-  // 没有找到 search 标签
-  return { searchText: "", remainText: text };
+): { searchText: string; remainText: string } {
+  const { tagText, remainText } = formatTaggedBlock(
+    text,
+    "search",
+    searchingTime,
+    {
+      ing: Locale.NewChat.Searching,
+      done: Locale.NewChat.Search,
+      none: Locale.NewChat.NoSearch,
+    },
+  );
+  return { searchText: tagText, remainText };
 }
 
 function formatThinkText(
   text: string,
   thinkingTime?: number,
-): {
-  thinkText: string;
-  remainText: string;
-} {
-  text = text.trimStart();
-  // 检查是否以 <think> 开头但没有结束标签
-  if (text.startsWith("<think>") && !text.includes("</think>")) {
-    // 获取 <think> 后的所有内容
-    const thinkContent = text.slice("<think>".length);
-    // 渲染为"思考中"状态
-    const thinkText = `<thinkcollapse title="${Locale.NewChat.Thinking}">\n${thinkContent}\n\n</thinkcollapse>\n`;
-    const remainText = ""; // 剩余文本为空
-    return { thinkText, remainText };
-  }
-
-  // 处理完整的 think 标签
-  const pattern = /^<think>([\s\S]*?)<\/think>/;
-  const match = text.match(pattern);
-  if (match) {
-    const thinkContent = match[1];
-    let thinkText = "";
-    if (thinkContent.trim() === "") {
-      thinkText = `<thinkcollapse title="${Locale.NewChat.NoThink}">\n\n</thinkcollapse>\n`;
-    } else {
-      thinkText = `<thinkcollapse title="${
-        Locale.NewChat.Think
-      }${Locale.NewChat.ThinkFormat(
-        thinkingTime,
-      )}">\n${thinkContent}\n\n</thinkcollapse>\n`;
-    }
-    const remainText = text.substring(match[0].length); // 提取剩余文本
-    return { thinkText, remainText };
-  }
-
-  // 没有找到 think 标签
-  return { thinkText: "", remainText: text };
+): { thinkText: string; remainText: string } {
+  const { tagText, remainText } = formatTaggedBlock(
+    text,
+    "think",
+    thinkingTime,
+    {
+      ing: Locale.NewChat.Thinking,
+      done: Locale.NewChat.Think,
+      none: Locale.NewChat.NoThink,
+    },
+  );
+  return { thinkText: tagText, remainText };
 }
 
 function tryWrapHtmlCode(text: string) {

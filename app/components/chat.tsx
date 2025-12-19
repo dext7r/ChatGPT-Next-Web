@@ -88,6 +88,7 @@ import {
   wrapThinkingPart,
   countTokens,
   saveModelConfig,
+  extractMarkdownFromSelection,
 } from "../utils";
 import { estimateTokenLengthInLLM } from "@/app/utils/token";
 
@@ -1962,7 +1963,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
         (anchor && container.contains(anchor)) ||
         (focus && container.contains(focus))
       ) {
-        const text = sel.toString().trim();
+        // 优先使用 extractMarkdownFromSelection 提取带格式的文本
+        const markdownText = extractMarkdownFromSelection();
+        const text = markdownText?.trim() || sel.toString().trim();
         if (!text) return;
         const range = sel.rangeCount ? sel.getRangeAt(0) : null;
         const rect = range?.getBoundingClientRect();

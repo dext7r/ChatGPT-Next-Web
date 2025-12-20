@@ -1321,10 +1321,9 @@ function escapeBrackets(text: string) {
 }
 function formatBoldText(text: string) {
   // 首先修复 ** 和内容之间的空格问题
-  // 处理 ** 后面有空格的情况：** text** -> **text**
-  let processed = text.replace(/\*\*\s+([^*]+?)\*\*/g, "**$1**");
-  // 处理 ** 前面有空格的情况：**text ** -> **text**
-  processed = processed.replace(/\*\*([^*]+?)\s+\*\*/g, "**$1**");
+  // 只移除 ** 标记内部紧贴的空格，不影响外部的分隔空格
+  // 使用负向前瞻确保不跨越多对 **
+  let processed = text.replace(/\*\*\s*((?:(?!\*\*).)+?)\s*\*\*/g, "**$1**");
 
   // 先处理加粗文本间冒号连接问题 - 优先处理复杂情况
   processed = processed.replace(
@@ -1350,11 +1349,17 @@ function formatBoldText(text: string) {
     },
   );
 
-  // 处理加粗后紧跟非空白字符的问题（包括中文括号等情况）
-  // 这个规则要放在最后，避免与前面的规则冲突
+  // 处理加粗后紧跟非空白字符的问题（修复版）
+  // 使用负向前瞻确保不跨越多对 **
+  // 排除冒号，因为冒号应该紧贴加粗文本
+  // 如果 boldText 是纯空格或以空格开头，跳过（避免破坏列表场景）
   processed = processed.replace(
-    /\*\*((?:[^*]|\*(?!\*))+?)\*\*([^\s*])/g,
+    /\*\*((?:(?!\*\*).)+?)\*\*([^\s*:：])/g,
     (match, boldText, nextChar) => {
+      // 如果 boldText 是纯空格或以空格开头，不添加空格
+      if (boldText.trim() === "" || boldText.startsWith(" ")) {
+        return match;
+      }
       return `**${boldText}** ${nextChar}`;
     },
   );

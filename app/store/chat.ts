@@ -49,6 +49,16 @@ export type ChatMessage = RequestMessage & {
   isContinuePrompt?: boolean;
   isStreamRequest?: boolean;
 
+  // 引用信息
+  quote?: {
+    text: string;
+    messageId: string;
+    messageIndex: number;
+    // DOM 位置信息（用于精确高亮）
+    startOffset?: number; // 在消息内容中的起始字符偏移
+    endOffset?: number; // 在消息内容中的结束字符偏移
+  };
+
   statistic?: {
     singlePromptTokens?: number;
     completionTokens?: number;
@@ -431,6 +441,13 @@ export const useChatStore = createPersistStore(
         attachImages?: string[],
         attachFiles?: UploadFile[],
         isContinuePrompt?: boolean,
+        quote?: {
+          text: string;
+          messageId: string;
+          messageIndex: number;
+          startOffset?: number;
+          endOffset?: number;
+        },
       ) {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
@@ -438,7 +455,17 @@ export const useChatStore = createPersistStore(
         const userContent = fillTemplateWith(content, modelConfig);
         // console.log("[User Input] after template: ", userContent);
 
-        let mContent: string | MultimodalContent[] = userContent;
+        // 构建发送给 AI 的内容（包含引用前缀）
+        let userContentForAI = userContent;
+        if (quote) {
+          const quotedText = quote.text
+            .split("\n")
+            .map((line) => `> ${line}`)
+            .join("\n");
+          userContentForAI = `${quotedText}\n\n${userContent}`;
+        }
+
+        let mContent: string | MultimodalContent[] = userContentForAI;
         let displayContent: string | MultimodalContent[] = userContent;
 
         const hasImages = attachImages && attachImages.length > 0;
@@ -452,7 +479,7 @@ export const useChatStore = createPersistStore(
           ];
 
           // Part 1: 文件部分 (Files)
-          let mContentText = userContent;
+          let mContentText = userContentForAI;
           if (hasFiles) {
             let fileHeaderText = "";
             // 处理每个文件，按照模板格式构建内容
@@ -466,7 +493,7 @@ export const useChatStore = createPersistStore(
                 fileHeaderText += `\n[file content end]\n`;
               }
             }
-            mContentText = fileHeaderText + userContent;
+            mContentText = fileHeaderText + userContentForAI;
 
             // 对于UI展示，文件以结构化对象的形式存在
             displayContentParts.push(
@@ -507,6 +534,7 @@ export const useChatStore = createPersistStore(
           role: "user",
           content: mContent,
           isContinuePrompt: isContinuePrompt,
+          quote: quote,
           statistic: {
             // singlePromptTokens: totalTokens ?? 0,
           },
@@ -711,8 +739,27 @@ export const useChatStore = createPersistStore(
         ) {
           const msg = messages[i];
           if (!msg || msg.isError) continue;
-          tokenCount += estimateTokenLengthInLLM(getMessageTextContent(msg));
-          reversedRecentMessages.push(msg);
+
+          // 如果消息包含引用字段，构建发送给 AI 的消息内容
+          let msgContent = getMessageTextContent(msg);
+          if (msg.quote) {
+            const quotedText = msg.quote.text
+              .split("\n")
+              .map((line) => `> ${line}`)
+              .join("\n");
+            msgContent = `${quotedText}\n\n${msgContent}`;
+          }
+
+          // 创建发送给 AI 的消息对象（不包含 quote 字段，只包含处理后的内容）
+          const sendMessage: ChatMessage = {
+            ...msg,
+            content: msgContent,
+          };
+          // 删除 quote 字段，因为已经合并到内容中了
+          delete (sendMessage as any).quote;
+
+          tokenCount += estimateTokenLengthInLLM(msgContent);
+          reversedRecentMessages.push(sendMessage);
         }
         // concat all messages
         const recentMessages = [

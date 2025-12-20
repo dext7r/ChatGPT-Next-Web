@@ -35,6 +35,7 @@ import EditIcon from "../icons/rename.svg";
 import EditToInputIcon from "../icons/edit_input.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
+import CloseIcon from "../icons/close.svg";
 import ContinueIcon from "../icons/continue.svg";
 // import ImageIcon from "../icons/image.svg";
 
@@ -1878,10 +1879,28 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     x: number;
     y: number;
     text: string;
+    messageId?: string;
+    messageIndex?: number;
+    startOffset?: number;
+    endOffset?: number;
   }>({ visible: false, x: 0, y: 0, text: "" });
+
+  // 引用块状态（显示在输入框上方）
+  const [quoteBlock, setQuoteBlock] = useState<{
+    text: string;
+    messageId: string;
+    messageIndex: number;
+    startOffset?: number;
+    endOffset?: number;
+  } | null>(null);
 
   const hideQuoteBubble = useCallback(() => {
     setQuoteBubble((q) => ({ ...q, visible: false, text: "" }));
+  }, []);
+
+  // 清除引用块
+  const clearQuoteBlock = useCallback(() => {
+    setQuoteBlock(null);
   }, []);
 
   // 代码块编辑处理函数
@@ -1972,7 +1991,44 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
         if (rect) {
           const px = rect.left + rect.width / 2; // 中间
           const py = rect.bottom + 8; // 下方 8px
-          setQuoteBubble({ visible: true, x: px, y: py, text });
+          // 获取消息 ID 和索引
+          const messageId = container.getAttribute("data-message-id") || "";
+          const messageIndex = parseInt(
+            container.getAttribute("data-message-index") || "-1",
+            10,
+          );
+
+          // 计算选中文本在消息内容中的偏移量
+          let startOffset = 0;
+          let endOffset = 0;
+
+          if (range) {
+            // 获取消息内容的纯文本
+            const messageText =
+              container.innerText || container.textContent || "";
+
+            // 创建一个临时 range 来计算偏移量
+            const tempRange = document.createRange();
+            tempRange.selectNodeContents(container);
+            tempRange.setEnd(range.startContainer, range.startOffset);
+            const textBeforeStart = tempRange.toString();
+            startOffset = textBeforeStart.length;
+
+            tempRange.setEnd(range.endContainer, range.endOffset);
+            const textBeforeEnd = tempRange.toString();
+            endOffset = textBeforeEnd.length;
+          }
+
+          setQuoteBubble({
+            visible: true,
+            x: px,
+            y: py,
+            text,
+            messageId,
+            messageIndex,
+            startOffset,
+            endOffset,
+          });
         }
       } else {
         hideQuoteBubble();
@@ -2244,20 +2300,38 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       return;
     }
     setIsLoading(true);
+    // 获取当前引用信息
+    const currentQuote = quoteBlock
+      ? {
+          text: quoteBlock.text,
+          messageId: quoteBlock.messageId,
+          messageIndex: quoteBlock.messageIndex,
+          startOffset: quoteBlock.startOffset,
+          endOffset: quoteBlock.endOffset,
+        }
+      : undefined;
     if (canUploadImage) {
       chatStore
-        .onUserInput(userInput, attachImages, attachFiles)
+        .onUserInput(
+          userInput,
+          attachImages,
+          attachFiles,
+          undefined,
+          currentQuote,
+        )
         .then(() => setIsLoading(false));
       setAttachImages([]);
     } else {
       chatStore
-        .onUserInput(userInput, [], attachFiles)
+        .onUserInput(userInput, [], attachFiles, undefined, currentQuote)
         .then(() => setIsLoading(false));
     }
     setAttachFiles([]);
     chatStore.setLastInput(userInput);
     setUserInput("");
     setPromptHints([]);
+    // 清除引用块
+    clearQuoteBlock();
     if (!isMobileScreen) inputRef.current?.focus();
     // setAutoScroll(true);
     scrollToBottom();
@@ -2806,6 +2880,320 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       ? Math.max(0, Math.min(location.state.jumpToIndex, messages.length - 1))
       : undefined;
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+
+  // 跳转到引用的消息并高亮具体文本
+  const scrollToQuotedMessage = useCallback(
+    (
+      messageIndex: number,
+      quoteText?: string,
+      startOffset?: number,
+      endOffset?: number,
+    ) => {
+      virtuosoRef.current?.scrollToIndex({
+        index: messageIndex,
+        align: "center",
+        behavior: "smooth",
+      });
+
+      // 延迟执行以等待滚动完成
+      setTimeout(() => {
+        // 查找目标消息元素
+        const messageElements = document.querySelectorAll(
+          `[data-message-index="${messageIndex}"]`,
+        );
+        if (messageElements.length === 0) return;
+
+        const messageEl = messageElements[0] as HTMLElement;
+
+        if (
+          typeof startOffset === "number" &&
+          typeof endOffset === "number" &&
+          startOffset >= 0 &&
+          endOffset > startOffset
+        ) {
+          // 使用偏移量精确高亮
+          highlightTextByOffset(messageEl, startOffset, endOffset);
+        } else if (quoteText) {
+          // 回退到文本匹配
+          highlightTextInElement(messageEl, quoteText);
+        } else {
+          // 如果没有具体文本，高亮整个消息
+          setHighlightIndex(messageIndex);
+          setTimeout(() => setHighlightIndex(null), 3000);
+        }
+      }, 300);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 使用偏移量精确高亮文本
+  const highlightTextByOffset = useCallback(
+    (element: HTMLElement, startOffset: number, endOffset: number) => {
+      try {
+        // 使用 TreeWalker 遍历所有文本节点
+        const walker = document.createTreeWalker(
+          element,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: (node) => {
+              const parent = node.parentElement;
+              if (!parent) return NodeFilter.FILTER_REJECT;
+              const tagName = parent.tagName.toLowerCase();
+              if (["script", "style", "noscript"].includes(tagName)) {
+                return NodeFilter.FILTER_REJECT;
+              }
+              return NodeFilter.FILTER_ACCEPT;
+            },
+          },
+        );
+
+        let currentOffset = 0;
+        const nodesToHighlight: Array<{
+          node: Text;
+          startOffset: number;
+          endOffset: number;
+        }> = [];
+
+        let node: Text | null;
+        while ((node = walker.nextNode() as Text | null)) {
+          const nodeText = node.textContent || "";
+          const nodeLength = nodeText.length;
+          const nodeStart = currentOffset;
+          const nodeEnd = currentOffset + nodeLength;
+
+          // 检查这个节点是否与选区有交集
+          if (nodeEnd > startOffset && nodeStart < endOffset) {
+            const highlightStart = Math.max(0, startOffset - nodeStart);
+            const highlightEnd = Math.min(nodeLength, endOffset - nodeStart);
+            nodesToHighlight.push({
+              node,
+              startOffset: highlightStart,
+              endOffset: highlightEnd,
+            });
+          }
+
+          currentOffset += nodeLength;
+
+          // 如果已经超过结束位置，可以提前退出
+          if (currentOffset >= endOffset) break;
+        }
+
+        if (nodesToHighlight.length === 0) {
+          // 回退到高亮整个消息
+          element.classList.add(styles["hit-highlight"]);
+          setTimeout(() => {
+            element.classList.remove(styles["hit-highlight"]);
+          }, 3000);
+          return;
+        }
+
+        // 对每个文本节点进行高亮
+        const highlights: HTMLSpanElement[] = [];
+        for (const { node, startOffset, endOffset } of nodesToHighlight) {
+          const text = node.textContent || "";
+          const beforeText = text.substring(0, startOffset);
+          const highlightText = text.substring(startOffset, endOffset);
+          const afterText = text.substring(endOffset);
+
+          // 创建高亮元素
+          const highlight = document.createElement("span");
+          highlight.className = styles["quote-text-highlight"];
+          highlight.textContent = highlightText;
+
+          // 创建文本节点
+          const parent = node.parentNode;
+          if (!parent) continue;
+
+          const fragment = document.createDocumentFragment();
+          if (beforeText)
+            fragment.appendChild(document.createTextNode(beforeText));
+          fragment.appendChild(highlight);
+          if (afterText)
+            fragment.appendChild(document.createTextNode(afterText));
+
+          parent.replaceChild(fragment, node);
+          highlights.push(highlight);
+        }
+
+        // 滚动到第一个高亮元素
+        if (highlights.length > 0) {
+          highlights[0].scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        // 3秒后移除所有高亮
+        setTimeout(() => {
+          highlights.forEach((highlight) => {
+            const parent = highlight.parentNode;
+            if (parent) {
+              parent.replaceChild(
+                document.createTextNode(highlight.textContent || ""),
+                highlight,
+              );
+              parent.normalize();
+            }
+          });
+        }, 3000);
+      } catch (e) {
+        console.warn("Failed to highlight by offset:", e);
+        // 回退到高亮整个消息
+        element.classList.add(styles["hit-highlight"]);
+        setTimeout(() => {
+          element.classList.remove(styles["hit-highlight"]);
+        }, 3000);
+      }
+    },
+    [],
+  );
+
+  // 在元素中查找并高亮文本
+  const highlightTextInElement = useCallback(
+    (element: HTMLElement, text: string) => {
+      // 清理文本用于匹配
+      const cleanText = (str: string) => {
+        return str
+          .replace(/[`*_~\[\]()]/g, "") // 移除 Markdown 标记
+          .replace(/\s+/g, " ") // 规范化空白
+          .trim()
+          .toLowerCase();
+      };
+
+      // 获取元素的纯文本内容
+      const getTextContent = (el: HTMLElement): string => {
+        // 跳过代码块中的语言标签
+        const codeLanguage = el.querySelector(".code-header");
+        if (codeLanguage) {
+          codeLanguage.remove();
+        }
+        return el.innerText || el.textContent || "";
+      };
+
+      const normalizedSearchText = cleanText(text);
+      const elementText = getTextContent(element);
+      const normalizedElementText = cleanText(elementText);
+
+      // 尝试在纯文本中查找
+      const searchLength = Math.min(50, normalizedSearchText.length);
+      const searchSubstring = normalizedSearchText.slice(0, searchLength);
+      const matchIndex = normalizedElementText.indexOf(searchSubstring);
+
+      if (matchIndex === -1) {
+        // 未找到匹配，高亮整个消息
+        element.classList.add(styles["hit-highlight"]);
+        setTimeout(() => {
+          element.classList.remove(styles["hit-highlight"]);
+        }, 3000);
+        return;
+      }
+
+      // 找到匹配位置，现在需要在 DOM 中定位这段文本
+      // 使用 TreeWalker 遍历所有文本节点
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) => {
+          // 跳过 script、style 等标签
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          const tagName = parent.tagName.toLowerCase();
+          if (["script", "style", "noscript"].includes(tagName)) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+
+      let currentPos = 0;
+      let targetNode: Text | null = null;
+      let targetOffset = 0;
+      const nodes: Text[] = [];
+
+      // 收集所有文本节点并计算位置
+      let node: Text | null;
+      while ((node = walker.nextNode() as Text | null)) {
+        nodes.push(node);
+        const nodeText = node.textContent || "";
+        const cleanNodeText = cleanText(nodeText);
+        const nodeLength = cleanNodeText.length;
+
+        if (
+          !targetNode &&
+          currentPos <= matchIndex &&
+          matchIndex < currentPos + nodeLength
+        ) {
+          targetNode = node;
+          targetOffset = matchIndex - currentPos;
+        }
+
+        currentPos += nodeLength;
+      }
+
+      if (!targetNode) {
+        // 回退到高亮整个消息
+        element.classList.add(styles["hit-highlight"]);
+        setTimeout(() => {
+          element.classList.remove(styles["hit-highlight"]);
+        }, 3000);
+        return;
+      }
+
+      // 在目标节点中查找实际的文本位置
+      const targetNodeText = targetNode.textContent || "";
+      const cleanTargetText = cleanText(targetNodeText);
+
+      // 计算在原始文本中的偏移量
+      let actualOffset = 0;
+      let cleanOffset = 0;
+      for (
+        let i = 0;
+        i < targetNodeText.length && cleanOffset < targetOffset;
+        i++
+      ) {
+        const char = targetNodeText[i];
+        if (!/\s/.test(char) || char === " ") {
+          cleanOffset++;
+        }
+        actualOffset = i + 1;
+      }
+
+      // 计算高亮长度
+      const highlightLength = Math.min(
+        30,
+        targetNodeText.length - actualOffset,
+      );
+
+      try {
+        const range = document.createRange();
+        range.setStart(targetNode, actualOffset);
+        range.setEnd(targetNode, actualOffset + highlightLength);
+
+        const highlight = document.createElement("span");
+        highlight.className = styles["quote-text-highlight"];
+        range.surroundContents(highlight);
+
+        // 滚动到高亮元素
+        highlight.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // 3秒后移除高亮
+        setTimeout(() => {
+          const parent = highlight.parentNode;
+          if (parent) {
+            parent.replaceChild(
+              document.createTextNode(highlight.textContent || ""),
+              highlight,
+            );
+            parent.normalize();
+          }
+        }, 3000);
+      } catch (e) {
+        // 如果包裹失败（可能跨越了元素边界），回退到高亮整个消息
+        console.warn("Failed to highlight text:", e);
+        element.classList.add(styles["hit-highlight"]);
+        setTimeout(() => {
+          element.classList.remove(styles["hit-highlight"]);
+        }, 3000);
+      }
+    },
+    [],
+  );
 
   // 初始时滚到命中项并高亮 3 秒
   useEffect(() => {
@@ -3686,7 +4074,31 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                     <div
                       className={styles["chat-message-item"]}
                       onMouseUp={onMessageMouseUp}
+                      data-message-id={message.id}
+                      data-message-index={index}
                     >
+                      {/* 显示消息中的引用块 */}
+                      {message.quote && (
+                        <div
+                          className={styles["message-quote-block"]}
+                          onClick={() =>
+                            scrollToQuotedMessage(
+                              message.quote!.messageIndex,
+                              message.quote!.text,
+                              message.quote!.startOffset,
+                              message.quote!.endOffset,
+                            )
+                          }
+                          title={Locale.Chat.Actions.QuoteTooltip}
+                        >
+                          <div className={styles["message-quote-bar"]} />
+                          <div className={styles["message-quote-text"]}>
+                            {message.quote.text.length > 80
+                              ? message.quote.text.slice(0, 80) + "..."
+                              : message.quote.text}
+                          </div>
+                        </div>
+                      )}
                       <MessageEditContext.Provider
                         value={{
                           messageId: message.id,
@@ -3935,6 +4347,36 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           setUserInput={setUserInput}
           modelTable={modelTable}
         />
+        {/* 引用块 - 显示在输入框上方 */}
+        {quoteBlock && (
+          <div className={styles["quote-block"]}>
+            <div
+              className={styles["quote-block-content"]}
+              onClick={() =>
+                scrollToQuotedMessage(
+                  quoteBlock.messageIndex,
+                  quoteBlock.text,
+                  quoteBlock.startOffset,
+                  quoteBlock.endOffset,
+                )
+              }
+              title={Locale.Chat.Actions.QuoteTooltip}
+            >
+              <div className={styles["quote-block-bar"]} />
+              <div className={styles["quote-block-text"]}>
+                {quoteBlock.text.length > 100
+                  ? quoteBlock.text.slice(0, 100) + "..."
+                  : quoteBlock.text}
+              </div>
+            </div>
+            <div
+              className={styles["quote-block-close"]}
+              onClick={clearQuoteBlock}
+            >
+              <CloseIcon style={{ stroke: "currentColor" }} />
+            </div>
+          </div>
+        )}
         <label
           className={`${styles["chat-input-panel-inner"]} ${
             attachImages.length != 0 || attachFiles.length != 0
@@ -4169,14 +4611,26 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
       {quoteBubble.visible && (
         <div
+          ref={quoteBubbleRef}
           className={styles["quote-bubble"]}
           style={{ position: "fixed", left: quoteBubble.x, top: quoteBubble.y }}
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            const q = toMarkdownQuote(quoteBubble.text);
-            // 头部插入引用文本
-            setUserInput((prev) => (prev ? q + prev : q));
+            // 设置引用块（显示在输入框上方）
+            if (
+              quoteBubble.messageId &&
+              typeof quoteBubble.messageIndex === "number" &&
+              quoteBubble.messageIndex >= 0
+            ) {
+              setQuoteBlock({
+                text: quoteBubble.text,
+                messageId: quoteBubble.messageId,
+                messageIndex: quoteBubble.messageIndex,
+                startOffset: quoteBubble.startOffset,
+                endOffset: quoteBubble.endOffset,
+              });
+            }
             // 聚焦输入框，清理选区并收起气泡
             requestAnimationFrame(() => inputRef.current?.focus());
             window.getSelection()?.removeAllRanges();

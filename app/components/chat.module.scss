@@ -605,18 +605,38 @@
 .hit-highlight {
   outline: 2px solid var(--second);
   border-radius: 8px;
-  background: var(--primary);
+  background: var(--second);
   animation: hit-fade 3s ease forwards;
 }
 
 @keyframes hit-fade {
   0% {
-    background: var(--primary);
+    background: var(--second);
     outline-color: var(--second);
   }
   100% {
     background: transparent;
     outline-color: transparent;
+  }
+}
+
+/* 引用文本高亮样式 */
+.quote-text-highlight {
+  background-color: var(--highlight);
+  border-radius: 3px;
+  padding: 1px 2px;
+  animation: quote-highlight-fade 3s ease forwards;
+}
+
+@keyframes quote-highlight-fade {
+  0% {
+    background-color: var(--highlight);
+  }
+  70% {
+    background-color: var(--highlight);
+  }
+  100% {
+    background-color: transparent;
   }
 }
 
@@ -760,11 +780,11 @@
     // 选中状态
     &-selected {
       border-left: 3px solid var(--primary);
-      background-color: rgba(var(--primary-rgb), 0.1);
+      background-color: rgba(var(--highlight), 0.1);
       padding-left: 9px; // 补偿边框宽度
       
       .item-title {
-        color: var(--primary);
+        color: var(--highlight);
         font-weight: bold;
       }
     }
@@ -868,6 +888,43 @@
   border: var(--border-in-light);
   position: relative;
   transition: all ease 0.3s;
+}
+
+// 消息中的引用块样式
+.message-quote-block {
+  display: flex;
+  align-items: stretch;
+  background-color: rgba(var(--highlight), 0.08);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-height: 24px;
+
+  &:hover {
+    background-color: rgba(var(--highlight), 0.15);
+  }
+
+  .message-quote-bar {
+    width: 3px;
+    min-height: 100%;
+    background-color: var(--highlight);
+    border-radius: 2px;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .message-quote-text {
+    flex: 1;
+    font-size: 12px;
+    color: var(--black);
+    line-height: 1.4;
+    opacity: 0.75;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .chat-message-item-image {
@@ -1048,6 +1105,90 @@
   }
 }
 
+// 引用块样式 - 显示在输入框上方
+.quote-block {
+  display: flex;
+  align-items: stretch;
+  // background-color: var(--second);
+  border: 1px solid var(--border-in-light);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  animation: quote-slide-in 0.2s ease-out;
+
+  @keyframes quote-slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .quote-block-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: var(--second);
+    transition: background-color 0.2s;
+    min-width: 0;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    &:active {
+      background-color: rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .quote-block-bar {
+    width: 3px;
+    min-height: 100%;
+    background-color: var(--primary);
+    border-radius: 2px;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  .quote-block-text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--black);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.85;
+  }
+
+  .quote-block-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: #f19a9a;
+    opacity: 0.85;
+    transition: all 0.2s;
+    border-left: 1px solid var(--border-in-light);
+
+    &:hover {
+      opacity: 1;
+      color: #f72020;
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
 .chat-input-panel-inner {
   cursor: text;
   display: flex;
@@ -1067,7 +1208,7 @@
 // Add this to chat.module.scss
 .param-override-header {
   position: relative;
-  background-color: rgba(var(--primary-rgb), 0.1);
+  background-color: rgba(var(--primary), 0.1);
   border-radius: 10px 10px 0 0;
   padding: 6px 12px;
   font-size: var(--text-xs);
@@ -1077,7 +1218,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
+  border-bottom: 1px solid rgba(var(--primary), 0.2);
   
   .param-override-indicator {
     display: flex;

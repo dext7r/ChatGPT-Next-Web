@@ -61,7 +61,8 @@ const en: LocaleType = {
         "Title generation failed, please manually click 🔄 after checking the compression model settings",
       Speech: "Play",
       StopSpeech: "Stop",
-      Quote: "Quote to Input",
+      Quote: "Quote to Input For Question",
+      QuoteTooltip: "Click to jump to original message",
       // Python execution
       Run: "Run",
       RunCode: "Run Code",

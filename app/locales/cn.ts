@@ -59,6 +59,7 @@ const cn = {
       Speech: "朗读",
       StopSpeech: "停止",
       Quote: "引用至输入框提问",
+      QuoteTooltip: "点击跳转到原消息",
       // Python execution
       Run: "运行",
       RunCode: "运行代码",

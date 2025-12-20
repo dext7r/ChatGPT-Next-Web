@@ -870,13 +870,26 @@ export const useChatStore = createPersistStore(
                 content: Locale.Store.Prompt.Topic,
               }),
             )
-            .map((v) => ({
-              ...v,
-              content:
+            .map((v) => {
+              let msgContent =
                 v.role === "assistant"
                   ? getMessageTextContentWithoutThinking(v)
-                  : getMessageTextContent(v),
-            }));
+                  : getMessageTextContent(v);
+
+              // 如果消息包含引用字段，将引用内容添加到消息前面
+              if (v.quote) {
+                const quotedText = v.quote.text
+                  .split("\n")
+                  .map((line) => `> ${line}`)
+                  .join("\n");
+                msgContent = `${quotedText}\n\n${msgContent}`;
+              }
+
+              return {
+                ...v,
+                content: msgContent,
+              };
+            });
           api.llm.chat({
             messages: topicMessages,
             config: {
@@ -952,13 +965,26 @@ export const useChatStore = createPersistStore(
                   date: "",
                 }),
               )
-              .map((v) => ({
-                ...v,
-                content:
+              .map((v) => {
+                let msgContent =
                   v.role === "assistant"
                     ? getMessageTextContentWithoutThinking(v)
-                    : getMessageTextContent(v),
-              })),
+                    : getMessageTextContent(v);
+
+                // 如果消息包含引用字段，将引用内容添加到消息前面
+                if (v.quote) {
+                  const quotedText = v.quote.text
+                    .split("\n")
+                    .map((line) => `> ${line}`)
+                    .join("\n");
+                  msgContent = `${quotedText}\n\n${msgContent}`;
+                }
+
+                return {
+                  ...v,
+                  content: msgContent,
+                };
+              }),
             config: {
               // ...modelcfg,
               stream: true,

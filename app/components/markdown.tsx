@@ -1320,8 +1320,14 @@ function escapeBrackets(text: string) {
   );
 }
 function formatBoldText(text: string) {
+  // 首先修复 ** 和内容之间的空格问题
+  // 处理 ** 后面有空格的情况：** text** -> **text**
+  let processed = text.replace(/\*\*\s+([^*]+?)\*\*/g, "**$1**");
+  // 处理 ** 前面有空格的情况：**text ** -> **text**
+  processed = processed.replace(/\*\*([^*]+?)\s+\*\*/g, "**$1**");
+
   // 先处理加粗文本间冒号连接问题 - 优先处理复杂情况
-  let processed = text.replace(
+  processed = processed.replace(
     /\*\*(.*?)\*\*([:：])\*\*(.*?)\*\*/g,
     (match, text1, colon, text2) => {
       return `**${text1}**${colon} **${text2}**`;
@@ -1336,11 +1342,20 @@ function formatBoldText(text: string) {
     },
   );
 
-  // 最后处理引号加粗后紧跟文本的问题 - 包含完整的中英文引号
+  // 处理引号加粗后紧跟文本的问题 - 包含完整的中英文引号
   processed = processed.replace(
-    /\*\*(".*?"|'.*?'|“.*?”|‘.*?’|「.*?」|『.*?』)\*\*([^\s])/g,
+    /\*\*(".*?"|'.*?'|".*?"|'.*?'|「.*?」|『.*?』)\*\*([^\s])/g,
     (match, quotedText, nextChar) => {
       return `**${quotedText}** ${nextChar}`;
+    },
+  );
+
+  // 处理加粗后紧跟非空白字符的问题（包括中文括号等情况）
+  // 这个规则要放在最后，避免与前面的规则冲突
+  processed = processed.replace(
+    /\*\*((?:[^*]|\*(?!\*))+?)\*\*([^\s*])/g,
+    (match, boldText, nextChar) => {
+      return `**${boldText}** ${nextChar}`;
     },
   );
 

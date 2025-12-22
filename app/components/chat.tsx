@@ -61,6 +61,7 @@ import ExpandIcon from "../icons/expand.svg";
 import AttachmentIcon from "../icons/paperclip.svg";
 import ToolboxIcon from "../icons/toolbox.svg";
 import EraserIcon from "../icons/eraser.svg";
+import DualModelIcon from "../icons/dual-model.svg";
 
 import {
   ChatMessage,
@@ -385,7 +386,7 @@ export function PromptHints(props: {
 }
 
 // function ClearContextDivider() {
-function ClearContextDivider(props: { index: number }) {
+function ClearContextDivider(props: { index: number; isSecondary?: boolean }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   return (
@@ -394,8 +395,21 @@ function ClearContextDivider(props: { index: number }) {
       onClick={() =>
         chatStore.updateTargetSession(session, (session) => {
           session.clearContextIndex = undefined;
-          if (props.index > 0) {
+
+          // 清除主模型的 beClear 标记
+          if (props.index > 0 && session.messages[props.index - 1]) {
             session.messages[props.index - 1].beClear = false;
+          }
+
+          // 双模型模式：同时清除副模型的 beClear 标记
+          if (session.dualModelMode && session.secondaryMessages?.length) {
+            const secondaryIndex = props.index - 1;
+            if (
+              secondaryIndex >= 0 &&
+              session.secondaryMessages[secondaryIndex]
+            ) {
+              session.secondaryMessages[secondaryIndex].beClear = false;
+            }
           }
         })
       }
@@ -1332,7 +1346,7 @@ export function ChatActions(props: {
           icon={<BreakIcon />}
           onClick={() => {
             chatStore.updateTargetSession(session, (session) => {
-              // 找到最后一条消息
+              // 找到主模型最后一条消息
               const lastMessage = session.messages[session.messages.length - 1];
               if (lastMessage) {
                 if (lastMessage?.beClear) {
@@ -1342,6 +1356,24 @@ export function ChatActions(props: {
                   session.clearContextIndex = session.messages.length;
                   lastMessage.beClear = true;
                   session.memoryPrompt = ""; // 清除记忆提示
+                }
+              }
+
+              // 双模型模式：同时清除副模型的上下文
+              if (session.dualModelMode && session.secondaryMessages?.length) {
+                const lastSecondaryMessage =
+                  session.secondaryMessages[
+                    session.secondaryMessages.length - 1
+                  ];
+                if (lastSecondaryMessage) {
+                  if (lastMessage?.beClear) {
+                    // 如果主模型是清除状态，副模型也清除
+                    lastSecondaryMessage.beClear = true;
+                    session.secondaryMemoryPrompt = "";
+                  } else {
+                    // 如果主模型取消清除，副模型也取消
+                    lastSecondaryMessage.beClear = false;
+                  }
                 }
               }
             });
@@ -1828,6 +1860,214 @@ function ChatInputActions(props: {
     </div>
   );
 }
+
+// 双模型切换按钮组件
+function DualModelToggle(props: { enabled: boolean; onToggle: () => void }) {
+  return (
+    <div className={styles["dual-model-toggle"]}>
+      <IconButton
+        icon={<DualModelIcon />}
+        bordered
+        title={props.enabled ? "关闭双模型对话" : "开启双模型对话"}
+        onClick={props.onToggle}
+        className={props.enabled ? styles["dual-model-active"] : ""}
+      />
+    </div>
+  );
+}
+
+// 双模型视图组件
+type RenderMessageType = ChatMessage & { preview?: boolean };
+
+function DualModelView(props: {
+  primaryMessages: ChatMessage[];
+  secondaryMessages: ChatMessage[];
+  primaryModelName: string;
+  secondaryModelName: string;
+  context: ChatMessage[];
+  renderMessage: (
+    message: RenderMessageType,
+    index: number,
+    isSecondary: boolean,
+  ) => JSX.Element | null;
+  isLoading: boolean;
+  config: any;
+  onPrimaryModelSelect: () => void;
+  onSecondaryModelSelect: () => void;
+  modelTable: Model[];
+  onScrollBothToBottom?: (fn: () => void) => void; // 注册滚动到底部的回调
+}) {
+  const primaryVirtuosoRef = useRef<VirtuosoHandle>(null);
+  const secondaryVirtuosoRef = useRef<VirtuosoHandle>(null);
+  const [primaryHitBottom, setPrimaryHitBottom] = useState(true);
+  const [secondaryHitBottom, setSecondaryHitBottom] = useState(true);
+
+  // 合并 context 和消息
+  const primaryRenderMessages: RenderMessageType[] = useMemo(() => {
+    return (props.context as RenderMessageType[])
+      .concat(props.primaryMessages as RenderMessageType[])
+      .concat(
+        props.isLoading
+          ? [
+              {
+                ...createMessage({
+                  role: "assistant",
+                  content: "……",
+                }),
+                preview: true,
+              },
+            ]
+          : [],
+      );
+  }, [props.context, props.primaryMessages, props.isLoading]);
+
+  const secondaryRenderMessages: RenderMessageType[] = useMemo(() => {
+    return (props.context as RenderMessageType[])
+      .concat(props.secondaryMessages as RenderMessageType[])
+      .concat(
+        props.isLoading
+          ? [
+              {
+                ...createMessage({
+                  role: "assistant",
+                  content: "……",
+                }),
+                preview: true,
+              },
+            ]
+          : [],
+      );
+  }, [props.context, props.secondaryMessages, props.isLoading]);
+
+  const scrollPrimaryToBottom = useCallback(() => {
+    primaryVirtuosoRef.current?.scrollToIndex({
+      index: primaryRenderMessages.length - 1,
+      behavior: "smooth",
+      align: "end",
+    });
+  }, [primaryRenderMessages.length]);
+
+  const scrollSecondaryToBottom = useCallback(() => {
+    secondaryVirtuosoRef.current?.scrollToIndex({
+      index: secondaryRenderMessages.length - 1,
+      behavior: "smooth",
+      align: "end",
+    });
+  }, [secondaryRenderMessages.length]);
+
+  // 同时滚动两个面板到底部
+  const scrollBothToBottom = useCallback(() => {
+    scrollPrimaryToBottom();
+    scrollSecondaryToBottom();
+  }, [scrollPrimaryToBottom, scrollSecondaryToBottom]);
+
+  // 注册滚动方法
+  useEffect(() => {
+    props.onScrollBothToBottom?.(scrollBothToBottom);
+  }, [scrollBothToBottom, props.onScrollBothToBottom]);
+
+  return (
+    <div className={styles["dual-model-container"]}>
+      {/* 主模型面板 */}
+      <div className={styles["model-panel"]}>
+        <div className={styles["panel-header"]}>
+          <div
+            className={styles["panel-title-clickable"]}
+            onClick={props.onPrimaryModelSelect}
+            title="点击切换主模型"
+          >
+            <span className={styles["panel-title"]}>
+              {props.primaryModelName}
+            </span>
+            <span className={styles["panel-title-arrow"]}>▼</span>
+          </div>
+          <span
+            className={styles["panel-badge-primary"]}
+            onClick={props.onPrimaryModelSelect}
+            style={{ cursor: "pointer" }}
+            title="点击切换主模型"
+          >
+            主模型
+          </span>
+        </div>
+        <div className={styles["panel-body"]}>
+          <Virtuoso
+            ref={primaryVirtuosoRef}
+            style={{ height: "100%" }}
+            data={primaryRenderMessages}
+            followOutput={primaryHitBottom ? "smooth" : false}
+            atBottomStateChange={setPrimaryHitBottom}
+            atBottomThreshold={64}
+            increaseViewportBy={{ top: 400, bottom: 800 }}
+            computeItemKey={(index, m) => `primary-${m.id || index}`}
+            itemContent={(index, message) =>
+              props.renderMessage(message, index, false)
+            }
+          />
+          {!primaryHitBottom && (
+            <div
+              className={styles["panel-scroll-to-bottom"]}
+              onClick={scrollPrimaryToBottom}
+            >
+              <BottomIcon />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 分隔线 */}
+      <div className={styles["panel-divider"]} />
+
+      {/* 副模型面板 */}
+      <div className={styles["model-panel"]}>
+        <div className={styles["panel-header"]}>
+          <div
+            className={styles["panel-title-clickable"]}
+            onClick={props.onSecondaryModelSelect}
+            title="点击切换副模型"
+          >
+            <span className={styles["panel-title"]}>
+              {props.secondaryModelName}
+            </span>
+            <span className={styles["panel-title-arrow"]}>▼</span>
+          </div>
+          <span
+            className={styles["panel-badge-secondary"]}
+            onClick={props.onSecondaryModelSelect}
+            style={{ cursor: "pointer" }}
+            title="点击切换副模型"
+          >
+            副模型
+          </span>
+        </div>
+        <div className={styles["panel-body"]}>
+          <Virtuoso
+            ref={secondaryVirtuosoRef}
+            style={{ height: "100%" }}
+            data={secondaryRenderMessages}
+            followOutput={secondaryHitBottom ? "smooth" : false}
+            atBottomStateChange={setSecondaryHitBottom}
+            atBottomThreshold={64}
+            increaseViewportBy={{ top: 400, bottom: 800 }}
+            computeItemKey={(index, m) => `secondary-${m.id || index}`}
+            itemContent={(index, message) =>
+              props.renderMessage(message, index, true)
+            }
+          />
+          {!secondaryHitBottom && (
+            <div
+              className={styles["panel-scroll-to-bottom"]}
+              onClick={scrollSecondaryToBottom}
+            >
+              <BottomIcon />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
@@ -1860,6 +2100,16 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const [showModelAtSelector, setShowModelAtSelector] = useState(false); // 是否显示@
   const [modelAtQuery, setModelAtQuery] = useState(""); // 模型选择器的搜索字符
   const [modelAtSelectIndex, setModelAtSelectIndex] = useState(0); // 当前选中模型的索引
+
+  // 双模型模式状态
+  const isDualMode = session.dualModelMode || false;
+  const [showSecondaryModelSelector, setShowSecondaryModelSelector] =
+    useState(false);
+  const [showPrimaryModelSelector, setShowPrimaryModelSelector] =
+    useState(false);
+
+  // 双模型视图滚动到底部的方法
+  const dualModelScrollToBottomRef = useRef<(() => void) | null>(null);
 
   // prompt hints
   const promptStore = usePromptStore();
@@ -2651,7 +2901,88 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     deleteMessage(userMessage.id);
     deleteMessage(botMessage?.id);
 
-    // resend the message
+    // 在双模型模式下，只重试主模型
+    if (isDualMode) {
+      // 创建新的用户消息和 bot 消息
+      const newUserMessage = createMessage({
+        role: "user",
+        content: userMessage.content,
+        modelSource: "primary",
+      });
+      const newBotMessage = createMessage({
+        role: "assistant",
+        streaming: true,
+        model: session.mask.modelConfig.model,
+        providerName: session.mask.modelConfig.providerName,
+        modelSource: "primary",
+      });
+
+      // 添加到主模型消息队列
+      chatStore.updateTargetSession(session, (session) => {
+        session.messages = session.messages.concat([
+          newUserMessage,
+          newBotMessage,
+        ]);
+      });
+
+      // 发送请求到主模型
+      const api = getClientApi(session.mask.modelConfig.providerName);
+      const recentMessages = chatStore.getMessagesWithMemory();
+      const sendMessages = recentMessages.slice(0, -1); // 移除刚添加的空 bot 消息
+
+      api.llm.chat({
+        messages: sendMessages,
+        config: {
+          ...session.mask.modelConfig,
+          stream: true,
+        },
+        onUpdate(content) {
+          newBotMessage.streaming = true;
+          if (content) {
+            newBotMessage.content = content;
+          }
+          chatStore.updateTargetSession(session, (session) => {
+            session.messages = session.messages.concat();
+          });
+        },
+        onFinish(message) {
+          newBotMessage.streaming = false;
+          if (message) {
+            newBotMessage.content =
+              typeof message === "string" ? message : message.content;
+          }
+          newBotMessage.date = new Date().toLocaleString();
+          chatStore.updateTargetSession(session, (session) => {
+            session.messages = session.messages.concat();
+          });
+          ChatControllerPool.remove(session.id, newBotMessage.id);
+        },
+        onError(error) {
+          newBotMessage.content +=
+            "\n\n" +
+            prettyObject({
+              error: true,
+              message: error.message,
+            });
+          newBotMessage.streaming = false;
+          newBotMessage.isError = true;
+          chatStore.updateTargetSession(session, (session) => {
+            session.messages = session.messages.concat();
+          });
+          ChatControllerPool.remove(session.id, newBotMessage.id);
+        },
+        onController(controller) {
+          ChatControllerPool.addController(
+            session.id,
+            newBotMessage.id,
+            controller,
+          );
+        },
+      });
+      return;
+    }
+
+    // resend the message (单模型模式)
     setIsLoading(true);
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
@@ -2660,6 +2991,149 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       .onUserInput(textContent, images, userAttachFiles)
       .then(() => setIsLoading(false));
     inputRef.current?.focus();
+  };
+
+  // 副模型消息删除
+  const onDeleteSecondary = (msgId: string) => {
+    chatStore.updateTargetSession(session, (session) => {
+      session.secondaryMessages = (session.secondaryMessages || []).filter(
+        (m) => m.id !== msgId,
+      );
+    });
+  };
+
+  // 副模型消息重试
+  const onResendSecondary = (message: ChatMessage) => {
+    const secondaryMessages = session.secondaryMessages || [];
+    const resendingIndex = secondaryMessages.findIndex(
+      (m) => m.id === message.id,
+    );
+
+    if (resendingIndex < 0 || resendingIndex >= secondaryMessages.length) {
+      console.error(
+        "[Chat] failed to find resending secondary message",
+        message,
+      );
+      return;
+    }
+
+    let userMessage: ChatMessage | undefined;
+    let botMessage: ChatMessage | undefined;
+
+    if (message.role === "assistant") {
+      botMessage = message;
+      for (let i = resendingIndex; i >= 0; i -= 1) {
+        if (secondaryMessages[i].role === "user") {
+          userMessage = secondaryMessages[i];
+          break;
+        }
+      }
+    } else if (message.role === "user") {
+      userMessage = message;
+      for (let i = resendingIndex; i < secondaryMessages.length; i += 1) {
+        if (secondaryMessages[i].role === "assistant") {
+          botMessage = secondaryMessages[i];
+          break;
+        }
+      }
+    }
+
+    if (userMessage === undefined) {
+      console.error("[Chat] failed to resend secondary", message);
+      return;
+    }
+
+    // 删除原消息
+    onDeleteSecondary(userMessage.id);
+    if (botMessage) {
+      onDeleteSecondary(botMessage.id);
+    }
+
+    // 重新发送到副模型
+    const secondaryModelConfig = session.secondaryModelConfig;
+    if (!secondaryModelConfig) {
+      showToast("请先选择副模型");
+      return;
+    }
+
+    // 创建新的用户消息和 bot 消息
+    const newUserMessage = createMessage({
+      role: "user",
+      content: userMessage.content,
+      modelSource: "secondary",
+    });
+    const newBotMessage = createMessage({
+      role: "assistant",
+      streaming: true,
+      model: secondaryModelConfig.model,
+      providerName: secondaryModelConfig.providerName,
+      modelSource: "secondary",
+    });
+
+    // 添加到副模型消息队列
+    chatStore.updateTargetSession(session, (session) => {
+      session.secondaryMessages = (session.secondaryMessages || []).concat([
+        newUserMessage,
+        newBotMessage,
+      ]);
+    });
+
+    // 发送请求到副模型
+    const api = getClientApi(secondaryModelConfig.providerName);
+    const sendMessages = (session.secondaryMessages || [])
+      .filter((m) => m.id !== newBotMessage.id)
+      .slice(-10); // 取最近的消息
+
+    api.llm.chat({
+      messages: sendMessages,
+      config: {
+        ...session.mask.modelConfig,
+        model: secondaryModelConfig.model,
+        stream: true,
+      },
+      onUpdate(content) {
+        newBotMessage.streaming = true;
+        if (content) {
+          newBotMessage.content = content;
+        }
+        chatStore.updateTargetSession(session, (session) => {
+          session.secondaryMessages = session.secondaryMessages?.concat();
+        });
+      },
+      onFinish(message) {
+        newBotMessage.streaming = false;
+        if (message) {
+          newBotMessage.content =
+            typeof message === "string" ? message : message.content;
+        }
+        newBotMessage.date = new Date().toLocaleString();
+        chatStore.updateTargetSession(session, (session) => {
+          session.secondaryMessages = session.secondaryMessages?.concat();
+        });
+        ChatControllerPool.remove(`${session.id}-secondary`, newBotMessage.id);
+      },
+      onError(error) {
+        newBotMessage.content +=
+          "\n\n" +
+          prettyObject({
+            error: true,
+            message: error.message,
+          });
+        newBotMessage.streaming = false;
+        newBotMessage.isError = true;
+        chatStore.updateTargetSession(session, (session) => {
+          session.secondaryMessages = session.secondaryMessages?.concat();
+        });
+        ChatControllerPool.remove(`${session.id}-secondary`, newBotMessage.id);
+      },
+      onController(controller) {
+        ChatControllerPool.addController(
+          `${session.id}-secondary`,
+          newBotMessage.id,
+          controller,
+        );
+      },
+    });
   };
 
   const onPinMessage = (message: ChatMessage) => {
@@ -3792,6 +4266,85 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     );
   };
 
+  // 双模型视图的消息格式化函数
+  const formatMessageForDual = (message: RenderMessageType) => {
+    const mainInfo = `${
+      message.date?.toLocaleString?.() || message.date || ""
+    }${message.model ? ` - ${message.displayName || message.model}` : ""}`;
+    const { statistic } = message;
+    if (!statistic) return mainInfo;
+    const isStreaming =
+      message.isStreamRequest !== undefined
+        ? message.isStreamRequest
+        : statistic &&
+          "firstReplyLatency" in statistic &&
+          statistic.firstReplyLatency !== undefined;
+    const {
+      singlePromptTokens,
+      completionTokens,
+      firstReplyLatency,
+      totalReplyLatency,
+    } = statistic;
+
+    if (message.role === "assistant") {
+      if (isStreaming) {
+        if (
+          completionTokens === undefined ||
+          !firstReplyLatency ||
+          !totalReplyLatency
+        ) {
+          return mainInfo;
+        }
+      } else {
+        if (completionTokens === undefined || !totalReplyLatency) {
+          return mainInfo;
+        }
+      }
+    } else {
+      if (singlePromptTokens === undefined) return mainInfo;
+    }
+
+    const tokenString =
+      message.role === "assistant"
+        ? `${completionTokens} Tokens`
+        : `${singlePromptTokens} Tokens`;
+
+    const performanceInfo =
+      message.role === "assistant"
+        ? (() => {
+            if (isStreaming) {
+              const ttft = (firstReplyLatency! / 1000).toFixed(2);
+              const latency = (totalReplyLatency! / 1000).toFixed(2);
+              const speed = (
+                (1000 * completionTokens!) /
+                (totalReplyLatency! - firstReplyLatency!)
+              ).toFixed(2);
+              return `⚡ ${speed} T/s ⏱️ FT:${ttft}s | TT:${latency}s`;
+            } else {
+              const speed = (
+                (1000 * completionTokens!) /
+                totalReplyLatency!
+              ).toFixed(2);
+              const latency = (totalReplyLatency! / 1000).toFixed(2);
+              return `⚡ ${speed} T/s ⏱️ ${latency}s (Non-stream)`;
+            }
+          })()
+        : "";
+
+    const statInfo = performanceInfo
+      ? `${tokenString} ${performanceInfo}`
+      : tokenString;
+
+    // 双模型模式下始终分两行显示
+    return (
+      <>
+        {mainInfo}
+        <br />
+        {statInfo}
+      </>
+    );
+  };
+
   const enableParamOverride =
     session.mask.modelConfig.enableParamOverride || false;
   const paramOverrideContent =
@@ -3824,6 +4377,13 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           </div> */}
         </div>
         <div className="window-actions">
+          {/* 双模型切换按钮 - 移动端不显示 */}
+          {!isMobileScreen && (
+            <DualModelToggle
+              enabled={isDualMode}
+              onToggle={() => chatStore.toggleDualModelMode()}
+            />
+          )}
           <div className="window-action-button">
             <IconButton
               icon={<ReloadIcon />}
@@ -3881,171 +4441,748 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       </div>
 
       <div
-        className={styles["chat-body"]}
+        className={clsx(
+          styles["chat-body"],
+          isDualMode && styles["chat-body-dual-mode"],
+        )}
         onMouseDown={() => inputRef.current?.blur()}
       >
-        <Virtuoso
-          ref={virtuosoRef}
-          data={messages}
-          initialTopMostItemIndex={jumpToIndex ?? messages.length - 1}
-          followOutput={hitBottom ? "smooth" : false}
-          atBottomStateChange={setHitBottom}
-          atBottomThreshold={64}
-          increaseViewportBy={{ top: 400, bottom: 800 }}
-          computeItemKey={(index, m) => m.id}
-          itemContent={(index, message) => {
-            const i = index;
-            const isUser = message.role === "user";
-            const shouldHideUserMessage =
-              isUser && message.isContinuePrompt === true;
-            if (!config.enableShowUserContinuePrompt && shouldHideUserMessage) {
-              return null;
+        {isDualMode ? (
+          <DualModelView
+            primaryMessages={session.messages}
+            secondaryMessages={session.secondaryMessages || []}
+            primaryModelName={
+              currentModelInfo?.displayName || session.mask.modelConfig.model
             }
+            secondaryModelName={
+              session.secondaryModelConfig?.displayName ||
+              session.secondaryModelConfig?.model ||
+              "未选择"
+            }
+            context={context}
+            isLoading={isLoading}
+            config={config}
+            modelTable={modelTable}
+            onPrimaryModelSelect={() => setShowPrimaryModelSelector(true)}
+            onSecondaryModelSelect={() => setShowSecondaryModelSelector(true)}
+            onScrollBothToBottom={(fn) => {
+              dualModelScrollToBottomRef.current = fn;
+            }}
+            renderMessage={(message, index, isSecondary) => {
+              const i = index;
+              const isUser = message.role === "user";
+              const shouldHideUserMessage =
+                isUser && message.isContinuePrompt === true;
+              if (
+                !config.enableShowUserContinuePrompt &&
+                shouldHideUserMessage
+              ) {
+                // 返回一个最小高度的占位元素，避免 Virtuoso 的 "Zero-sized element" 警告
+                return <div style={{ height: 1, overflow: "hidden" }} />;
+              }
 
-            const isContext = i < context.length;
-            const showActions =
-              i > 0 &&
-              !(
-                message.preview || getMessageTextContent(message).length === 0
-              ) &&
-              !isContext;
+              const isContext = i < context.length;
+              const showActions =
+                i > 0 &&
+                !(
+                  message.preview || getMessageTextContent(message).length === 0
+                ) &&
+                !isContext;
 
-            const showTyping = message.preview || message.streaming;
+              const showTyping = message.preview || message.streaming;
 
-            const shouldShowClearContextDivider =
-              i === clearContextIndex - 1 || message?.beClear === true;
+              // 上下文分割线判断
+              const shouldShowClearContextDivider =
+                i === clearContextIndex - 1 || message?.beClear === true;
 
-            const providerIdForClick =
-              message?.providerType === "custom-provider";
-            return (
-              <Fragment key={message.id}>
-                <div
-                  className={clsx(
-                    isUser
-                      ? styles["chat-message-user"]
-                      : styles["chat-message"],
-                    index === highlightIndex && styles["hit-highlight"],
-                  )}
-                >
-                  <div className={styles["chat-message-container"]}>
-                    <div className={styles["chat-message-header"]}>
-                      <div className={styles["chat-message-avatar"]}>
-                        <div className={styles["chat-message-edit"]}>
-                          <IconButton
-                            icon={<EditIcon />}
-                            aria={Locale.Chat.Actions.Edit}
-                            onClick={async () => {
-                              const newMessage = await showPrompt(
-                                Locale.Chat.Actions.Edit,
-                                getMessageTextContent(message),
-                                10,
-                              );
-                              // 检查原始消息是否包含多模态内容（图片或文件）
-                              const hasMultimodalContent =
-                                Array.isArray(message.content) &&
-                                message.content.some(
-                                  (item) =>
-                                    item.type === "image_url" ||
-                                    item.type === "file_url",
+              return (
+                <Fragment key={message.id}>
+                  <div
+                    className={clsx(
+                      isUser
+                        ? styles["chat-message-user"]
+                        : styles["chat-message"],
+                    )}
+                  >
+                    <div className={styles["chat-message-container"]}>
+                      <div className={styles["chat-message-header"]}>
+                        <div className={styles["chat-message-avatar"]}>
+                          {/* 编辑按钮 */}
+                          <div className={styles["chat-message-edit"]}>
+                            <IconButton
+                              icon={<EditIcon />}
+                              aria={Locale.Chat.Actions.Edit}
+                              onClick={async () => {
+                                const newMessage = await showPrompt(
+                                  Locale.Chat.Actions.Edit,
+                                  getMessageTextContent(message),
+                                  10,
                                 );
+                                // 检查原始消息是否包含多模态内容（图片或文件）
+                                const hasMultimodalContent =
+                                  Array.isArray(message.content) &&
+                                  message.content.some(
+                                    (item) =>
+                                      item.type === "image_url" ||
+                                      item.type === "file_url",
+                                  );
 
-                              let newContent: string | MultimodalContent[];
+                                let newContent: string | MultimodalContent[];
 
-                              if (hasMultimodalContent) {
-                                // 如果有多模态内容，直接创建为数组类型
-                                newContent = [
-                                  { type: "text", text: newMessage },
-                                ];
-
-                                // 如果原始消息是数组形式，遍历并保留所有非文本内容
-                                if (Array.isArray(message.content)) {
-                                  // 保留所有图片和文件
-                                  message.content.forEach((item) => {
-                                    if (
-                                      item.type === "image_url" &&
-                                      item.image_url
-                                    ) {
-                                      (newContent as MultimodalContent[]).push({
-                                        type: "image_url",
-                                        image_url: {
-                                          url: item.image_url.url,
-                                        },
-                                      });
-                                    } else if (
-                                      item.type === "file_url" &&
-                                      item.file_url
-                                    ) {
-                                      console.log("edit file_url", item);
-                                      (newContent as MultimodalContent[]).push({
-                                        type: "file_url",
-                                        file_url: {
-                                          url: item.file_url.url,
-                                          name: item.file_url.name,
-                                          contentType:
-                                            item.file_url.contentType,
-                                          size: item.file_url.size,
-                                          tokenCount: item.file_url.tokenCount,
-                                        },
-                                      });
-                                    }
-                                  });
-                                }
-                              } else {
-                                // 如果没有多模态内容，就直接使用文本
-                                newContent = newMessage;
-                              }
-                              chatStore.updateTargetSession(
-                                session,
-                                (session) => {
-                                  const m = session.mask.context
-                                    .concat(session.messages)
-                                    .find((m) => m.id === message.id);
-                                  if (m) {
-                                    m.content = newContent;
+                                if (hasMultimodalContent) {
+                                  newContent = [
+                                    { type: "text", text: newMessage },
+                                  ];
+                                  if (Array.isArray(message.content)) {
+                                    message.content.forEach((item) => {
+                                      if (
+                                        item.type === "image_url" &&
+                                        item.image_url
+                                      ) {
+                                        (
+                                          newContent as MultimodalContent[]
+                                        ).push({
+                                          type: "image_url",
+                                          image_url: {
+                                            url: item.image_url.url,
+                                          },
+                                        });
+                                      } else if (
+                                        item.type === "file_url" &&
+                                        item.file_url
+                                      ) {
+                                        (
+                                          newContent as MultimodalContent[]
+                                        ).push({
+                                          type: "file_url",
+                                          file_url: {
+                                            url: item.file_url.url,
+                                            name: item.file_url.name,
+                                            contentType:
+                                              item.file_url.contentType,
+                                            size: item.file_url.size,
+                                            tokenCount:
+                                              item.file_url.tokenCount,
+                                          },
+                                        });
+                                      }
+                                    });
                                   }
-                                },
-                              );
-                            }}
-                          ></IconButton>
-                        </div>
-                        {isUser ? (
-                          <Avatar avatar={config.avatar} />
-                        ) : (
-                          <>
-                            {["system"].includes(message.role) ? (
-                              <Avatar avatar="2699-fe0f" />
-                            ) : (
-                              <MaskAvatar
-                                avatar={session.mask.avatar}
-                                model={
-                                  message.displayName ||
-                                  message.model ||
-                                  session.mask.modelConfig.model
+                                } else {
+                                  newContent = newMessage;
                                 }
-                              />
-                            )}
-                          </>
+
+                                // 根据是主模型还是副模型更新对应的消息队列
+                                chatStore.updateTargetSession(
+                                  session,
+                                  (session) => {
+                                    const messages = isSecondary
+                                      ? session.secondaryMessages
+                                      : session.messages;
+                                    const m = session.mask.context
+                                      .concat(messages || [])
+                                      .find((m) => m.id === message.id);
+                                    if (m) {
+                                      m.content = newContent;
+                                    }
+                                  },
+                                );
+                              }}
+                            />
+                          </div>
+                          {isUser ? (
+                            <Avatar avatar={config.avatar} />
+                          ) : (
+                            <MaskAvatar
+                              avatar={session.mask.avatar}
+                              model={
+                                message.displayName ||
+                                message.model ||
+                                session.mask.modelConfig.model
+                              }
+                            />
+                          )}
+                        </div>
+                        {!isUser && (
+                          <div className={styles["chat-model-name"]}>
+                            {message.displayName || message.model}
+                          </div>
+                        )}
+                        {/* 消息操作按钮 */}
+                        {showActions && (
+                          <div className={styles["chat-message-actions"]}>
+                            <div className={styles["message-actions-row"]}>
+                              {message.streaming ? (
+                                <ChatAction
+                                  text={Locale.Chat.Actions.Stop}
+                                  icon={<StopIcon />}
+                                  onClick={() => onUserStop(message.id ?? i)}
+                                />
+                              ) : (
+                                <>
+                                  <ChatAction
+                                    text={Locale.Chat.Actions.Copy}
+                                    icon={<CopyIcon />}
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        getMessageTextContent(message),
+                                      )
+                                    }
+                                  />
+                                  {!isUser && (
+                                    <ChatAction
+                                      text={Locale.Chat.Actions.Retry}
+                                      icon={<ResetIcon />}
+                                      onClick={() =>
+                                        isSecondary
+                                          ? onResendSecondary(message)
+                                          : onResend(message)
+                                      }
+                                    />
+                                  )}
+                                  <ChatAction
+                                    text={Locale.Chat.Actions.Delete}
+                                    icon={<DeleteIcon />}
+                                    onClick={() =>
+                                      isSecondary
+                                        ? onDeleteSecondary(message.id ?? i)
+                                        : onDelete(message.id ?? i)
+                                    }
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
-                      {!isUser && (
-                        <div
-                          className={`${styles["chat-model-name"]} ${
-                            providerIdForClick
-                              ? styles["chat-model-name--clickable"]
-                              : ""
-                          }`}
-                          onClick={
-                            providerIdForClick
-                              ? () => handleModelNameClick(message.providerId)
-                              : undefined
-                          }
-                          title={Locale.Chat.GoToCustomProviderConfig}
-                        >
-                          {message.displayName || message.model}
+                      {showTyping && (
+                        <div className={styles["chat-message-status"]}>
+                          {Locale.Chat.Typing}
                         </div>
                       )}
+                      <div className={styles["chat-message-item"]}>
+                        <Markdown
+                          key={message.streaming ? "loading" : "done"}
+                          status={showTyping}
+                          content={getMessageTextContent(message)}
+                          loading={
+                            (message.preview || message.streaming) &&
+                            message.content.length === 0 &&
+                            !isUser
+                          }
+                          defaultShow={true}
+                        />
+                        {/* 显示图片 */}
+                        {getMessageImages(message).length == 1 && (
+                          <Image
+                            className={styles["chat-message-item-image"]}
+                            src={getMessageImages(message)[0]}
+                            alt=""
+                            width={80}
+                            height={80}
+                            style={{ maxWidth: "100%", height: "auto" }}
+                          />
+                        )}
+                        {getMessageImages(message).length > 1 && (
+                          <div
+                            className={styles["chat-message-item-images"]}
+                            style={
+                              {
+                                "--image-count":
+                                  getMessageImages(message).length,
+                              } as React.CSSProperties
+                            }
+                          >
+                            {getMessageImages(message).map((image, idx) => (
+                              <Image
+                                className={
+                                  styles["chat-message-item-image-multi"]
+                                }
+                                key={idx}
+                                src={image}
+                                alt=""
+                                width={80}
+                                height={80}
+                                style={{ maxWidth: "100%", height: "auto" }}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {/* 显示文件 */}
+                        {getMessageFiles(message).length > 0 && (
+                          <div className={styles["chat-message-item-files"]}>
+                            {getMessageFiles(message).map((file, idx) => {
+                              const extension: DefaultExtensionType = file.name
+                                .split(".")
+                                .pop()
+                                ?.toLowerCase() as DefaultExtensionType;
+                              const style = defaultStyles[extension];
+                              return (
+                                <a
+                                  key={idx}
+                                  className={styles["chat-message-item-file"]}
+                                >
+                                  <div
+                                    className={
+                                      styles["chat-message-item-file-icon"] +
+                                      " no-dark"
+                                    }
+                                  >
+                                    <FileIcon {...style} glyphColor="#303030" />
+                                  </div>
+                                  <div
+                                    className={
+                                      styles["chat-message-item-file-name"]
+                                    }
+                                  >
+                                    {file.name}{" "}
+                                    {file?.size !== undefined
+                                      ? `(${file.size}K, ${file.tokenCount}Tokens)`
+                                      : `(${file.tokenCount}K)`}
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      <div className={styles["chat-message-action-date"]}>
+                        {isContext
+                          ? Locale.Chat.IsContext
+                          : formatMessageForDual(message)}
+                      </div>
+                      {/* 底部功能图标组 */}
+                      {showActions && (
+                        <div className={styles["chat-message-actions"]}>
+                          <div className={styles["message-actions-row"]}>
+                            {message.streaming ? (
+                              <ChatAction
+                                text={Locale.Chat.Actions.Stop}
+                                icon={<StopIcon />}
+                                onClick={() => onUserStop(message.id ?? i)}
+                              />
+                            ) : (
+                              <>
+                                <ChatAction
+                                  text={Locale.Chat.Actions.Retry}
+                                  icon={<ResetIcon />}
+                                  onClick={() =>
+                                    isSecondary
+                                      ? onResendSecondary(message)
+                                      : onResend(message)
+                                  }
+                                />
+                                <ChatAction
+                                  text={Locale.Chat.Actions.Delete}
+                                  icon={<DeleteIcon />}
+                                  onClick={() =>
+                                    isSecondary
+                                      ? onDeleteSecondary(message.id ?? i)
+                                      : onDelete(message.id ?? i)
+                                  }
+                                />
+                                <ChatAction
+                                  text={Locale.Chat.Actions.Copy}
+                                  icon={<CopyIcon />}
+                                  onClick={() =>
+                                    copyToClipboard(
+                                      getMessageTextContent(message),
+                                    )
+                                  }
+                                />
+                                {config.ttsConfig?.enable && (
+                                  <ChatAction
+                                    text={
+                                      speechStatus
+                                        ? Locale.Chat.Actions.StopSpeech
+                                        : Locale.Chat.Actions.Speech
+                                    }
+                                    icon={
+                                      speechStatus ? (
+                                        <SpeakStopIcon />
+                                      ) : (
+                                        <SpeakIcon />
+                                      )
+                                    }
+                                    onClick={() =>
+                                      openaiSpeech(
+                                        getMessageTextContent(message),
+                                      )
+                                    }
+                                  />
+                                )}
+                                <ChatAction
+                                  text={Locale.Chat.Actions.EditToInput}
+                                  icon={<EditToInputIcon />}
+                                  onClick={() =>
+                                    setUserInput(getMessageTextContent(message))
+                                  }
+                                />
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* 上下文分割线 */}
+                  {shouldShowClearContextDivider && (
+                    <ClearContextDivider index={i} />
+                  )}
+                </Fragment>
+              );
+            }}
+          />
+        ) : (
+          <Virtuoso
+            ref={virtuosoRef}
+            data={messages}
+            initialTopMostItemIndex={jumpToIndex ?? messages.length - 1}
+            followOutput={hitBottom ? "smooth" : false}
+            atBottomStateChange={setHitBottom}
+            atBottomThreshold={64}
+            increaseViewportBy={{ top: 400, bottom: 800 }}
+            computeItemKey={(index, m) => m.id}
+            itemContent={(index, message) => {
+              const i = index;
+              const isUser = message.role === "user";
+              const shouldHideUserMessage =
+                isUser && message.isContinuePrompt === true;
+              if (
+                !config.enableShowUserContinuePrompt &&
+                shouldHideUserMessage
+              ) {
+                // 返回一个最小高度的占位元素，避免 Virtuoso 的 "Zero-sized element" 警告
+                return <div style={{ height: 1, overflow: "hidden" }} />;
+              }
 
-                      {iconUpEnabled && showActions && (
+              const isContext = i < context.length;
+              const showActions =
+                i > 0 &&
+                !(
+                  message.preview || getMessageTextContent(message).length === 0
+                ) &&
+                !isContext;
+
+              const showTyping = message.preview || message.streaming;
+
+              const shouldShowClearContextDivider =
+                i === clearContextIndex - 1 || message?.beClear === true;
+
+              const providerIdForClick =
+                message?.providerType === "custom-provider";
+              return (
+                <Fragment key={message.id}>
+                  <div
+                    className={clsx(
+                      isUser
+                        ? styles["chat-message-user"]
+                        : styles["chat-message"],
+                      index === highlightIndex && styles["hit-highlight"],
+                    )}
+                  >
+                    <div className={styles["chat-message-container"]}>
+                      <div className={styles["chat-message-header"]}>
+                        <div className={styles["chat-message-avatar"]}>
+                          <div className={styles["chat-message-edit"]}>
+                            <IconButton
+                              icon={<EditIcon />}
+                              aria={Locale.Chat.Actions.Edit}
+                              onClick={async () => {
+                                const newMessage = await showPrompt(
+                                  Locale.Chat.Actions.Edit,
+                                  getMessageTextContent(message),
+                                  10,
+                                );
+                                // 检查原始消息是否包含多模态内容（图片或文件）
+                                const hasMultimodalContent =
+                                  Array.isArray(message.content) &&
+                                  message.content.some(
+                                    (item) =>
+                                      item.type === "image_url" ||
+                                      item.type === "file_url",
+                                  );
+
+                                let newContent: string | MultimodalContent[];
+
+                                if (hasMultimodalContent) {
+                                  // 如果有多模态内容，直接创建为数组类型
+                                  newContent = [
+                                    { type: "text", text: newMessage },
+                                  ];
+
+                                  // 如果原始消息是数组形式，遍历并保留所有非文本内容
+                                  if (Array.isArray(message.content)) {
+                                    // 保留所有图片和文件
+                                    message.content.forEach((item) => {
+                                      if (
+                                        item.type === "image_url" &&
+                                        item.image_url
+                                      ) {
+                                        (
+                                          newContent as MultimodalContent[]
+                                        ).push({
+                                          type: "image_url",
+                                          image_url: {
+                                            url: item.image_url.url,
+                                          },
+                                        });
+                                      } else if (
+                                        item.type === "file_url" &&
+                                        item.file_url
+                                      ) {
+                                        console.log("edit file_url", item);
+                                        (
+                                          newContent as MultimodalContent[]
+                                        ).push({
+                                          type: "file_url",
+                                          file_url: {
+                                            url: item.file_url.url,
+                                            name: item.file_url.name,
+                                            contentType:
+                                              item.file_url.contentType,
+                                            size: item.file_url.size,
+                                            tokenCount:
+                                              item.file_url.tokenCount,
+                                          },
+                                        });
+                                      }
+                                    });
+                                  }
+                                } else {
+                                  // 如果没有多模态内容，就直接使用文本
+                                  newContent = newMessage;
+                                }
+                                chatStore.updateTargetSession(
+                                  session,
+                                  (session) => {
+                                    const m = session.mask.context
+                                      .concat(session.messages)
+                                      .find((m) => m.id === message.id);
+                                    if (m) {
+                                      m.content = newContent;
+                                    }
+                                  },
+                                );
+                              }}
+                            ></IconButton>
+                          </div>
+                          {isUser ? (
+                            <Avatar avatar={config.avatar} />
+                          ) : (
+                            <>
+                              {["system"].includes(message.role) ? (
+                                <Avatar avatar="2699-fe0f" />
+                              ) : (
+                                <MaskAvatar
+                                  avatar={session.mask.avatar}
+                                  model={
+                                    message.displayName ||
+                                    message.model ||
+                                    session.mask.modelConfig.model
+                                  }
+                                />
+                              )}
+                            </>
+                          )}
+                        </div>
+                        {!isUser && (
+                          <div
+                            className={`${styles["chat-model-name"]} ${
+                              providerIdForClick
+                                ? styles["chat-model-name--clickable"]
+                                : ""
+                            }`}
+                            onClick={
+                              providerIdForClick
+                                ? () => handleModelNameClick(message.providerId)
+                                : undefined
+                            }
+                            title={Locale.Chat.GoToCustomProviderConfig}
+                          >
+                            {message.displayName || message.model}
+                          </div>
+                        )}
+
+                        {iconUpEnabled && showActions && (
+                          <div className={styles["chat-message-actions"]}>
+                            <div className={styles["message-actions-row"]}>
+                              <ChatInputActions
+                                message={message}
+                                onUserStop={onUserStop}
+                                onResend={onResend}
+                                onDelete={onDelete}
+                                onBreak={onBreak}
+                                onPinMessage={onPinMessage}
+                                copyToClipboard={copyToClipboard}
+                                openaiSpeech={openaiSpeech}
+                                setUserInput={setUserInput}
+                                speechStatus={speechStatus}
+                                config={config}
+                                i={i}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {showTyping && (
+                        <div className={styles["chat-message-status"]}>
+                          {Locale.Chat.Typing}
+                        </div>
+                      )}
+                      <div
+                        className={styles["chat-message-item"]}
+                        onMouseUp={onMessageMouseUp}
+                        data-message-id={message.id}
+                        data-message-index={index}
+                      >
+                        {/* 显示消息中的引用块 */}
+                        {message.quote && (
+                          <div
+                            className={styles["message-quote-block"]}
+                            onClick={() =>
+                              scrollToQuotedMessage(
+                                message.quote!.messageIndex,
+                                message.quote!.text,
+                                message.quote!.startOffset,
+                                message.quote!.endOffset,
+                              )
+                            }
+                            title={Locale.Chat.Actions.QuoteTooltip}
+                          >
+                            <div className={styles["message-quote-bar"]} />
+                            <div className={styles["message-quote-text"]}>
+                              {message.quote.text.length > 80
+                                ? message.quote.text.slice(0, 80) + "..."
+                                : message.quote.text}
+                            </div>
+                          </div>
+                        )}
+                        <MessageEditContext.Provider
+                          value={{
+                            messageId: message.id,
+                            onEditCodeBlock: (
+                              originalCode,
+                              newCode,
+                              language,
+                            ) =>
+                              handleEditCodeBlock(
+                                message.id,
+                                originalCode,
+                                newCode,
+                                language,
+                              ),
+                          }}
+                        >
+                          <Markdown
+                            key={message.streaming ? "loading" : "done"}
+                            status={showTyping}
+                            content={
+                              !message.streaming &&
+                              isThinkingModel(message.model)
+                                ? wrapThinkingPart(
+                                    getMessageTextContent(message),
+                                  )
+                                : getMessageTextContent(message)
+                            }
+                            loading={
+                              (message.preview || message.streaming) &&
+                              message.content.length === 0 &&
+                              !isUser
+                            }
+                            // onContextMenu={(e) => onRightClick(e, message)}  //don't copy message to input area when right click
+                            onDoubleClickCapture={() => {
+                              if (!isMobileScreen) return;
+                              setUserInput(getMessageTextContent(message));
+                            }}
+                            // fontSize={fontSize}
+                            // parentRef={scrollRef}
+                            defaultShow={i >= messages.length - 6}
+                            searchingTime={message.statistic?.searchingLatency}
+                            thinkingTime={message.statistic?.reasoningLatency}
+                          />
+                        </MessageEditContext.Provider>
+                        {getMessageImages(message).length == 1 && (
+                          <Image
+                            className={styles["chat-message-item-image"]}
+                            src={getMessageImages(message)[0]}
+                            alt=""
+                            width={80}
+                            height={80}
+                            style={{ maxWidth: "100%", height: "auto" }}
+                          />
+                        )}
+                        {getMessageImages(message).length > 1 && (
+                          <div
+                            className={styles["chat-message-item-images"]}
+                            style={
+                              {
+                                "--image-count":
+                                  getMessageImages(message).length,
+                              } as React.CSSProperties
+                            }
+                          >
+                            {getMessageImages(message).map((image, index) => {
+                              return (
+                                <Image
+                                  className={
+                                    styles["chat-message-item-image-multi"]
+                                  }
+                                  key={index}
+                                  src={image}
+                                  alt=""
+                                  width={80}
+                                  height={80}
+                                  style={{ maxWidth: "100%", height: "auto" }}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
+                        {getMessageFiles(message).length > 0 && (
+                          <div className={styles["chat-message-item-files"]}>
+                            {getMessageFiles(message).map((file, index) => {
+                              const extension: DefaultExtensionType = file.name
+                                .split(".")
+                                .pop()
+                                ?.toLowerCase() as DefaultExtensionType;
+                              const style = defaultStyles[extension];
+                              return (
+                                <a
+                                  key={index}
+                                  className={styles["chat-message-item-file"]}
+                                >
+                                  <div
+                                    className={
+                                      styles["chat-message-item-file-icon"] +
+                                      " no-dark"
+                                    }
+                                  >
+                                    <FileIcon {...style} glyphColor="#303030" />
+                                  </div>
+                                  <div
+                                    className={
+                                      styles["chat-message-item-file-name"]
+                                    }
+                                  >
+                                    {file.name}{" "}
+                                    {file?.size !== undefined
+                                      ? `(${file.size}K, ${file.tokenCount}Tokens)`
+                                      : `(${file.tokenCount}K)`}
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className={styles["chat-message-action-date"]}>
+                        {isContext
+                          ? Locale.Chat.IsContext
+                          : formatMessage(message)}
+                      </div>
+                      {iconDownEnabled && showActions && (
                         <div className={styles["chat-message-actions"]}>
                           <div className={styles["message-actions-row"]}>
                             <ChatInputActions
@@ -4066,195 +5203,26 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                         </div>
                       )}
                     </div>
-                    {showTyping && (
-                      <div className={styles["chat-message-status"]}>
-                        {Locale.Chat.Typing}
-                      </div>
-                    )}
-                    <div
-                      className={styles["chat-message-item"]}
-                      onMouseUp={onMessageMouseUp}
-                      data-message-id={message.id}
-                      data-message-index={index}
-                    >
-                      {/* 显示消息中的引用块 */}
-                      {message.quote && (
-                        <div
-                          className={styles["message-quote-block"]}
-                          onClick={() =>
-                            scrollToQuotedMessage(
-                              message.quote!.messageIndex,
-                              message.quote!.text,
-                              message.quote!.startOffset,
-                              message.quote!.endOffset,
-                            )
-                          }
-                          title={Locale.Chat.Actions.QuoteTooltip}
-                        >
-                          <div className={styles["message-quote-bar"]} />
-                          <div className={styles["message-quote-text"]}>
-                            {message.quote.text.length > 80
-                              ? message.quote.text.slice(0, 80) + "..."
-                              : message.quote.text}
-                          </div>
-                        </div>
-                      )}
-                      <MessageEditContext.Provider
-                        value={{
-                          messageId: message.id,
-                          onEditCodeBlock: (originalCode, newCode, language) =>
-                            handleEditCodeBlock(
-                              message.id,
-                              originalCode,
-                              newCode,
-                              language,
-                            ),
-                        }}
-                      >
-                        <Markdown
-                          key={message.streaming ? "loading" : "done"}
-                          status={showTyping}
-                          content={
-                            !message.streaming && isThinkingModel(message.model)
-                              ? wrapThinkingPart(getMessageTextContent(message))
-                              : getMessageTextContent(message)
-                          }
-                          loading={
-                            (message.preview || message.streaming) &&
-                            message.content.length === 0 &&
-                            !isUser
-                          }
-                          // onContextMenu={(e) => onRightClick(e, message)}  //don't copy message to input area when right click
-                          onDoubleClickCapture={() => {
-                            if (!isMobileScreen) return;
-                            setUserInput(getMessageTextContent(message));
-                          }}
-                          // fontSize={fontSize}
-                          // parentRef={scrollRef}
-                          defaultShow={i >= messages.length - 6}
-                          searchingTime={message.statistic?.searchingLatency}
-                          thinkingTime={message.statistic?.reasoningLatency}
-                        />
-                      </MessageEditContext.Provider>
-                      {getMessageImages(message).length == 1 && (
-                        <Image
-                          className={styles["chat-message-item-image"]}
-                          src={getMessageImages(message)[0]}
-                          alt=""
-                          width={80}
-                          height={80}
-                          style={{ maxWidth: "100%", height: "auto" }}
-                        />
-                      )}
-                      {getMessageImages(message).length > 1 && (
-                        <div
-                          className={styles["chat-message-item-images"]}
-                          style={
-                            {
-                              "--image-count": getMessageImages(message).length,
-                            } as React.CSSProperties
-                          }
-                        >
-                          {getMessageImages(message).map((image, index) => {
-                            return (
-                              <Image
-                                className={
-                                  styles["chat-message-item-image-multi"]
-                                }
-                                key={index}
-                                src={image}
-                                alt=""
-                                width={80}
-                                height={80}
-                                style={{ maxWidth: "100%", height: "auto" }}
-                              />
-                            );
-                          })}
-                        </div>
-                      )}
-                      {getMessageFiles(message).length > 0 && (
-                        <div className={styles["chat-message-item-files"]}>
-                          {getMessageFiles(message).map((file, index) => {
-                            const extension: DefaultExtensionType = file.name
-                              .split(".")
-                              .pop()
-                              ?.toLowerCase() as DefaultExtensionType;
-                            const style = defaultStyles[extension];
-                            return (
-                              <a
-                                key={index}
-                                className={styles["chat-message-item-file"]}
-                              >
-                                <div
-                                  className={
-                                    styles["chat-message-item-file-icon"] +
-                                    " no-dark"
-                                  }
-                                >
-                                  <FileIcon {...style} glyphColor="#303030" />
-                                </div>
-                                <div
-                                  className={
-                                    styles["chat-message-item-file-name"]
-                                  }
-                                >
-                                  {file.name}{" "}
-                                  {file?.size !== undefined
-                                    ? `(${file.size}K, ${file.tokenCount}Tokens)`
-                                    : `(${file.tokenCount}K)`}
-                                </div>
-                              </a>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className={styles["chat-message-action-date"]}>
-                      {isContext
-                        ? Locale.Chat.IsContext
-                        : formatMessage(message)}
-                    </div>
-                    {iconDownEnabled && showActions && (
-                      <div className={styles["chat-message-actions"]}>
-                        <div className={styles["message-actions-row"]}>
-                          <ChatInputActions
-                            message={message}
-                            onUserStop={onUserStop}
-                            onResend={onResend}
-                            onDelete={onDelete}
-                            onBreak={onBreak}
-                            onPinMessage={onPinMessage}
-                            copyToClipboard={copyToClipboard}
-                            openaiSpeech={openaiSpeech}
-                            setUserInput={setUserInput}
-                            speechStatus={speechStatus}
-                            config={config}
-                            i={i}
-                          />
-                        </div>
-                      </div>
-                    )}
                   </div>
-                </div>
-                {shouldShowClearContextDivider && (
-                  <ClearContextDivider index={i} />
-                )}
-              </Fragment>
-            );
-          }}
-          components={{
-            Footer: () =>
-              previewVisible ? (
-                <InputPreviewBubble
-                  text={userInput}
-                  images={attachImages}
-                  files={attachFiles}
-                  avatar={config.avatar}
-                />
-              ) : null,
-          }}
-        />
+                  {shouldShowClearContextDivider && (
+                    <ClearContextDivider index={i} />
+                  )}
+                </Fragment>
+              );
+            }}
+            components={{
+              Footer: () =>
+                previewVisible ? (
+                  <InputPreviewBubble
+                    text={userInput}
+                    images={attachImages}
+                    files={attachFiles}
+                    avatar={config.avatar}
+                  />
+                ) : null,
+            }}
+          />
+        )}
       </div>
       <div className={styles["chat-input-panel"]}>
         <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect} />
@@ -4419,7 +5387,13 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             value={userInput}
             onKeyDown={onInputKeyDown}
             // onFocus={scrollToBottom}
-            onClick={() => scrollToBottom()}
+            onClick={() => {
+              scrollToBottom();
+              // 双模型模式下同时滚动两个面板
+              if (isDualMode) {
+                dualModelScrollToBottomRef.current?.();
+              }
+            }}
             onPaste={handlePaste}
             rows={inputRows}
             autoFocus={autoFocus}
@@ -4607,6 +5581,76 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 
       {showShortcutKeyModal && (
         <ShortcutKeyModal onClose={() => setShowShortcutKeyModal(false)} />
+      )}
+
+      {/* 主模型选择器（双模型模式下使用） */}
+      {showPrimaryModelSelector && (
+        <SearchSelector
+          defaultSelectedValue={`${session.mask.modelConfig.model}@${session.mask.modelConfig.providerName}`}
+          items={modelTable.map((m) => ({
+            title:
+              m?.provider?.providerName?.toLowerCase() === "openai" ||
+              m?.provider?.providerType === "custom-provider" ||
+              m?.provider?.providerName === m.name
+                ? `${m.displayName}`
+                : `${m.displayName} (${m?.provider?.providerName})`,
+            subTitle: m.description,
+            value: `${m.name}@${m?.provider?.providerName}`,
+          }))}
+          onClose={() => setShowPrimaryModelSelector(false)}
+          onSelection={(s) => {
+            if (s.length === 0) return;
+            const [model, providerName] = s[0].split(/@(?=[^@]*$)/);
+            const selectedModel = modelTable.find(
+              (m) =>
+                m.name === model && m.provider?.providerName === providerName,
+            );
+            chatStore.updateTargetSession(session, (session) => {
+              session.mask.modelConfig.model = model as ModelType;
+              session.mask.modelConfig.providerName =
+                providerName as ServiceProvider;
+            });
+            setShowPrimaryModelSelector(false);
+            showToast(`主模型已设置为: ${selectedModel?.displayName || model}`);
+          }}
+        />
+      )}
+
+      {/* 副模型选择器 */}
+      {showSecondaryModelSelector && (
+        <SearchSelector
+          defaultSelectedValue={
+            session.secondaryModelConfig
+              ? `${session.secondaryModelConfig.model}@${session.secondaryModelConfig.providerName}`
+              : undefined
+          }
+          items={modelTable.map((m) => ({
+            title:
+              m?.provider?.providerName?.toLowerCase() === "openai" ||
+              m?.provider?.providerType === "custom-provider" ||
+              m?.provider?.providerName === m.name
+                ? `${m.displayName}`
+                : `${m.displayName} (${m?.provider?.providerName})`,
+            subTitle: m.description,
+            value: `${m.name}@${m?.provider?.providerName}`,
+          }))}
+          onClose={() => setShowSecondaryModelSelector(false)}
+          onSelection={(s) => {
+            if (s.length === 0) return;
+            const [model, providerName] = s[0].split(/@(?=[^@]*$)/);
+            const selectedModel = modelTable.find(
+              (m) =>
+                m.name === model && m.provider?.providerName === providerName,
+            );
+            chatStore.setSecondaryModel(
+              model as ModelType,
+              providerName as ServiceProvider,
+              selectedModel?.displayName,
+            );
+            setShowSecondaryModelSelector(false);
+            showToast(`副模型已设置为: ${selectedModel?.displayName || model}`);
+          }}
+        />
       )}
 
       {quoteBubble.visible && (

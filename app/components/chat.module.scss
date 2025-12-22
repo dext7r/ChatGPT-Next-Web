@@ -578,6 +578,12 @@
   overscroll-behavior: none;
 }
 
+// 双模型模式下的 chat-body 样式
+.chat-body-dual-mode {
+  overflow: hidden; // 禁用滚动，让子组件自己处理
+  padding: 0; // 移除 padding，让 dual-model-container 自己处理
+}
+
 .chat-body-main-title {
   cursor: pointer;
 
@@ -1464,4 +1470,232 @@
 
   &:hover { transform: translateY(-1px); }
   &:active { transform: translateY(0); }
+}
+
+// ========== 双模型对话模式样式 ==========
+
+// 双模型切换按钮
+.dual-model-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dual-model-active {
+  background-color: var(--primary) !important;
+  color: white !important;
+
+  svg {
+    stroke: white;
+  }
+}
+
+.secondary-model-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background-color: var(--white);
+  border: var(--border-in-light);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--hover-color);
+    border-color: var(--primary);
+  }
+}
+
+.secondary-model-label {
+  color: var(--black);
+  opacity: 0.7;
+}
+
+.secondary-model-name {
+  color: var(--primary);
+  font-weight: bold;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 双模型容器
+.dual-model-container {
+  display: flex;
+  flex-direction: row;
+  // 使用绝对定位填满父容器，避免高度计算问题
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  gap: 12px;
+  padding: 8px 8px 8px 8px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+}
+
+// 模型面板
+.model-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0; // 重要：让 flex 子元素可以收缩
+  overflow: hidden;
+  border: var(--border-in-light);
+  border-radius: 10px;
+  background-color: var(--white);
+  box-shadow: var(--card-shadow);
+
+  @media (max-width: 768px) {
+    min-height: 40vh;
+
+    &:first-child {
+      border-top-left-radius: 10px;
+      border-top-right-radius: 0;
+    }
+
+    &:last-child {
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
+      border-right: var(--border-in-light);
+    }
+  }
+}
+
+// 面板头部
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: var(--second);
+  border-bottom: var(--border-in-light);
+  flex-shrink: 0;
+
+  // 继承面板的圆角
+  .model-panel:first-child & {
+    border-radius: 0 10px 0 0;
+  }
+
+  .model-panel:last-child & {
+    border-radius: 10px 0 0 0;
+  }
+}
+
+.panel-title {
+  font-size: var(--text-sm);
+  font-weight: bold;
+  color: var(--black);
+  max-width: 350px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 可点击的面板标题
+.panel-title-clickable {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.panel-title-arrow {
+  font-size: 10px;
+  color: var(--black);
+  opacity: 0.5;
+}
+
+.panel-badge-primary {
+  font-size: var(--text-xs);
+  padding: 2px 8px;
+  border-radius: 10px;
+  background-color: var(--primary);
+  color: white;
+}
+
+.panel-badge-secondary {
+  font-size: var(--text-xs);
+  padding: 2px 8px;
+  border-radius: 10px;
+  background-color: #6366f1;
+  color: white;
+}
+
+// 面板内容区
+.panel-body {
+  flex: 1;
+  overflow: hidden; // 改为 hidden，让 Virtuoso 自己处理滚动
+  position: relative;
+  min-height: 0; // 重要：让 flex 子元素可以收缩
+  padding: 10px 15px; // 增加内边距，让消息气泡和边缘有间距
+
+  // 继承 chat-body 的样式
+  overscroll-behavior: none;
+}
+
+// 滚动到底部按钮
+.panel-scroll-to-bottom {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--white);
+  border: var(--border-in-light);
+  box-shadow: var(--card-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--hover-color);
+    transform: scale(1.1);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// 面板分隔线（已通过 gap 实现间隔，保留样式以备用）
+.panel-divider {
+  display: none; // 隐藏分隔线，使用 gap 间隔
+}
+
+// 副模型选择器弹窗
+.secondary-model-selector-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background-color: var(--white);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 90%;
+  max-height: 70vh;
+  overflow: hidden;
 }

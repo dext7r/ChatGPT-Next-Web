@@ -48,6 +48,7 @@ export type ChatMessage = RequestMessage & {
   beClear?: boolean;
   isContinuePrompt?: boolean;
   isStreamRequest?: boolean;
+  modelSource?: "primary" | "secondary"; // 双模型模式下标识消息来源
 
   // 引用信息
   quote?: {
@@ -100,6 +101,18 @@ export interface ChatSession {
   pinned?: boolean;
 
   mask: Mask;
+
+  // 双模型模式相关字段
+  dualModelMode?: boolean; // 是否启用双模型模式
+  secondaryMessages?: ChatMessage[]; // 副模型消息队列
+  secondaryModelConfig?: {
+    // 副模型配置
+    model: ModelType;
+    providerName: ServiceProvider;
+    displayName?: string;
+  };
+  secondaryMemoryPrompt?: string; // 副模型记忆提示
+  secondaryLastSummarizeIndex?: number; // 副模型摘要索引
 }
 
 export const DEFAULT_TOPIC = Locale.Store.DefaultTopic;
@@ -123,6 +136,13 @@ function createEmptySession(): ChatSession {
     lastSummarizeIndex: 0,
 
     mask: createEmptyMask(),
+
+    // 双模型模式默认值
+    dualModelMode: false,
+    secondaryMessages: [],
+    secondaryModelConfig: undefined,
+    secondaryMemoryPrompt: "",
+    secondaryLastSummarizeIndex: 0,
   };
 }
 
@@ -563,11 +583,32 @@ export const useChatStore = createPersistStore(
             ...userMessage,
             //content: mContent,
             content: displayContent,
+            modelSource: "primary" as const,
           };
           session.messages = session.messages.concat([
             savedUserMessage,
             botMessage,
           ]);
+
+          // 双模型模式：同时保存到副模型消息队列
+          if (session.dualModelMode && session.secondaryModelConfig) {
+            const secondaryUserMessage = {
+              ...userMessage,
+              id: nanoid(),
+              content: displayContent,
+              modelSource: "secondary" as const,
+            };
+            const secondaryBotMessage: ChatMessage = createMessage({
+              role: "assistant",
+              streaming: true,
+              model: session.secondaryModelConfig.model,
+              providerName: session.secondaryModelConfig.providerName,
+              modelSource: "secondary",
+            });
+            session.secondaryMessages = (
+              session.secondaryMessages || []
+            ).concat([secondaryUserMessage, secondaryBotMessage]);
+          }
         });
 
         const api: ClientApi = getClientApi(modelConfig.providerName);
@@ -641,6 +682,107 @@ export const useChatStore = createPersistStore(
             );
           },
         });
+
+        // 双模型模式：同时发送请求到副模型
+        if (session.dualModelMode && session.secondaryModelConfig) {
+          const secondaryModelConfig = session.secondaryModelConfig;
+          const secondaryApi: ClientApi = getClientApi(
+            secondaryModelConfig.providerName,
+          );
+
+          // 获取副模型消息队列中最后一个 bot 消息
+          const secondaryMessages =
+            get().currentSession().secondaryMessages || [];
+          const secondaryBotMessage =
+            secondaryMessages[secondaryMessages.length - 1];
+
+          if (secondaryBotMessage && secondaryBotMessage.role === "assistant") {
+            // 获取副模型的历史消息
+            const secondaryRecentMessages =
+              get().getSecondaryMessagesWithMemory();
+            // 移除最后一个 bot 消息（因为它是空的占位符）
+            const secondarySendMessages = secondaryRecentMessages.slice(0, -1);
+
+            secondaryApi.llm.chat({
+              messages: secondarySendMessages,
+              config: {
+                ...session.mask.modelConfig,
+                model: secondaryModelConfig.model,
+                stream: true,
+              },
+              onUpdate(message) {
+                secondaryBotMessage.streaming = true;
+                if (message) {
+                  secondaryBotMessage.content = message;
+                }
+                get().updateCurrentSession((session) => {
+                  session.secondaryMessages =
+                    session.secondaryMessages?.concat();
+                });
+              },
+              onFinish(message) {
+                secondaryBotMessage.streaming = false;
+                if (message) {
+                  secondaryBotMessage.content =
+                    typeof message === "string" ? message : message.content;
+                  if (typeof message !== "string") {
+                    if (!secondaryBotMessage.statistic) {
+                      secondaryBotMessage.statistic = {};
+                    }
+                    secondaryBotMessage.isStreamRequest =
+                      !!message?.is_stream_request;
+                    secondaryBotMessage.statistic.completionTokens =
+                      message?.usage?.completion_tokens;
+                    secondaryBotMessage.statistic.firstReplyLatency =
+                      message?.usage?.first_content_latency;
+                    secondaryBotMessage.statistic.totalReplyLatency =
+                      message?.usage?.total_latency;
+                    secondaryBotMessage.statistic.reasoningLatency =
+                      message?.usage?.thinking_time;
+                    secondaryBotMessage.statistic.searchingLatency =
+                      message?.usage?.searching_time;
+                  }
+                  secondaryBotMessage.date = new Date().toLocaleString();
+                }
+                get().updateCurrentSession((session) => {
+                  session.secondaryMessages =
+                    session.secondaryMessages?.concat();
+                });
+                ChatControllerPool.remove(
+                  `${session.id}-secondary`,
+                  secondaryBotMessage.id,
+                );
+              },
+              onError(error) {
+                const isAborted = error.message?.includes?.("aborted");
+                secondaryBotMessage.content +=
+                  "\n\n" +
+                  prettyObject({
+                    error: true,
+                    message: error.message,
+                  });
+                secondaryBotMessage.streaming = false;
+                secondaryBotMessage.isError = !isAborted;
+                get().updateCurrentSession((session) => {
+                  session.secondaryMessages =
+                    session.secondaryMessages?.concat();
+                });
+                ChatControllerPool.remove(
+                  `${session.id}-secondary`,
+                  secondaryBotMessage.id,
+                );
+                console.error("[Chat] secondary model failed ", error);
+              },
+              onController(controller) {
+                ChatControllerPool.addController(
+                  `${session.id}-secondary`,
+                  secondaryBotMessage.id,
+                  controller,
+                );
+              },
+            });
+          }
+        }
       },
 
       getMemoryPrompt() {
@@ -1102,6 +1244,88 @@ export const useChatStore = createPersistStore(
         localStorage.clear();
         location.reload();
       },
+
+      // ========== 双模型模式相关方法 ==========
+      toggleDualModelMode() {
+        const session = get().currentSession();
+        get().updateCurrentSession((session) => {
+          session.dualModelMode = !session.dualModelMode;
+
+          // 首次开启时初始化副模型配置
+          if (session.dualModelMode && !session.secondaryModelConfig) {
+            // 默认使用与主模型相同的配置
+            session.secondaryModelConfig = {
+              model: session.mask.modelConfig.model,
+              providerName: session.mask.modelConfig.providerName,
+              displayName: undefined,
+            };
+            session.secondaryMessages = [];
+            session.secondaryMemoryPrompt = "";
+            session.secondaryLastSummarizeIndex = 0;
+          }
+        });
+      },
+
+      setSecondaryModel(
+        model: ModelType,
+        providerName: ServiceProvider,
+        displayName?: string,
+      ) {
+        get().updateCurrentSession((session) => {
+          session.secondaryModelConfig = {
+            model,
+            providerName,
+            displayName,
+          };
+        });
+      },
+
+      clearSecondaryMessages() {
+        get().updateCurrentSession((session) => {
+          session.secondaryMessages = [];
+          session.secondaryMemoryPrompt = "";
+          session.secondaryLastSummarizeIndex = 0;
+        });
+      },
+
+      // 获取副模型的消息历史（带记忆）
+      getSecondaryMessagesWithMemory() {
+        const session = get().currentSession();
+        const modelConfig = session.secondaryModelConfig;
+        const messages = session.secondaryMessages?.slice() || [];
+        const totalMessageCount = messages.length;
+
+        // 类似 getMessagesWithMemory 的逻辑
+        const reversedRecentMessages: ChatMessage[] = [];
+        for (
+          let i = totalMessageCount - 1, count = 0;
+          i >= 0 && count < (session.mask.modelConfig.historyMessageCount || 4);
+          i -= 1
+        ) {
+          const msg = messages[i];
+          if (!msg || msg.isError) continue;
+          count += 1;
+          reversedRecentMessages.push(msg);
+        }
+
+        const recentMessages = reversedRecentMessages.reverse();
+
+        // 添加记忆提示
+        if (
+          session.secondaryMemoryPrompt &&
+          session.secondaryMemoryPrompt.length > 0
+        ) {
+          const memoryMessage = createMessage({
+            role: "system",
+            content: Locale.Store.Prompt.History(session.secondaryMemoryPrompt),
+            date: "",
+          });
+          recentMessages.unshift(memoryMessage);
+        }
+
+        return recentMessages;
+      },
+
       setLastInput(lastInput: string) {
         set({
           lastInput,

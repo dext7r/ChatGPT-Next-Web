@@ -1535,6 +1535,9 @@
   gap: 12px;
   padding: 8px 8px 8px 8px;
 
+  // 双模型模式下消息宽度调整为 95%
+  --message-max-width: 95%;
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: 10px;

@@ -1205,6 +1205,99 @@ function CustomCode(props: { children: any; className?: string }) {
 // ========== Markdown 预处理器 ==========
 // 设计原则：保护 → 处理 → 恢复
 
+/**
+ * 转义未闭合的公式，使已闭合的公式正常渲染，未闭合的显示原文
+ * 流式渲染时调用，实现部分公式渲染
+ */
+function escapeIncompleteFormulas(text: string): string {
+  // 1. 检查是否在未闭合的代码块内，如果是则不处理
+  const codeBlockCount = (text.match(/```/g) || []).length;
+  if (codeBlockCount % 2 !== 0) {
+    return text;
+  }
+
+  // 2. 使用保护器保护代码块
+  const protectedBlocks: { placeholder: string; content: string }[] = [];
+  let idx = 0;
+
+  let result = text
+    // 保护完整代码块
+    .replace(/```[\s\S]*?```/g, (match) => {
+      const placeholder = `\x00CODEBLOCK${idx++}\x00`;
+      protectedBlocks.push({ placeholder, content: match });
+      return placeholder;
+    })
+    // 保护行内代码
+    .replace(/`[^`\n]+`/g, (match) => {
+      const placeholder = `\x00INLINECODE${idx++}\x00`;
+      protectedBlocks.push({ placeholder, content: match });
+      return placeholder;
+    });
+
+  // 3. 处理 $$ 块级公式 - 转义未闭合的
+  const doubleDollarParts = result.split("$$");
+  if (doubleDollarParts.length % 2 === 0) {
+    // 奇数个 $$，说明最后一个未闭合
+    // 转义最后一个 $$ 为 \$\$
+    const lastIdx = result.lastIndexOf("$$");
+    if (lastIdx !== -1) {
+      result = result.slice(0, lastIdx) + "\\$\\$" + result.slice(lastIdx + 2);
+    }
+  }
+
+  // 4. 处理 $ 行内公式 - 转义未闭合的（排除 $$ 的情况）
+  // 先保护已处理的 $$
+  result = result.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
+    const placeholder = `\x00BLOCKMATH${idx++}\x00`;
+    protectedBlocks.push({ placeholder, content: match });
+    return placeholder;
+  });
+
+  // 统计单独的 $
+  const singleDollarMatches = result.match(/(?<!\$)\$(?!\$)/g) || [];
+  if (singleDollarMatches.length % 2 !== 0) {
+    // 奇数个 $，转义最后一个
+    const lastIdx = result.lastIndexOf("$");
+    if (
+      lastIdx !== -1 &&
+      result[lastIdx - 1] !== "$" &&
+      result[lastIdx + 1] !== "$"
+    ) {
+      result = result.slice(0, lastIdx) + "\\$" + result.slice(lastIdx + 1);
+    }
+  }
+
+  // 5. 处理 \[ - 转义未闭合的
+  const openBrackets = (result.match(/\\\[/g) || []).length;
+  const closeBrackets = (result.match(/\\\]/g) || []).length;
+  if (openBrackets > closeBrackets) {
+    // 找到最后一个未配对的 \[
+    const lastIdx = result.lastIndexOf("\\[");
+    if (lastIdx !== -1) {
+      result = result.slice(0, lastIdx) + "\\\\[" + result.slice(lastIdx + 2);
+    }
+  }
+
+  // 6. 处理 \( - 转义未闭合的
+  const openParens = (result.match(/\\\(/g) || []).length;
+  const closeParens = (result.match(/\\\)/g) || []).length;
+  if (openParens > closeParens) {
+    const lastIdx = result.lastIndexOf("\\(");
+    if (lastIdx !== -1) {
+      result = result.slice(0, lastIdx) + "\\\\(" + result.slice(lastIdx + 2);
+    }
+  }
+
+  // 7. 恢复保护的内容
+  for (let i = protectedBlocks.length - 1; i >= 0; i--) {
+    result = result
+      .split(protectedBlocks[i].placeholder)
+      .join(protectedBlocks[i].content);
+  }
+
+  return result;
+}
+
 type ProtectedRegion = {
   placeholder: string;
   content: string;
@@ -1602,51 +1695,51 @@ function R_MarkDownContent(props: {
     );
     content = searchText + thinkText + remainText;
 
-    return tryWrapHtmlCode(content);
-  }, [props.content, props.searchingTime, props.thinkingTime]);
+    // 5. 流式期间：转义未闭合的公式，使已闭合的公式正常渲染
+    if (isStreaming) {
+      content = escapeIncompleteFormulas(content);
+    }
 
+    return tryWrapHtmlCode(content);
+  }, [props.content, props.searchingTime, props.thinkingTime, isStreaming]);
+
+  // 流式期间也启用公式渲染（未闭合的公式已被转义）
   const remarkPlugins = useMemo(
-    () =>
-      isStreaming
-        ? [RemarkGfm, RemarkBreaks]
-        : [RemarkMath, RemarkGfm, RemarkBreaks],
-    [isStreaming],
+    () => [RemarkMath, RemarkGfm, RemarkBreaks],
+    [],
   );
   const rehypePlugins = useMemo(
-    () =>
-      isStreaming
-        ? [[rehypeSanitize, sanitizeOptions]]
-        : [
-            RehypeRaw,
-            RehypeKatex,
-            [rehypeSanitize, sanitizeOptions],
-            [
-              RehypeHighlight,
-              {
-                detect: true, // 无语言标注时自动识别
-                ignoreMissing: true, // 未注册语言跳过
-                subset: [
-                  "javascript",
-                  "typescript",
-                  "python",
-                  "json",
-                  "bash",
-                  "yaml",
-                  "markdown",
-                  "java",
-                  "c",
-                  "cpp",
-                  "go",
-                  "sql",
-                  "html",
-                  "xml",
-                  "css",
-                ],
-                plainText: ["plain", "text", "txt"],
-              },
-            ],
+    () => [
+      RehypeRaw,
+      RehypeKatex,
+      [rehypeSanitize, sanitizeOptions],
+      [
+        RehypeHighlight,
+        {
+          detect: true, // 无语言标注时自动识别
+          ignoreMissing: true, // 未注册语言跳过
+          subset: [
+            "javascript",
+            "typescript",
+            "python",
+            "json",
+            "bash",
+            "yaml",
+            "markdown",
+            "java",
+            "c",
+            "cpp",
+            "go",
+            "sql",
+            "html",
+            "xml",
+            "css",
           ],
-    [isStreaming],
+          plainText: ["plain", "text", "txt"],
+        },
+      ],
+    ],
+    [],
   );
   return (
     <ReactMarkdown

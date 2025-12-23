@@ -167,6 +167,7 @@ export function MessageExporter() {
     includeContext: true,
     useDisplayName: true,
     shareSessionTitle: "",
+    dualModelSource: "primary" as "primary" | "secondary",
   });
 
   function updateExportConfig(updater: (config: typeof exportConfig) => void) {
@@ -178,20 +179,60 @@ export function MessageExporter() {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const { selection, updateSelection } = useMessageSelector();
+
+  // 判断是否是双模型模式（有副模型消息）
+  const isDualMode =
+    session.secondaryMessages && session.secondaryMessages.length > 0;
+
+  // 根据选择获取消息源
+  const sourceMessages =
+    exportConfig.dualModelSource === "secondary" && isDualMode
+      ? session.secondaryMessages || []
+      : session.messages;
+
+  // 当切换导出模型时，自动全选新消息源的消息
+  const isValid = (m: ChatMessage) => m.content && !m.isError && !m.streaming;
+  useEffect(() => {
+    // 计算有效消息
+    const validMessages = sourceMessages.filter(
+      (m, i) =>
+        m.id &&
+        isValid(m) &&
+        (i >= sourceMessages.length - 1 || isValid(sourceMessages[i + 1])),
+    );
+    // 全选有效消息
+    updateSelection((sel) => {
+      sel.clear();
+      validMessages.forEach((m) => sel.add(m.id!));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exportConfig.dualModelSource]);
+
   const selectedMessages = useMemo(() => {
     const ret: ChatMessage[] = [];
     if (exportConfig.includeContext) {
       ret.push(...session.mask.context);
     }
-    ret.push(...session.messages.filter((m) => selection.has(m.id)));
+    ret.push(...sourceMessages.filter((m) => selection.has(m.id)));
     return ret;
   }, [
     exportConfig.includeContext,
-    session.messages,
+    sourceMessages,
     session.mask.context,
     selection,
   ]);
   function preview() {
+    // 如果导出副模型，使用副模型配置
+    const modelOverride =
+      exportConfig.dualModelSource === "secondary" &&
+      session.secondaryModelConfig
+        ? {
+            model: session.secondaryModelConfig.model,
+            providerName: session.secondaryModelConfig.providerName,
+            displayName: session.secondaryModelConfig.displayName,
+          }
+        : undefined;
+
     if (exportConfig.format === "text") {
       return (
         <MarkdownPreviewer
@@ -215,6 +256,7 @@ export function MessageExporter() {
           topic={exportConfig.shareSessionTitle || session.topic}
           mask={session.mask}
           useDisplayName={exportConfig.useDisplayName}
+          modelOverride={modelOverride}
         />
       );
     }
@@ -295,11 +337,37 @@ export function MessageExporter() {
               }}
             ></input>
           </ListItem>
+          {isDualMode && (
+            <ListItem
+              title={Locale.Export.DualModelSource.Title}
+              subTitle={Locale.Export.DualModelSource.SubTitle}
+            >
+              <Select
+                value={exportConfig.dualModelSource}
+                onChange={(e) =>
+                  updateExportConfig(
+                    (config) =>
+                      (config.dualModelSource = e.currentTarget.value as
+                        | "primary"
+                        | "secondary"),
+                  )
+                }
+              >
+                <option value="primary">
+                  {Locale.Export.DualModelSource.Primary}
+                </option>
+                <option value="secondary">
+                  {Locale.Export.DualModelSource.Secondary}
+                </option>
+              </Select>
+            </ListItem>
+          )}
         </List>
         <MessageSelector
           selection={selection}
           updateSelection={updateSelection}
           defaultSelectAll
+          sourceMessages={sourceMessages}
         />
       </div>
       {currentStep.value === "preview" && (
@@ -422,6 +490,11 @@ export function ImagePreviewer(props: {
   mask: Mask;
   useDisplayName: boolean;
   notShowActions?: boolean;
+  modelOverride?: {
+    model: string;
+    providerName?: string;
+    displayName?: string;
+  };
 }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
@@ -655,22 +728,31 @@ export function ImagePreviewer(props: {
     }
   };
   const allModels = useAllModels();
+  // 如果有 modelOverride，优先使用它
+  const effectiveModel = props.modelOverride?.model ?? mask.modelConfig.model;
+  const effectiveProviderName =
+    props.modelOverride?.providerName ?? mask.modelConfig.providerName;
   const currentModelName = useMemo(() => {
+    // 如果 modelOverride 直接提供了 displayName，优先使用
+    if (props.modelOverride?.displayName && props.useDisplayName) {
+      return props.modelOverride.displayName;
+    }
     if (props.useDisplayName) {
       const model = allModels.find(
         (m) =>
-          m.name == mask.modelConfig.model &&
-          m?.provider?.providerName == mask.modelConfig.providerName,
+          m.name == effectiveModel &&
+          m?.provider?.providerName == effectiveProviderName,
       );
-      return model?.displayName ?? mask.modelConfig.model;
+      return model?.displayName ?? effectiveModel;
     } else {
-      return mask.modelConfig.model;
+      return effectiveModel;
     }
   }, [
     allModels,
-    mask.modelConfig.model,
-    mask.modelConfig.providerName,
+    effectiveModel,
+    effectiveProviderName,
     props.useDisplayName,
+    props.modelOverride?.displayName,
   ]);
 
   const estimateMessagesToken = (messages: ChatMessage[]): number => {

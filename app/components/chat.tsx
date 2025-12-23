@@ -4671,6 +4671,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                             !isUser
                           }
                           defaultShow={true}
+                          searchingTime={message.statistic?.searchingLatency}
+                          thinkingTime={message.statistic?.reasoningLatency}
                         />
                         {/* 显示图片 */}
                         {getMessageImages(message).length == 1 && (

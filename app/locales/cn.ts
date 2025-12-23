@@ -320,6 +320,12 @@ const cn = {
       Title: "对话主题",
       SubTitle: "支持设置对话主题覆盖原有标题",
     },
+    DualModelSource: {
+      Title: "导出模型",
+      SubTitle: "双模型模式下选择导出哪个模型的对话",
+      Primary: "主模型",
+      Secondary: "副模型",
+    },
     Steps: {
       Select: "选取",
       Preview: "预览",

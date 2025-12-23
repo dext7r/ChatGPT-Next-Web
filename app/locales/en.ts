@@ -341,6 +341,12 @@ const en: LocaleType = {
       Title: "Session Title",
       SubTitle: "Support to Set Session Title to override original title",
     },
+    DualModelSource: {
+      Title: "Export Model",
+      SubTitle: "Choose which model to export in dual-model mode",
+      Primary: "Primary",
+      Secondary: "Secondary",
+    },
     Steps: {
       Select: "Select",
       Preview: "Preview",

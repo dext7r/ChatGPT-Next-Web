@@ -70,25 +70,30 @@ export function MessageSelector(props: {
   updateSelection: Updater<Set<string>>;
   defaultSelectAll?: boolean;
   onSelected?: (messages: ChatMessage[]) => void;
+  sourceMessages?: ChatMessage[]; // 可选：自定义消息源（用于双模型模式）
 }) {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const isValid = (m: ChatMessage) => m.content && !m.isError && !m.streaming;
+
+  // 使用自定义消息源或默认 session.messages
+  const rawMessages = props.sourceMessages ?? session.messages;
+
   const allMessages = useMemo(() => {
-    const totalMessageCount = session.messages.length;
+    const totalMessageCount = rawMessages.length;
     let clearContextIndex = session.clearContextIndex ?? 0;
     for (let i = totalMessageCount - 1; i >= 0; i--) {
-      if (session.messages[i].beClear === true) {
+      if (rawMessages[i].beClear === true) {
         clearContextIndex = i + 1;
         break;
       }
     }
     let startIndex = Math.max(0, clearContextIndex);
-    if (startIndex === session.messages.length - 1) {
+    if (startIndex === rawMessages.length - 1) {
       startIndex = 0;
     }
-    return session.messages.slice(startIndex);
-  }, [session.messages, session.clearContextIndex]);
+    return rawMessages.slice(startIndex);
+  }, [rawMessages, session.clearContextIndex]);
 
   const messages = useMemo(
     () =>

@@ -1202,6 +1202,50 @@ function CustomCode(props: { children: any; className?: string }) {
   );
 }
 
+// ========== Markdown 预处理器 ==========
+// 设计原则：保护 → 处理 → 恢复
+
+type ProtectedRegion = {
+  placeholder: string;
+  content: string;
+};
+
+/**
+ * 创建保护器，用于保护特殊区域不被处理
+ */
+function createProtector() {
+  const regions: ProtectedRegion[] = [];
+  let index = 0;
+
+  const protect = (text: string, pattern: RegExp): string => {
+    return text.replace(pattern, (match) => {
+      const placeholder = `\x00P${index++}\x00`;
+      regions.push({ placeholder, content: match });
+      return placeholder;
+    });
+  };
+
+  const restore = (text: string): string => {
+    // 逆序恢复，避免嵌套问题
+    for (let i = regions.length - 1; i >= 0; i--) {
+      text = text.split(regions[i].placeholder).join(regions[i].content);
+    }
+    return text;
+  };
+
+  return { protect, restore };
+}
+
+// ========== 保护模式定义 ==========
+
+// 代码块 ```...```（支持语言标识，使用非贪婪匹配）
+const CODE_BLOCK_PATTERN = /```[\s\S]*?```/g;
+
+// 行内代码 `...`（非贪婪，不跨行，排除空内容）
+const INLINE_CODE_PATTERN = /`[^`\n]+`/g;
+
+// ========== 转义处理函数 ==========
+
 function escapeDollarNumber(text: string): string {
   const result: string[] = [];
   let isInMathExpression = false;
@@ -1319,48 +1363,73 @@ function escapeBrackets(text: string) {
     },
   );
 }
-function formatBoldText(text: string) {
-  // 首先修复 ** 和内容之间的空格问题
-  // 只移除 ** 标记内部紧贴的空格，不影响外部的分隔空格
-  // 使用负向前瞻确保不跨越多对 **
-  let processed = text.replace(/\*\*\s*((?:(?!\*\*).)+?)\s*\*\*/g, "**$1**");
+/**
+ * 加粗标记处理器
+ * 标准 Markdown 加粗规则：
+ * 1. ** 必须紧贴内容（内部不能有前导/尾随空格）
+ * 2. 处理各种边界情况（冒号、引号、标点等）
+ * 3. 加粗不应跨行（所有空白匹配都排除换行符）
+ * 4. ** 前后不能是 *（避免与 *** 斜体加粗混淆）
+ * 5. CommonMark 要求 ** 前面是空白或标点，否则可能无法解析
+ *
+ * 注意：此函数应在保护区域（代码块、LaTeX等）被保护后调用
+ */
+function processBoldMarkers(text: string): string {
+  // 常见的后置分隔符（加粗后允许紧跟的字符）
+  const PUNCT_AFTER = /^[\s,.\];:!?，。；：！？、）】》"'""''）\]>}\n\r*]/;
 
-  // 先处理加粗文本间冒号连接问题 - 优先处理复杂情况
-  processed = processed.replace(
-    /\*\*(.*?)\*\*([:：])\*\*(.*?)\*\*/g,
-    (match, text1, colon, text2) => {
-      return `**${text1}**${colon} **${text2}**`;
+  // 使用发丝空格 (Hair Space, U+200A) 作为分隔符
+  // 它被 CommonMark 视为空白，但视觉上几乎不可见
+  const HAIR_SPACE = "\u200A";
+
+  // 0. 处理非空白非标点字符紧跟 ** 的情况（CommonMark 要求）
+  // 例如：属于**"欺骗"** → 属于 **"欺骗"**
+  // 这确保 Markdown 解析器能正确识别加粗开始
+  let processed = text.replace(
+    /([^\s\p{P}])(\*\*(?!\*))/gu,
+    (match, prevChar, stars) => {
+      return `${prevChar}${HAIR_SPACE}${stars}`;
     },
   );
 
-  // 然后处理单个冒号后加粗问题
+  // 1. 移除 ** 内部的前导/尾随空格：** text ** → **text**
+  // 使用 [^\S\n]+ 匹配非换行的空白字符，防止跨行匹配
   processed = processed.replace(
-    /\*\*(.*?)([:：])\*\*/g,
-    (match, boldText, colon) => {
-      return `**${boldText}**${colon}`;
+    /(?<!\*)\*\*[^\S\n]+((?:(?!\*\*)[^\n])+?)\*\*(?!\*)/g,
+    (match, content) => `**${content.trimStart()}**`,
+  );
+  processed = processed.replace(
+    /(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)[^\S\n]+\*\*(?!\*)/g,
+    (match, content) => `**${content.trimEnd()}**`,
+  );
+
+  // 2. 处理 **内容:** 的情况（冒号在加粗内部末尾）
+  processed = processed.replace(
+    /(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)([:：])\*\*(?!\*)/g,
+    (match, content, colon) => {
+      const trimmed = content.trimEnd();
+      if (trimmed === "") return match;
+      return `**${trimmed}**${colon}`;
     },
   );
 
-  // 处理引号加粗后紧跟文本的问题 - 包含完整的中英文引号
+  // 3. 处理 **A**:**B** → **A**: **B**（两个加粗之间的冒号）
   processed = processed.replace(
-    /\*\*(".*?"|'.*?'|".*?"|'.*?'|「.*?」|『.*?』)\*\*([^\s])/g,
-    (match, quotedText, nextChar) => {
-      return `**${quotedText}** ${nextChar}`;
-    },
+    /(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)\*\*(?!\*)([:：])(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)\*\*(?!\*)/g,
+    (_, a, colon, b) => `**${a}**${colon}${HAIR_SPACE}**${b}**`,
   );
 
-  // 处理加粗后紧跟非空白字符的问题（修复版）
-  // 使用负向前瞻确保不跨越多对 **
-  // 排除冒号，因为冒号应该紧贴加粗文本
-  // 如果 boldText 是纯空格或以空格开头，跳过（避免破坏列表场景）
+  // 4. 处理加粗后紧跟非分隔符的情况
   processed = processed.replace(
-    /\*\*((?:(?!\*\*).)+?)\*\*([^\s*:：])/g,
-    (match, boldText, nextChar) => {
-      // 如果 boldText 是纯空格或以空格开头，不添加空格
-      if (boldText.trim() === "" || boldText.startsWith(" ")) {
+    /(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)\*\*(?!\*)([^\s*])/g,
+    (match, content, nextChar) => {
+      if (content.trim() === "" || content.startsWith(" ")) {
         return match;
       }
-      return `**${boldText}** ${nextChar}`;
+      if (PUNCT_AFTER.test(nextChar)) {
+        return match;
+      }
+      return `**${content}**${HAIR_SPACE}${nextChar}`;
     },
   );
 
@@ -1503,18 +1572,36 @@ function R_MarkDownContent(props: {
   const isStreaming = !!props.status;
 
   const escapedContent = useMemo(() => {
-    const originalContent = autoFixLatexDisplayMode(
-      formatBoldText(escapeBrackets(escapeDollarNumber(props.content))),
-    );
+    let content = props.content;
+
+    // 使用保护-处理-恢复模式
+    const { protect, restore } = createProtector();
+
+    // 1. 只保护代码块和行内代码（LaTeX 不保护，因为需要被 escapeBrackets 处理）
+    content = protect(content, CODE_BLOCK_PATTERN); // 代码块优先级最高
+    content = protect(content, INLINE_CODE_PATTERN); // 行内代码
+    // 注意：不保护 LaTeX，因为 escapeBrackets 需要将 \[...\] 转换为 $$...$$
+
+    // 2. 在保护区域外处理各种标记
+    content = escapeDollarNumber(content); // 转义 $数字（内部已处理 LaTeX 保护）
+    content = escapeBrackets(content); // LaTeX 括号转换 \[...\] → $$...$$
+    content = processBoldMarkers(content); // 加粗处理
+    content = autoFixLatexDisplayMode(content); // 修复 LaTeX 展示模式
+
+    // 3. 恢复保护区域
+    content = restore(content);
+
+    // 4. 处理 search/think 标签
     const { searchText, remainText: searchRemainText } = formatSearchText(
-      originalContent,
+      content,
       props.searchingTime,
     );
     const { thinkText, remainText } = formatThinkText(
       searchRemainText,
       props.thinkingTime,
     );
-    const content = searchText + thinkText + remainText;
+    content = searchText + thinkText + remainText;
+
     return tryWrapHtmlCode(content);
   }, [props.content, props.searchingTime, props.thinkingTime]);
 

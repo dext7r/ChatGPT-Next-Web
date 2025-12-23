@@ -1463,70 +1463,82 @@ function escapeBrackets(text: string) {
  * 2. 处理各种边界情况（冒号、引号、标点等）
  * 3. 加粗不应跨行（所有空白匹配都排除换行符）
  * 4. ** 前后不能是 *（避免与 *** 斜体加粗混淆）
- * 5. CommonMark 要求 ** 前面是空白或标点，否则可能无法解析
+ * 5. CommonMark 要求强调标记与周围文字有适当的边界
  *
  * 注意：此函数应在保护区域（代码块、LaTeX等）被保护后调用
  */
 function processBoldMarkers(text: string): string {
   // 常见的后置分隔符（加粗后允许紧跟的字符）
-  const PUNCT_AFTER = /^[\s,.\];:!?，。；：！？、）】》"'""''）\]>}\n\r*]/;
-
-  // 使用发丝空格 (Hair Space, U+200A) 作为分隔符
-  // 它被 CommonMark 视为空白，但视觉上几乎不可见
+  const PUNCT_AFTER =
+    /^[\s,.\];:!?，。；：！？、）】》"'""''（【《\(\[\{）\]>}\n\r*]/;
   const HAIR_SPACE = "\u200A";
 
-  // 0. 处理非空白非标点字符紧跟 ** 的情况（CommonMark 要求）
-  // 例如：属于**"欺骗"** → 属于 **"欺骗"**
-  // 这确保 Markdown 解析器能正确识别加粗开始
-  let processed = text.replace(
-    /([^\s\p{P}])(\*\*(?!\*))/gu,
-    (match, prevChar, stars) => {
-      return `${prevChar}${HAIR_SPACE}${stars}`;
-    },
-  );
+  // 找到所有 ** 标记的位置
+  const markers: number[] = [];
+  const markerRegex = /\*\*(?!\*)/g;
+  let match;
+  while ((match = markerRegex.exec(text)) !== null) {
+    markers.push(match.index);
+  }
 
-  // 1. 移除 ** 内部的前导/尾随空格：** text ** → **text**
-  // 使用 [^\S\n]+ 匹配非换行的空白字符，防止跨行匹配
-  processed = processed.replace(
-    /(?<!\*)\*\*[^\S\n]+((?:(?!\*\*)[^\n])+?)\*\*(?!\*)/g,
-    (match, content) => `**${content.trimStart()}**`,
-  );
-  processed = processed.replace(
-    /(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)[^\S\n]+\*\*(?!\*)/g,
-    (match, content) => `**${content.trimEnd()}**`,
-  );
+  // 没有标记或奇数个标记（不完整）则不处理
+  if (markers.length === 0 || markers.length % 2 !== 0) {
+    return text;
+  }
 
-  // 2. 处理 **内容:** 的情况（冒号在加粗内部末尾）
-  processed = processed.replace(
-    /(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)([:：])\*\*(?!\*)/g,
+  // 构建结果字符串
+  let result = "";
+  let lastIndex = 0;
+
+  for (let i = 0; i < markers.length; i++) {
+    const pos = markers[i];
+    const isOpening = i % 2 === 0;
+
+    // 添加标记之前的文本
+    result += text.slice(lastIndex, pos);
+
+    if (isOpening) {
+      // 开始标记：如果前面是非空白非标点字符，添加发丝空格
+      const prevChar = result.slice(-1);
+      if (prevChar && /[^\s\p{P}]/u.test(prevChar)) {
+        result += HAIR_SPACE;
+      }
+    }
+
+    // 添加 ** 标记
+    result += "**";
+    lastIndex = pos + 2;
+
+    if (!isOpening) {
+      // 结束标记：如果后面是非空白非*字符且不在 PUNCT_AFTER 中，添加发丝空格
+      const nextChar = text[lastIndex];
+      if (nextChar && /[^\s*]/u.test(nextChar) && !PUNCT_AFTER.test(nextChar)) {
+        result += HAIR_SPACE;
+      }
+    }
+  }
+
+  // 添加剩余文本
+  result += text.slice(lastIndex);
+
+  // 处理 **内容:** 的情况（冒号在加粗内部末尾）
+  result = result.replace(
+    /(?<!\*)\*\*([^\s\n][^\n]*?)([:：])\*\*(?!\*)/g,
     (match, content, colon) => {
+      if (content.includes("**")) return match;
       const trimmed = content.trimEnd();
       if (trimmed === "") return match;
       return `**${trimmed}**${colon}`;
     },
   );
 
-  // 3. 处理 **A**:**B** → **A**: **B**（两个加粗之间的冒号）
-  processed = processed.replace(
+  // 处理 **A**:**B** → **A**: **B**
+  result = result.replace(
     /(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)\*\*(?!\*)([:：])(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)\*\*(?!\*)/g,
     (_, a, colon, b) => `**${a}**${colon}${HAIR_SPACE}**${b}**`,
   );
 
-  // 4. 处理加粗后紧跟非分隔符的情况
-  processed = processed.replace(
-    /(?<!\*)\*\*((?:(?!\*\*)[^\n])+?)\*\*(?!\*)([^\s*])/g,
-    (match, content, nextChar) => {
-      if (content.trim() === "" || content.startsWith(" ")) {
-        return match;
-      }
-      if (PUNCT_AFTER.test(nextChar)) {
-        return match;
-      }
-      return `**${content}**${HAIR_SPACE}${nextChar}`;
-    },
-  );
-
-  return processed;
+  return result;
 }
 
 // 通用标签块格式化函数

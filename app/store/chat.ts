@@ -1295,11 +1295,26 @@ export const useChatStore = createPersistStore(
         const messages = session.secondaryMessages?.slice() || [];
         const totalMessageCount = messages.length;
 
-        // 类似 getMessagesWithMemory 的逻辑
+        // 检查 beClear 标记，找到清除上下文的位置
+        let clearContextIndex = 0;
+        for (let i = totalMessageCount - 1; i >= 0; i--) {
+          if (messages[i]?.beClear === true) {
+            clearContextIndex = i + 1;
+            break;
+          }
+        }
+
+        // 类似 getMessagesWithMemory 的逻辑，但要考虑 clearContextIndex
+        const historyCount = session.mask.modelConfig.historyMessageCount || 4;
+        const startIndex = Math.max(
+          clearContextIndex,
+          totalMessageCount - historyCount,
+        );
+
         const reversedRecentMessages: ChatMessage[] = [];
         for (
           let i = totalMessageCount - 1, count = 0;
-          i >= 0 && count < (session.mask.modelConfig.historyMessageCount || 4);
+          i >= startIndex && count < historyCount;
           i -= 1
         ) {
           const msg = messages[i];
@@ -1310,14 +1325,18 @@ export const useChatStore = createPersistStore(
 
         const recentMessages = reversedRecentMessages.reverse();
 
-        // 添加记忆提示
-        if (
+        // 添加记忆提示（只有在 lastSummarizeIndex > clearContextIndex 时才添加）
+        const shouldSendMemory =
           session.secondaryMemoryPrompt &&
-          session.secondaryMemoryPrompt.length > 0
-        ) {
+          session.secondaryMemoryPrompt.length > 0 &&
+          (session.secondaryLastSummarizeIndex ?? 0) > clearContextIndex;
+
+        if (shouldSendMemory) {
           const memoryMessage = createMessage({
             role: "system",
-            content: Locale.Store.Prompt.History(session.secondaryMemoryPrompt),
+            content: Locale.Store.Prompt.History(
+              session.secondaryMemoryPrompt!,
+            ),
             date: "",
           });
           recentMessages.unshift(memoryMessage);

@@ -1473,6 +1473,18 @@ function processBoldMarkers(text: string): string {
     /^[\s,.\];:!?，。；：！？、）】》"'""''（【《\(\[\{）\]>}\n\r*]/;
   const HAIR_SPACE = "\u200A";
 
+  // 预处理：修复 ** 和内容之间的空格问题
+  // 一次性匹配完整的 **...** 对，将内部空格移到外部
+  // 避免分两步处理导致互相干扰的问题
+  text = text.replace(
+    /\*\*(\s*)((?:(?!\*\*)[\s\S])+?)(\s*)\*\*/g,
+    (match, leadSpace, content, trailSpace) => {
+      // 如果内容为空或只有空格，不处理
+      if (!content.trim()) return match;
+      return leadSpace + "**" + content.trim() + "**" + trailSpace;
+    },
+  );
+
   // 找到所有 ** 标记的位置
   const markers: number[] = [];
   const markerRegex = /\*\*(?!\*)/g;

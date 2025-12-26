@@ -5427,7 +5427,13 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             value={userInput}
             onKeyDown={onInputKeyDown}
             // onFocus={scrollToBottom}
-            onClick={() => scrollToBottom(true)}
+            onDoubleClick={() => {
+              scrollToBottom(true);
+              // 双模型模式下同时滚动两个面板
+              if (isDualMode) {
+                dualModelScrollToBottomRef.current?.(true);
+              }
+            }}
             onPaste={handlePaste}
             rows={inputRows}
             autoFocus={autoFocus}

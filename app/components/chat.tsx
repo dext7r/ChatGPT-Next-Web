@@ -2171,11 +2171,15 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       originalCode: string,
       newCode: string,
       language: string,
+      isSecondary?: boolean,
     ) => {
       if (originalCode === newCode) return;
 
       chatStore.updateTargetSession(session, (session) => {
-        const msg = session.messages.find((m) => m.id === messageId);
+        const messages = isSecondary
+          ? session.secondaryMessages
+          : session.messages;
+        const msg = messages?.find((m) => m.id === messageId);
         if (!msg) return;
 
         const content = getMessageTextContent(msg);
@@ -4713,19 +4717,48 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
                         </div>
                       )}
                       <div className={styles["chat-message-item"]}>
-                        <Markdown
-                          key={message.streaming ? "loading" : "done"}
-                          status={showTyping}
-                          content={getMessageTextContent(message)}
-                          loading={
-                            (message.preview || message.streaming) &&
-                            message.content.length === 0 &&
-                            !isUser
-                          }
-                          defaultShow={true}
-                          searchingTime={message.statistic?.searchingLatency}
-                          thinkingTime={message.statistic?.reasoningLatency}
-                        />
+                        <MessageEditContext.Provider
+                          value={{
+                            messageId: message.id,
+                            onEditCodeBlock: (
+                              originalCode,
+                              newCode,
+                              language,
+                            ) =>
+                              handleEditCodeBlock(
+                                message.id,
+                                originalCode,
+                                newCode,
+                                language,
+                                isSecondary,
+                              ),
+                          }}
+                        >
+                          <Markdown
+                            key={message.streaming ? "loading" : "done"}
+                            status={showTyping}
+                            content={
+                              !message.streaming &&
+                              isThinkingModel(message.model)
+                                ? wrapThinkingPart(
+                                    getMessageTextContent(message),
+                                  )
+                                : getMessageTextContent(message)
+                            }
+                            loading={
+                              (message.preview || message.streaming) &&
+                              message.content.length === 0 &&
+                              !isUser
+                            }
+                            onDoubleClickCapture={() => {
+                              if (!isMobileScreen) return;
+                              setUserInput(getMessageTextContent(message));
+                            }}
+                            defaultShow={true}
+                            searchingTime={message.statistic?.searchingLatency}
+                            thinkingTime={message.statistic?.reasoningLatency}
+                          />
+                        </MessageEditContext.Provider>
                         {/* 显示图片 */}
                         {getMessageImages(message).length == 1 && (
                           <Image

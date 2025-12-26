@@ -600,7 +600,7 @@ export function ChatActions(props: {
   setAttachFiles: (files: UploadFile[]) => void;
   setUploading: (uploading: boolean) => void;
   showPromptModal: () => void;
-  scrollToBottom: () => void;
+  scrollToBottom: (instant?: boolean) => void;
   showPromptHints: () => void;
   hitBottom: boolean;
   uploading: boolean;
@@ -1314,7 +1314,7 @@ export function ChatActions(props: {
         )}
         {!props.hitBottom && (
           <ChatAction
-            onClick={props.scrollToBottom}
+            onClick={() => props.scrollToBottom(true)}
             text={Locale.Chat.InputActions.ToBottom}
             icon={<BottomIcon />}
           />
@@ -1895,7 +1895,7 @@ function DualModelView(props: {
   onPrimaryModelSelect: () => void;
   onSecondaryModelSelect: () => void;
   modelTable: Model[];
-  onScrollBothToBottom?: (fn: () => void) => void; // 注册滚动到底部的回调
+  onScrollBothToBottom?: (fn: (instant?: boolean) => void) => void; // 注册滚动到底部的回调
 }) {
   const primaryVirtuosoRef = useRef<VirtuosoHandle>(null);
   const secondaryVirtuosoRef = useRef<VirtuosoHandle>(null);
@@ -1939,27 +1939,36 @@ function DualModelView(props: {
       );
   }, [props.context, props.secondaryMessages, props.isLoading]);
 
-  const scrollPrimaryToBottom = useCallback(() => {
-    primaryVirtuosoRef.current?.scrollToIndex({
-      index: primaryRenderMessages.length - 1,
-      behavior: "smooth",
-      align: "end",
-    });
-  }, [primaryRenderMessages.length]);
+  const scrollPrimaryToBottom = useCallback(
+    (instant?: boolean) => {
+      primaryVirtuosoRef.current?.scrollToIndex({
+        index: primaryRenderMessages.length - 1,
+        behavior: instant ? "auto" : "smooth",
+        align: "end",
+      });
+    },
+    [primaryRenderMessages.length],
+  );
 
-  const scrollSecondaryToBottom = useCallback(() => {
-    secondaryVirtuosoRef.current?.scrollToIndex({
-      index: secondaryRenderMessages.length - 1,
-      behavior: "smooth",
-      align: "end",
-    });
-  }, [secondaryRenderMessages.length]);
+  const scrollSecondaryToBottom = useCallback(
+    (instant?: boolean) => {
+      secondaryVirtuosoRef.current?.scrollToIndex({
+        index: secondaryRenderMessages.length - 1,
+        behavior: instant ? "auto" : "smooth",
+        align: "end",
+      });
+    },
+    [secondaryRenderMessages.length],
+  );
 
   // 同时滚动两个面板到底部
-  const scrollBothToBottom = useCallback(() => {
-    scrollPrimaryToBottom();
-    scrollSecondaryToBottom();
-  }, [scrollPrimaryToBottom, scrollSecondaryToBottom]);
+  const scrollBothToBottom = useCallback(
+    (instant?: boolean) => {
+      scrollPrimaryToBottom(instant);
+      scrollSecondaryToBottom(instant);
+    },
+    [scrollPrimaryToBottom, scrollSecondaryToBottom],
+  );
 
   // 注册滚动方法
   useEffect(() => {
@@ -2007,7 +2016,7 @@ function DualModelView(props: {
           {!primaryHitBottom && (
             <div
               className={styles["panel-scroll-to-bottom"]}
-              onClick={scrollPrimaryToBottom}
+              onClick={() => scrollPrimaryToBottom(true)}
             >
               <BottomIcon />
             </div>
@@ -2057,7 +2066,7 @@ function DualModelView(props: {
           {!secondaryHitBottom && (
             <div
               className={styles["panel-scroll-to-bottom"]}
-              onClick={scrollSecondaryToBottom}
+              onClick={() => scrollSecondaryToBottom(true)}
             >
               <BottomIcon />
             </div>
@@ -2109,7 +2118,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     useState(false);
 
   // 双模型视图滚动到底部的方法
-  const dualModelScrollToBottomRef = useRef<(() => void) | null>(null);
+  const dualModelScrollToBottomRef = useRef<
+    ((instant?: boolean) => void) | null
+  >(null);
 
   // prompt hints
   const promptStore = usePromptStore();
@@ -3338,19 +3349,22 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
   const messages = renderMessages;
 
   const scrollToBottom = useCallback(
-    (force?: boolean) => {
+    (instant?: boolean) => {
       const v = virtuosoRef.current;
       if (!v) return;
+
+      const behavior: ScrollBehavior = instant ? "auto" : "smooth";
+
       // Footer 内有预览，或者强制要求到底，就直接滚到最底（含 Footer）
-      if (previewVisible || force) {
+      if (previewVisible) {
         // 大数即可；Virtuoso 内部会 clamp 到 scrollHeight
-        v.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "smooth" });
+        v.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior });
       } else {
         // 无预览时仍可对齐最后一项
         v.scrollToIndex({
           index: messages.length - 1,
           align: "end",
-          behavior: "smooth",
+          behavior,
         });
       }
     },
@@ -3361,7 +3375,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
     if (!hitBottom) return; // 用户不在底部就别打扰他
     if (!previewVisible) return;
     // 等一帧，等 DOM 测量完 Footer 新高度
-    const id = requestAnimationFrame(() => scrollToBottom());
+    const id = requestAnimationFrame(() => scrollToBottom(true));
     return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -5413,13 +5427,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             value={userInput}
             onKeyDown={onInputKeyDown}
             // onFocus={scrollToBottom}
-            onClick={() => {
-              scrollToBottom();
-              // 双模型模式下同时滚动两个面板
-              if (isDualMode) {
-                dualModelScrollToBottomRef.current?.();
-              }
-            }}
+            onClick={() => scrollToBottom(true)}
             onPaste={handlePaste}
             rows={inputRows}
             autoFocus={autoFocus}

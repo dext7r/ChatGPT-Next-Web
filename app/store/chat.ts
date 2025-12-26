@@ -106,10 +106,21 @@ export interface ChatSession {
   dualModelMode?: boolean; // 是否启用双模型模式
   secondaryMessages?: ChatMessage[]; // 副模型消息队列
   secondaryModelConfig?: {
-    // 副模型配置
+    // 副模型配置 - 只存储与主模型不同的配置
     model: ModelType;
     providerName: ServiceProvider;
     displayName?: string;
+    // 以下配置为可选，如果不设置则跟随主模型配置
+    // 设置为具体值表示使用独立配置，不跟随主模型
+    historyMessageCount?: number;
+    sendMemory?: boolean;
+    compressMessageLengthThreshold?: number;
+    temperature?: number;
+    top_p?: number;
+    max_tokens?: number;
+    presence_penalty?: number;
+    frequency_penalty?: number;
+    enableInjectSystemPrompts?: boolean;
   };
   secondaryMemoryPrompt?: string; // 副模型记忆提示
   secondaryLastSummarizeIndex?: number; // 副模型摘要索引
@@ -576,6 +587,27 @@ export const useChatStore = createPersistStore(
         const sendMessages = recentMessages.concat(userMessage);
         const messageIndex = get().currentSession().messages.length + 1;
 
+        // 双模型模式：在保存消息之前获取副模型的历史消息（与主模型逻辑一致）
+        let secondaryRecentMessages: ChatMessage[] = [];
+        let secondaryUserMessage: ChatMessage | null = null;
+        let secondaryBotMessage: ChatMessage | null = null;
+        if (session.dualModelMode && session.secondaryModelConfig) {
+          secondaryRecentMessages = get().getSecondaryMessagesWithMemory();
+          secondaryUserMessage = {
+            ...userMessage,
+            id: nanoid(),
+            content: displayContent,
+            modelSource: "secondary" as const,
+          };
+          secondaryBotMessage = createMessage({
+            role: "assistant",
+            streaming: true,
+            model: session.secondaryModelConfig.model,
+            providerName: session.secondaryModelConfig.providerName,
+            modelSource: "secondary",
+          });
+        }
+
         // save user's and bot's message
         get().updateCurrentSession((session) => {
           // 存储在会话中的用户消息使用 displayContent，以支持富文本渲染
@@ -591,20 +623,12 @@ export const useChatStore = createPersistStore(
           ]);
 
           // 双模型模式：同时保存到副模型消息队列
-          if (session.dualModelMode && session.secondaryModelConfig) {
-            const secondaryUserMessage = {
-              ...userMessage,
-              id: nanoid(),
-              content: displayContent,
-              modelSource: "secondary" as const,
-            };
-            const secondaryBotMessage: ChatMessage = createMessage({
-              role: "assistant",
-              streaming: true,
-              model: session.secondaryModelConfig.model,
-              providerName: session.secondaryModelConfig.providerName,
-              modelSource: "secondary",
-            });
+          if (
+            session.dualModelMode &&
+            session.secondaryModelConfig &&
+            secondaryUserMessage &&
+            secondaryBotMessage
+          ) {
             session.secondaryMessages = (
               session.secondaryMessages || []
             ).concat([secondaryUserMessage, secondaryBotMessage]);
@@ -684,104 +708,120 @@ export const useChatStore = createPersistStore(
         });
 
         // 双模型模式：同时发送请求到副模型
-        if (session.dualModelMode && session.secondaryModelConfig) {
+        if (
+          session.dualModelMode &&
+          session.secondaryModelConfig &&
+          secondaryBotMessage &&
+          secondaryUserMessage
+        ) {
           const secondaryModelConfig = session.secondaryModelConfig;
+          const primaryConfig = session.mask.modelConfig;
           const secondaryApi: ClientApi = getClientApi(
             secondaryModelConfig.providerName,
           );
 
-          // 获取副模型消息队列中最后一个 bot 消息
-          const secondaryMessages =
-            get().currentSession().secondaryMessages || [];
-          const secondaryBotMessage =
-            secondaryMessages[secondaryMessages.length - 1];
+          // 使用之前获取的历史消息，并添加用户消息（与主模型逻辑一致）
+          const secondarySendMessages =
+            secondaryRecentMessages.concat(secondaryUserMessage);
 
-          if (secondaryBotMessage && secondaryBotMessage.role === "assistant") {
-            // 获取副模型的历史消息
-            const secondaryRecentMessages =
-              get().getSecondaryMessagesWithMemory();
-            // 移除最后一个 bot 消息（因为它是空的占位符）
-            const secondarySendMessages = secondaryRecentMessages.slice(0, -1);
+          // 构建副模型的完整配置，使用副模型配置覆盖主模型配置
+          const secondaryFullConfig = {
+            ...primaryConfig,
+            model: secondaryModelConfig.model,
+            providerName: secondaryModelConfig.providerName,
+            // 使用副模型配置，如果没有则回退到主模型配置
+            historyMessageCount:
+              secondaryModelConfig.historyMessageCount ??
+              primaryConfig.historyMessageCount,
+            sendMemory:
+              secondaryModelConfig.sendMemory ?? primaryConfig.sendMemory,
+            compressMessageLengthThreshold:
+              secondaryModelConfig.compressMessageLengthThreshold ??
+              primaryConfig.compressMessageLengthThreshold,
+            temperature:
+              secondaryModelConfig.temperature ?? primaryConfig.temperature,
+            top_p: secondaryModelConfig.top_p ?? primaryConfig.top_p,
+            max_tokens:
+              secondaryModelConfig.max_tokens ?? primaryConfig.max_tokens,
+            presence_penalty:
+              secondaryModelConfig.presence_penalty ??
+              primaryConfig.presence_penalty,
+            frequency_penalty:
+              secondaryModelConfig.frequency_penalty ??
+              primaryConfig.frequency_penalty,
+            enableInjectSystemPrompts:
+              secondaryModelConfig.enableInjectSystemPrompts ??
+              primaryConfig.enableInjectSystemPrompts,
+            stream: true,
+          };
 
-            secondaryApi.llm.chat({
-              messages: secondarySendMessages,
-              config: {
-                ...session.mask.modelConfig,
-                model: secondaryModelConfig.model,
-                stream: true,
-              },
-              onUpdate(message) {
-                secondaryBotMessage.streaming = true;
-                if (message) {
-                  secondaryBotMessage.content = message;
-                }
-                get().updateCurrentSession((session) => {
-                  session.secondaryMessages =
-                    session.secondaryMessages?.concat();
-                });
-              },
-              onFinish(message) {
-                secondaryBotMessage.streaming = false;
-                if (message) {
-                  secondaryBotMessage.content =
-                    typeof message === "string" ? message : message.content;
-                  if (typeof message !== "string") {
-                    if (!secondaryBotMessage.statistic) {
-                      secondaryBotMessage.statistic = {};
-                    }
-                    secondaryBotMessage.isStreamRequest =
-                      !!message?.is_stream_request;
-                    secondaryBotMessage.statistic.completionTokens =
-                      message?.usage?.completion_tokens;
-                    secondaryBotMessage.statistic.firstReplyLatency =
-                      message?.usage?.first_content_latency;
-                    secondaryBotMessage.statistic.totalReplyLatency =
-                      message?.usage?.total_latency;
-                    secondaryBotMessage.statistic.reasoningLatency =
-                      message?.usage?.thinking_time;
-                    secondaryBotMessage.statistic.searchingLatency =
-                      message?.usage?.searching_time;
+          // 创建局部变量以避免闭包中的 null 检查问题
+          const botMsg = secondaryBotMessage;
+
+          secondaryApi.llm.chat({
+            messages: secondarySendMessages,
+            config: secondaryFullConfig,
+            onUpdate(message) {
+              botMsg.streaming = true;
+              if (message) {
+                botMsg.content = message;
+              }
+              get().updateCurrentSession((session) => {
+                session.secondaryMessages = session.secondaryMessages?.concat();
+              });
+            },
+            onFinish(message) {
+              botMsg.streaming = false;
+              if (message) {
+                botMsg.content =
+                  typeof message === "string" ? message : message.content;
+                if (typeof message !== "string") {
+                  if (!botMsg.statistic) {
+                    botMsg.statistic = {};
                   }
-                  secondaryBotMessage.date = new Date().toLocaleString();
+                  botMsg.isStreamRequest = !!message?.is_stream_request;
+                  botMsg.statistic.completionTokens =
+                    message?.usage?.completion_tokens;
+                  botMsg.statistic.firstReplyLatency =
+                    message?.usage?.first_content_latency;
+                  botMsg.statistic.totalReplyLatency =
+                    message?.usage?.total_latency;
+                  botMsg.statistic.reasoningLatency =
+                    message?.usage?.thinking_time;
+                  botMsg.statistic.searchingLatency =
+                    message?.usage?.searching_time;
                 }
-                get().updateCurrentSession((session) => {
-                  session.secondaryMessages =
-                    session.secondaryMessages?.concat();
+                botMsg.date = new Date().toLocaleString();
+              }
+              get().updateCurrentSession((session) => {
+                session.secondaryMessages = session.secondaryMessages?.concat();
+              });
+              ChatControllerPool.remove(`${session.id}-secondary`, botMsg.id);
+            },
+            onError(error) {
+              const isAborted = error.message?.includes?.("aborted");
+              botMsg.content +=
+                "\n\n" +
+                prettyObject({
+                  error: true,
+                  message: error.message,
                 });
-                ChatControllerPool.remove(
-                  `${session.id}-secondary`,
-                  secondaryBotMessage.id,
-                );
-              },
-              onError(error) {
-                const isAborted = error.message?.includes?.("aborted");
-                secondaryBotMessage.content +=
-                  "\n\n" +
-                  prettyObject({
-                    error: true,
-                    message: error.message,
-                  });
-                secondaryBotMessage.streaming = false;
-                secondaryBotMessage.isError = !isAborted;
-                get().updateCurrentSession((session) => {
-                  session.secondaryMessages =
-                    session.secondaryMessages?.concat();
-                });
-                ChatControllerPool.remove(
-                  `${session.id}-secondary`,
-                  secondaryBotMessage.id,
-                );
-                console.error("[Chat] secondary model failed ", error);
-              },
-              onController(controller) {
-                ChatControllerPool.addController(
-                  `${session.id}-secondary`,
-                  secondaryBotMessage.id,
-                  controller,
-                );
-              },
-            });
-          }
+              botMsg.streaming = false;
+              botMsg.isError = !isAborted;
+              get().updateCurrentSession((session) => {
+                session.secondaryMessages = session.secondaryMessages?.concat();
+              });
+              ChatControllerPool.remove(`${session.id}-secondary`, botMsg.id);
+              console.error("[Chat] secondary model failed ", error);
+            },
+            onController(controller) {
+              ChatControllerPool.addController(
+                `${session.id}-secondary`,
+                botMsg.id,
+                controller,
+              );
+            },
+          });
         }
       },
 
@@ -1253,11 +1293,15 @@ export const useChatStore = createPersistStore(
 
           // 首次开启时初始化副模型配置
           if (session.dualModelMode && !session.secondaryModelConfig) {
-            // 默认使用与主模型相同的配置
+            const primaryConfig = session.mask.modelConfig;
+            // 只初始化必要的配置（model、providerName）
+            // 其他配置不设置，会自动跟随主模型配置
             session.secondaryModelConfig = {
-              model: session.mask.modelConfig.model,
-              providerName: session.mask.modelConfig.providerName,
+              model: primaryConfig.model,
+              providerName: primaryConfig.providerName,
               displayName: undefined,
+              // 不设置以下配置，让它们跟随主模型
+              // historyMessageCount, sendMemory, temperature 等
             };
             session.secondaryMessages = [];
             session.secondaryMemoryPrompt = "";
@@ -1272,7 +1316,10 @@ export const useChatStore = createPersistStore(
         displayName?: string,
       ) {
         get().updateCurrentSession((session) => {
+          const existingConfig = session.secondaryModelConfig;
+          // 只更新模型相关配置，保留其他独立配置（如果有的话）
           session.secondaryModelConfig = {
+            ...existingConfig,
             model,
             providerName,
             displayName,
@@ -1291,7 +1338,8 @@ export const useChatStore = createPersistStore(
       // 获取副模型的消息历史（带记忆）
       getSecondaryMessagesWithMemory() {
         const session = get().currentSession();
-        const modelConfig = session.secondaryModelConfig;
+        const secondaryConfig = session.secondaryModelConfig;
+        const primaryConfig = session.mask.modelConfig;
         const messages = session.secondaryMessages?.slice() || [];
         const totalMessageCount = messages.length;
 
@@ -1304,43 +1352,107 @@ export const useChatStore = createPersistStore(
           }
         }
 
-        // 类似 getMessagesWithMemory 的逻辑，但要考虑 clearContextIndex
-        const historyCount = session.mask.modelConfig.historyMessageCount || 4;
-        const startIndex = Math.max(
-          clearContextIndex,
-          totalMessageCount - historyCount,
-        );
+        // 使用副模型配置，如果没有则回退到主模型配置
+        const historyCount =
+          secondaryConfig?.historyMessageCount ??
+          primaryConfig.historyMessageCount ??
+          4;
+        const sendMemory =
+          secondaryConfig?.sendMemory ?? primaryConfig.sendMemory ?? true;
+        const enableInjectSystemPrompts =
+          secondaryConfig?.enableInjectSystemPrompts ??
+          primaryConfig.enableInjectSystemPrompts ??
+          true;
 
-        const reversedRecentMessages: ChatMessage[] = [];
-        for (
-          let i = totalMessageCount - 1, count = 0;
-          i >= startIndex && count < historyCount;
-          i -= 1
+        // 上下文提示词（与主模型共享）
+        const contextPrompts = session.mask.context.slice();
+
+        // 系统提示词
+        let systemPrompts: ChatMessage[] = [];
+        if (
+          enableInjectSystemPrompts &&
+          secondaryConfig?.model &&
+          !isImageGenerationModel(secondaryConfig.model)
         ) {
-          const msg = messages[i];
-          if (!msg || msg.isError) continue;
-          count += 1;
-          reversedRecentMessages.push(msg);
+          systemPrompts = [
+            createMessage({
+              role: "system",
+              content: fillTemplateWith("", {
+                ...primaryConfig,
+                ...secondaryConfig,
+                template: DEFAULT_SYSTEM_TEMPLATE,
+              } as ModelConfig),
+            }),
+          ];
+          console.log("[Secondary Model] System Prompt Injected");
         }
 
-        const recentMessages = reversedRecentMessages.reverse();
-
-        // 添加记忆提示（只有在 lastSummarizeIndex > clearContextIndex 时才添加）
-        const shouldSendMemory =
+        // 长期记忆
+        const shouldSendLongTermMemory =
+          sendMemory &&
           session.secondaryMemoryPrompt &&
           session.secondaryMemoryPrompt.length > 0 &&
           (session.secondaryLastSummarizeIndex ?? 0) > clearContextIndex;
 
-        if (shouldSendMemory) {
-          const memoryMessage = createMessage({
-            role: "system",
-            content: Locale.Store.Prompt.History(
-              session.secondaryMemoryPrompt!,
-            ),
-            date: "",
-          });
-          recentMessages.unshift(memoryMessage);
+        const longTermMemoryPrompts: ChatMessage[] = [];
+        if (shouldSendLongTermMemory) {
+          longTermMemoryPrompts.push(
+            createMessage({
+              role: "system",
+              content: Locale.Store.Prompt.History(
+                session.secondaryMemoryPrompt!,
+              ),
+              date: "",
+            }),
+          );
         }
+        const longTermMemoryStartIndex =
+          session.secondaryLastSummarizeIndex ?? 0;
+
+        // 短期记忆
+        const shortTermMemoryStartIndex = Math.max(
+          0,
+          totalMessageCount - historyCount,
+        );
+
+        // 计算消息起始索引
+        const memoryStartIndex = shouldSendLongTermMemory
+          ? Math.min(longTermMemoryStartIndex, shortTermMemoryStartIndex)
+          : shortTermMemoryStartIndex;
+        const contextStartIndex = Math.max(clearContextIndex, memoryStartIndex);
+
+        // 获取最近的消息
+        const reversedRecentMessages: ChatMessage[] = [];
+        for (let i = totalMessageCount - 1; i >= contextStartIndex; i -= 1) {
+          const msg = messages[i];
+          if (!msg || msg.isError) continue;
+
+          // 处理引用字段
+          let msgContent = getMessageTextContent(msg);
+          if (msg.quote) {
+            const quotedText = msg.quote.text
+              .split("\n")
+              .map((line: string) => `> ${line}`)
+              .join("\n");
+            msgContent = `${quotedText}\n\n${msgContent}`;
+          }
+
+          const sendMessage: ChatMessage = {
+            ...msg,
+            content: msgContent,
+          };
+          delete (sendMessage as any).quote;
+
+          reversedRecentMessages.push(sendMessage);
+        }
+
+        // 组合所有消息
+        const recentMessages = [
+          ...systemPrompts,
+          ...longTermMemoryPrompts,
+          ...contextPrompts,
+          ...reversedRecentMessages.reverse(),
+        ];
 
         return recentMessages;
       },

@@ -402,13 +402,13 @@ function ClearContextDivider(props: { index: number; isSecondary?: boolean }) {
           }
 
           // 双模型模式：同时清除副模型的 beClear 标记
+          // 使用最后一条带有 beClear 标记的消息，而不是依赖索引
           if (session.dualModelMode && session.secondaryMessages?.length) {
-            const secondaryIndex = props.index - 1;
-            if (
-              secondaryIndex >= 0 &&
-              session.secondaryMessages[secondaryIndex]
-            ) {
-              session.secondaryMessages[secondaryIndex].beClear = false;
+            for (let i = session.secondaryMessages.length - 1; i >= 0; i--) {
+              if (session.secondaryMessages[i]?.beClear) {
+                session.secondaryMessages[i].beClear = false;
+                break;
+              }
             }
           }
         })
@@ -3084,13 +3084,37 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       .filter((m) => m.id !== newBotMessage.id)
       .slice(-10); // 取最近的消息
 
+    // 构建副模型的完整配置
+    const primaryConfig = session.mask.modelConfig;
+    const secondaryFullConfig = {
+      ...primaryConfig,
+      model: secondaryModelConfig.model,
+      providerName: secondaryModelConfig.providerName,
+      historyMessageCount:
+        secondaryModelConfig.historyMessageCount ??
+        primaryConfig.historyMessageCount,
+      sendMemory: secondaryModelConfig.sendMemory ?? primaryConfig.sendMemory,
+      compressMessageLengthThreshold:
+        secondaryModelConfig.compressMessageLengthThreshold ??
+        primaryConfig.compressMessageLengthThreshold,
+      temperature:
+        secondaryModelConfig.temperature ?? primaryConfig.temperature,
+      top_p: secondaryModelConfig.top_p ?? primaryConfig.top_p,
+      max_tokens: secondaryModelConfig.max_tokens ?? primaryConfig.max_tokens,
+      presence_penalty:
+        secondaryModelConfig.presence_penalty ?? primaryConfig.presence_penalty,
+      frequency_penalty:
+        secondaryModelConfig.frequency_penalty ??
+        primaryConfig.frequency_penalty,
+      enableInjectSystemPrompts:
+        secondaryModelConfig.enableInjectSystemPrompts ??
+        primaryConfig.enableInjectSystemPrompts,
+      stream: true,
+    };
+
     api.llm.chat({
       messages: sendMessages,
-      config: {
-        ...session.mask.modelConfig,
-        model: secondaryModelConfig.model,
-        stream: true,
-      },
+      config: secondaryFullConfig,
       onUpdate(content) {
         newBotMessage.streaming = true;
         if (content) {

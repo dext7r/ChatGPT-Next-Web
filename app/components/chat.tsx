@@ -3078,6 +3078,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       streaming: true,
       model: secondaryModelConfig.model,
       providerName: secondaryModelConfig.providerName,
+      displayName: secondaryModelConfig.displayName,
       modelSource: "secondary",
     });
 
@@ -3816,6 +3817,16 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
       (m) => m.name === modelName && m.provider?.providerName === providerName,
     );
   }, [modelName, providerName, modelTable]);
+
+  // Find the secondary model info from modelTable (for dual model mode)
+  const secondaryModelInfo = useMemo(() => {
+    if (!session.secondaryModelConfig) return null;
+    return modelTable.find(
+      (m) =>
+        m.name === session.secondaryModelConfig!.model &&
+        m.provider?.providerName === session.secondaryModelConfig!.providerName,
+    );
+  }, [session.secondaryModelConfig, modelTable]);
   // Determine if the model supports vision
   const canUploadImage = useMemo(() => {
     return isVisionModel(modelName) || !!currentModelInfo?.enableVision;
@@ -4419,7 +4430,9 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           {!isMobileScreen && (
             <DualModelToggle
               enabled={isDualMode}
-              onToggle={() => chatStore.toggleDualModelMode()}
+              onToggle={() =>
+                chatStore.toggleDualModelMode(currentModelInfo?.displayName)
+              }
             />
           )}
           <div className="window-action-button">
@@ -4493,6 +4506,7 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
               currentModelInfo?.displayName || session.mask.modelConfig.model
             }
             secondaryModelName={
+              secondaryModelInfo?.displayName ||
               session.secondaryModelConfig?.displayName ||
               session.secondaryModelConfig?.model ||
               "未选择"

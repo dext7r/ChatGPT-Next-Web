@@ -604,6 +604,7 @@ export const useChatStore = createPersistStore(
             streaming: true,
             model: session.secondaryModelConfig.model,
             providerName: session.secondaryModelConfig.providerName,
+            displayName: session.secondaryModelConfig.displayName,
             modelSource: "secondary",
           });
         }
@@ -1286,7 +1287,7 @@ export const useChatStore = createPersistStore(
       },
 
       // ========== 双模型模式相关方法 ==========
-      toggleDualModelMode() {
+      toggleDualModelMode(displayName?: string) {
         const session = get().currentSession();
         get().updateCurrentSession((session) => {
           session.dualModelMode = !session.dualModelMode;
@@ -1299,7 +1300,7 @@ export const useChatStore = createPersistStore(
             session.secondaryModelConfig = {
               model: primaryConfig.model,
               providerName: primaryConfig.providerName,
-              displayName: undefined,
+              displayName,
               // 不设置以下配置，让它们跟随主模型
               // historyMessageCount, sendMemory, temperature 等
             };

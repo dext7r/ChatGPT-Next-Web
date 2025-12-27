@@ -22,9 +22,6 @@ import mermaid from "mermaid";
 import Locale from "../locales";
 import LoadingIcon from "../icons/three-dots.svg";
 import ReloadButtonIcon from "../icons/reload.svg";
-import ConfirmIcon from "../icons/confirm.svg";
-import CancelIcon from "../icons/cancel.svg";
-import CloseIcon from "../icons/close.svg";
 import React from "react";
 // import { useDebouncedCallback } from "use-debounce";
 import { showImageModal, FullScreen } from "./ui-lib";
@@ -50,14 +47,10 @@ type CodeFoldCtx = {
 };
 const CodeFoldContext = React.createContext<CodeFoldCtx | null>(null);
 
-// 消息编辑上下文 - 用于代码块编辑功能
+// 消息编辑上下文 - 用于代码块编辑功能（弹窗提升到 ChatComponent）
 export type MessageEditContextType = {
-  messageId?: string;
-  onEditCodeBlock?: (
-    originalCode: string,
-    newCode: string,
-    language: string,
-  ) => void;
+  // 打开编辑弹窗的方法（由 ChatComponent 提供）
+  openEditModal?: (originalCode: string, language: string) => void;
 };
 export const MessageEditContext = React.createContext<MessageEditContextType>(
   {},
@@ -519,9 +512,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
   const [showToggle, setShowToggle] = useState(false);
   const prevCollapsedRef = useRef<boolean | undefined>(undefined);
 
-  // 代码编辑相关状态
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingCode, setEditingCode] = useState("");
+  // 代码编辑上下文
   const messageEditCtx = useContext(MessageEditContext);
 
   const isStatusReady = !props.status;
@@ -643,25 +634,11 @@ export function PreCode(props: { children: any; status?: boolean }) {
     await downloadAs(originalCode, filename);
   };
 
-  // 打开代码编辑弹窗
+  // 打开代码编辑弹窗（调用 ChatComponent 提供的方法）
   const handleOpenEdit = () => {
-    setEditingCode(originalCode);
-    setShowEditModal(true);
+    messageEditCtx.openEditModal?.(originalCode, language);
   };
 
-  // 保存编辑的代码
-  const handleSaveEdit = () => {
-    if (messageEditCtx.onEditCodeBlock && editingCode !== originalCode) {
-      messageEditCtx.onEditCodeBlock(originalCode, editingCode, language);
-    }
-    setShowEditModal(false);
-  };
-
-  // 取消编辑
-  const handleCancelEdit = () => {
-    setShowEditModal(false);
-    setEditingCode("");
-  };
   const handlePreviewClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -960,7 +937,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
           <button className={styles["code-header-btn"]} onClick={downloadCode}>
             {Locale.Chat.Actions.Download}
           </button>
-          {messageEditCtx.onEditCodeBlock && (
+          {messageEditCtx.openEditModal && (
             <button
               className={styles["code-header-btn"]}
               onClick={handleOpenEdit}
@@ -1053,59 +1030,6 @@ export function PreCode(props: { children: any; status?: boolean }) {
           </CodeFoldContext.Provider>
         )}
       </div>
-
-      {/* 代码编辑弹窗 */}
-      {showEditModal && (
-        <div
-          className={styles["code-edit-modal-overlay"]}
-          onClick={handleCancelEdit}
-        >
-          <div
-            className={styles["code-edit-modal"]}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles["code-edit-modal-header"]}>
-              <div className={styles["code-edit-modal-title"]}>
-                {Locale.Chat.Actions.Edit} - {language || "code"}
-              </div>
-              <div
-                className={styles["code-edit-modal-close"]}
-                onClick={handleCancelEdit}
-              >
-                <CloseIcon />
-              </div>
-            </div>
-            <textarea
-              className={styles["code-edit-textarea"]}
-              value={editingCode}
-              onChange={(e) => setEditingCode(e.target.value)}
-              spellCheck={false}
-              autoFocus
-            />
-            <div className={styles["code-edit-modal-footer"]}>
-              <div className={styles["code-edit-modal-actions"]}>
-                <IconButton
-                  text={Locale.Chat.Actions.Cancel}
-                  onClick={handleCancelEdit}
-                  icon={<CancelIcon />}
-                  bordered
-                  shadow
-                  tabIndex={0}
-                />
-                <IconButton
-                  text={Locale.Chat.Actions.Save}
-                  type="primary"
-                  onClick={handleSaveEdit}
-                  icon={<ConfirmIcon />}
-                  bordered
-                  shadow
-                  tabIndex={0}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

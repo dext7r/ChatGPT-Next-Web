@@ -45,7 +45,7 @@ import {
 import { getClientConfig } from "../config/client";
 import { getHeaders } from "../client/api";
 import { getMessageTextContent } from "../utils";
-import { useAllModels } from "../utils/hooks";
+import { useModelTable } from "../context/model-table";
 
 import { FileIcon, defaultStyles } from "react-file-icon";
 import type { DefaultExtensionType } from "react-file-icon";
@@ -727,7 +727,7 @@ export function ImagePreviewer(props: {
       dom.innerHTML = dom.innerHTML; // Refresh the content of the preview by resetting its HTML for fix a bug glitching
     }
   };
-  const allModels = useAllModels();
+  const allModels = useModelTable();
   // 如果有 modelOverride，优先使用它
   const effectiveModel = props.modelOverride?.model ?? mask.modelConfig.model;
   const effectiveProviderName =

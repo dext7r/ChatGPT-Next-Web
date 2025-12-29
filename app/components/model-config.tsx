@@ -4,7 +4,7 @@ import { ModalConfigValidator, ModelConfig, useAccessStore } from "../store";
 import Locale from "../locales";
 import { InputRange } from "./input-range";
 import { ListItem, Select } from "./ui-lib";
-import { useAllModelsWithCustomProviders } from "../utils/hooks";
+import { useModelTable } from "../context/model-table";
 import { groupBy } from "lodash-es";
 import { useState, useEffect } from "react";
 import { Model } from "../client/api";
@@ -54,7 +54,7 @@ export function ModelConfigList(props: {
   modelConfig: ModelConfig;
   updateConfig: (updater: (config: ModelConfig) => void) => void;
 }) {
-  const allModels = useAllModelsWithCustomProviders();
+  const allModels = useModelTable();
   const groupModels = groupBy(
     allModels.filter((v) => v.available),
     "provider.providerName",

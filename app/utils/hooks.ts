@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAccessStore, useAppConfig, useCustomProviderStore } from "../store";
 import { collectModelsWithDefaultModel } from "./model";
 import { Model } from "../client/api";
@@ -34,37 +34,36 @@ export function useAllModels() {
 export function useAllModelsWithCustomProviders() {
   const builtInModels = useAllModels();
   const customProviderStore = useCustomProviderStore();
-  const [customProviderModels, setCustomProviderModels] = useState<Model[]>(
-    () => {
-      try {
-        const providers = customProviderStore.providers;
-        const activeProviders = providers.filter((p) => p.status === "active");
-        return activeProviders.flatMap((provider) => {
-          return (provider.models || [])
-            .filter((model) => model.available)
-            .map((model) => ({
-              name: model.name,
-              available: true,
-              displayName: `${model.displayName || model.name} | ${
-                provider.name
-              }`,
-              provider: {
-                id: provider.id,
-                providerName: provider.name,
-                providerType: "custom-provider",
-              },
-              isCustom: true as const,
-              enableVision: model?.enableVision,
-              description: model?.description,
-            }));
-        });
-      } catch (e) {
-        console.error("Failed to parse custom providers:", e);
-        return [];
-      }
-    },
-  );
-  // }, []);
+
+  const customProviderModels = useMemo<Model[]>(() => {
+    try {
+      const providers = customProviderStore.providers;
+      const activeProviders = providers.filter((p) => p.status === "active");
+      return activeProviders.flatMap((provider) => {
+        return (provider.models || [])
+          .filter((model) => model.available)
+          .map((model) => ({
+            name: model.name,
+            available: true,
+            displayName: `${model.displayName || model.name} | ${
+              provider.name
+            }`,
+            provider: {
+              id: provider.id,
+              providerName: provider.name,
+              providerType: "custom-provider",
+            },
+            isCustom: true as const,
+            enableVision: model?.enableVision,
+            description: model?.description,
+          }));
+      });
+    } catch (e) {
+      console.error("Failed to parse custom providers:", e);
+      return [];
+    }
+  }, [customProviderStore.providers]);
+
   // Combine built-in models with custom provider models
   return useMemo(() => {
     return [...customProviderModels, ...builtInModels];

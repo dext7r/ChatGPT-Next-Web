@@ -146,7 +146,7 @@ import {
 import { prettyObject } from "../utils/format";
 import { ExportMessageModal } from "./exporter";
 import { getClientConfig } from "../config/client";
-import { useAllModelsWithCustomProviders } from "../utils/hooks";
+import { useModelTable } from "../context/model-table";
 import { Model, MultimodalContent, getClientApi } from "../client/api";
 
 import { ClientApi } from "../client/api";
@@ -607,13 +607,13 @@ export function ChatActions(props: {
   setShowShortcutKeyModal: React.Dispatch<React.SetStateAction<boolean>>;
   userInput: string;
   setUserInput: (input: string) => void;
-  modelTable: Model[];
 }) {
   const config = useAppConfig();
   const navigate = useNavigate();
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const access = useAccessStore();
+  const modelTable = useModelTable();
 
   const [showTools, setShowTools] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
@@ -1247,7 +1247,7 @@ export function ChatActions(props: {
   const stopAll = () => ChatControllerPool.stopAll();
 
   // switch model
-  const models = props.modelTable;
+  const models = modelTable;
   const currentModel = session.mask.modelConfig.model;
   const currentProviderName =
     session.mask.modelConfig?.providerName || ServiceProvider.OpenAI;
@@ -1894,9 +1894,9 @@ function DualModelView(props: {
   config: any;
   onPrimaryModelSelect: () => void;
   onSecondaryModelSelect: () => void;
-  modelTable: Model[];
   onScrollBothToBottom?: (fn: (instant?: boolean) => void) => void; // 注册滚动到底部的回调
 }) {
+  const modelTable = useModelTable();
   const primaryVirtuosoRef = useRef<VirtuosoHandle>(null);
   const secondaryVirtuosoRef = useRef<VirtuosoHandle>(null);
   const [primaryHitBottom, setPrimaryHitBottom] = useState(true);
@@ -2077,12 +2077,13 @@ function DualModelView(props: {
   );
 }
 
-function ChatComponent({ modelTable }: { modelTable: Model[] }) {
+function ChatComponent() {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
   const config = useAppConfig();
+  const modelTable = useModelTable();
   // const fontSize = config.fontSize;
 
   const [showExport, setShowExport] = useState(false);
@@ -4518,7 +4519,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
             context={context}
             isLoading={isLoading}
             config={config}
-            modelTable={modelTable}
             onPrimaryModelSelect={() => setShowPrimaryModelSelector(true)}
             onSecondaryModelSelect={() => setShowSecondaryModelSelector(true)}
             onScrollBothToBottom={(fn) => {
@@ -5400,7 +5400,6 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
           setShowShortcutKeyModal={setShowShortcutKeyModal}
           userInput={userInput}
           setUserInput={setUserInput}
-          modelTable={modelTable}
         />
         {/* 引用块 - 显示在输入框上方 */}
         {quoteBlock && (
@@ -5783,48 +5782,8 @@ function ChatComponent({ modelTable }: { modelTable: Model[] }) {
 export function Chat() {
   const chatStore = useChatStore();
   const session = chatStore.currentSession();
-  const allModels = useAllModelsWithCustomProviders();
+  const modelTable = useModelTable();
   const access = useAccessStore();
-
-  const modelTable = useMemo(() => {
-    const filteredModels = allModels.filter((m) => m.available);
-    const modelMap = new Map<string, (typeof allModels)[0]>();
-
-    filteredModels.forEach((model) => {
-      const key = `${model.name}@${model?.provider?.id}`;
-
-      if (modelMap.has(key)) {
-        // 合并已存在的模型
-        const existingModel = modelMap.get(key)!;
-
-        // 合并 description（如果新模型有 description 而旧模型没有）
-        if (model.description && !existingModel.description) {
-          existingModel.description = model.description;
-        }
-        if (model.displayName && !existingModel.displayName) {
-          existingModel.displayName = model.displayName;
-        }
-        if (model.isDefault) {
-          existingModel.isDefault = true;
-        }
-      } else {
-        // 添加新模型
-        modelMap.set(key, { ...model });
-      }
-    });
-
-    // 转换为数组
-    const mergedModels = Array.from(modelMap.values());
-
-    // 确保默认模型排在第一位
-    const defaultModel = mergedModels.find((m) => m.isDefault);
-
-    if (defaultModel) {
-      return [defaultModel, ...mergedModels.filter((m) => m !== defaultModel)];
-    }
-    console.log("recalculate modelTable... ");
-    return mergedModels;
-  }, [allModels]);
 
   // Update session messages based on modelTable
   useEffect(() => {
@@ -6021,7 +5980,5 @@ export function Chat() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelTable]);
-  return (
-    <ChatComponent key={session.id} modelTable={modelTable}></ChatComponent>
-  );
+  return <ChatComponent key={session.id} />;
 }

@@ -108,6 +108,7 @@ import Locale from "../locales";
 
 import { IconButton } from "./button";
 import styles from "./chat.module.scss";
+import mdStyles from "./markdown.module.scss";
 
 import {
   List,
@@ -2160,6 +2161,23 @@ function ChatComponent() {
     setQuoteBubble((q) => ({ ...q, visible: false, text: "" }));
   }, []);
 
+  // 代码编辑弹窗状态（全局唯一）
+  const [codeEditModal, setCodeEditModal] = useState<{
+    visible: boolean;
+    messageId: string;
+    originalCode: string;
+    editingCode: string;
+    language: string;
+    isSecondary: boolean;
+  }>({
+    visible: false,
+    messageId: "",
+    originalCode: "",
+    editingCode: "",
+    language: "",
+    isSecondary: false,
+  });
+
   // 清除引用块
   const clearQuoteBlock = useCallback(() => {
     setQuoteBlock(null);
@@ -2215,6 +2233,43 @@ function ChatComponent() {
     },
     [chatStore, session],
   );
+
+  // 创建打开弹窗的方法（返回一个闭包，绑定 messageId 和 isSecondary）
+  const createOpenCodeEditModal = useCallback(
+    (messageId: string, isSecondary: boolean) =>
+      (originalCode: string, language: string) => {
+        setCodeEditModal({
+          visible: true,
+          messageId,
+          originalCode,
+          editingCode: originalCode,
+          language,
+          isSecondary,
+        });
+      },
+    [],
+  );
+
+  // 保存编辑
+  const handleSaveCodeEdit = useCallback(() => {
+    const { messageId, originalCode, editingCode, language, isSecondary } =
+      codeEditModal;
+    if (editingCode !== originalCode) {
+      handleEditCodeBlock(
+        messageId,
+        originalCode,
+        editingCode,
+        language,
+        isSecondary,
+      );
+    }
+    setCodeEditModal((prev) => ({ ...prev, visible: false }));
+  }, [codeEditModal, handleEditCodeBlock]);
+
+  // 取消编辑
+  const handleCancelCodeEdit = useCallback(() => {
+    setCodeEditModal((prev) => ({ ...prev, visible: false }));
+  }, []);
 
   // 将选中文本转为逐行 Markdown 引用
   function toMarkdownQuote(raw: string) {
@@ -4719,19 +4774,10 @@ function ChatComponent() {
                       <div className={styles["chat-message-item"]}>
                         <MessageEditContext.Provider
                           value={{
-                            messageId: message.id,
-                            onEditCodeBlock: (
-                              originalCode,
-                              newCode,
-                              language,
-                            ) =>
-                              handleEditCodeBlock(
-                                message.id,
-                                originalCode,
-                                newCode,
-                                language,
-                                isSecondary,
-                              ),
+                            openEditModal: createOpenCodeEditModal(
+                              message.id,
+                              isSecondary,
+                            ),
                           }}
                         >
                           <Markdown
@@ -5147,18 +5193,10 @@ function ChatComponent() {
                         )}
                         <MessageEditContext.Provider
                           value={{
-                            messageId: message.id,
-                            onEditCodeBlock: (
-                              originalCode,
-                              newCode,
-                              language,
-                            ) =>
-                              handleEditCodeBlock(
-                                message.id,
-                                originalCode,
-                                newCode,
-                                language,
-                              ),
+                            openEditModal: createOpenCodeEditModal(
+                              message.id,
+                              false,
+                            ),
                           }}
                         >
                           <Markdown
@@ -5773,6 +5811,64 @@ function ChatComponent() {
           onClick={(e) => e.stopPropagation()}
         >
           {Locale.Chat.Actions.Quote}
+        </div>
+      )}
+
+      {/* 代码编辑弹窗（全局唯一） */}
+      {codeEditModal.visible && (
+        <div
+          className={mdStyles["code-edit-modal-overlay"]}
+          onClick={handleCancelCodeEdit}
+        >
+          <div
+            className={mdStyles["code-edit-modal"]}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={mdStyles["code-edit-modal-header"]}>
+              <div className={mdStyles["code-edit-modal-title"]}>
+                {Locale.Chat.Actions.Edit} - {codeEditModal.language || "code"}
+              </div>
+              <div
+                className={mdStyles["code-edit-modal-close"]}
+                onClick={handleCancelCodeEdit}
+              >
+                <CloseIcon />
+              </div>
+            </div>
+            <textarea
+              className={mdStyles["code-edit-textarea"]}
+              value={codeEditModal.editingCode}
+              onChange={(e) =>
+                setCodeEditModal((prev) => ({
+                  ...prev,
+                  editingCode: e.target.value,
+                }))
+              }
+              spellCheck={false}
+              autoFocus
+            />
+            <div className={mdStyles["code-edit-modal-footer"]}>
+              <div className={mdStyles["code-edit-modal-actions"]}>
+                <IconButton
+                  text={Locale.Chat.Actions.Cancel}
+                  onClick={handleCancelCodeEdit}
+                  icon={<CancelIcon />}
+                  bordered
+                  shadow
+                  tabIndex={0}
+                />
+                <IconButton
+                  text={Locale.Chat.Actions.Save}
+                  type="primary"
+                  onClick={handleSaveCodeEdit}
+                  icon={<ConfirmIcon />}
+                  bordered
+                  shadow
+                  tabIndex={0}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

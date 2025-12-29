@@ -269,6 +269,8 @@ export function ProviderModal(props: ProviderModalProps) {
   const [models, setModels] = useState<Model[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelSearchTerm, setModelSearchTerm] = useState("");
+  // 模型视图模式: 'list' | 'grid'
+  const [modelViewMode, setModelViewMode] = useState<"list" | "grid">("list");
   // 模型排序状态
   const [initialSortDone, setInitialSortDone] = useState(false);
   // 模型编辑和json视图
@@ -2394,6 +2396,27 @@ export function ProviderModal(props: ProviderModalProps) {
                   bordered
                   onClick={AddModels}
                 />
+                {/* 视图切换按钮组 */}
+                <div className={styles.viewToggleGroup}>
+                  <button
+                    className={`${styles.viewToggleBtn} ${
+                      modelViewMode === "list" ? styles.active : ""
+                    }`}
+                    onClick={() => setModelViewMode("list")}
+                    title="列表视图"
+                  >
+                    列表
+                  </button>
+                  <button
+                    className={`${styles.viewToggleBtn} ${
+                      modelViewMode === "grid" ? styles.active : ""
+                    }`}
+                    onClick={() => setModelViewMode("grid")}
+                    title="卡片视图"
+                  >
+                    卡片
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2434,94 +2457,197 @@ export function ProviderModal(props: ProviderModalProps) {
                   />
                 </div>
               ) : filteredModels.length > 0 ? (
-                /* 模型网格 */
-                <div className={styles.modelGrid}>
-                  {filteredModels.map((model) => (
-                    <div
-                      key={model.name}
-                      className={`${styles.modelItem} ${
-                        model.available ? styles.selected : ""
-                      }`}
-                      onClick={() => toggleModelSelection(model.name)}
-                    >
-                      <div className={styles.modelContent}>
-                        <div
-                          className={styles.modelName}
-                          title={model.name} // 只添加title属性
-                        >
-                          {model.displayName || model.name}
+                /* 根据视图模式渲染 */
+                modelViewMode === "list" ? (
+                  /* 列表视图 */
+                  <div className={styles.modelListView}>
+                    {filteredModels.map((model) => (
+                      <div
+                        key={model.name}
+                        className={`${styles.modelListItem} ${
+                          model.available ? styles.selected : ""
+                        }`}
+                        onClick={() => toggleModelSelection(model.name)}
+                      >
+                        <div className={styles.modelListLeft}>
+                          <div className={styles.modelCheckbox} />
+                          <div className={styles.modelListInfo}>
+                            <div className={styles.modelListName}>
+                              {model.displayName || model.name}
+                            </div>
+                            {model.displayName &&
+                              model.displayName !== model.name && (
+                                <div className={styles.modelListOriginalName}>
+                                  {model.name}
+                                </div>
+                              )}
+                          </div>
                         </div>
-                      </div>
-                      <div className={styles.modelFooter}>
-                        <div
-                          className={`${styles.modelTestIcon} ${
-                            modelTestStatus[model.name]?.status === "testing"
-                              ? styles.testing
-                              : modelTestStatus[model.name]?.status ===
-                                "success"
-                              ? styles.success
-                              : modelTestStatus[model.name]?.status === "error"
-                              ? styles.error
-                              : ""
-                          }`}
-                          onClick={(e) => testModelAvailability(model, e)}
-                          title={
-                            modelTestStatus[model.name]?.status === "success"
-                              ? `响应时间: ${modelTestStatus[model.name]
-                                  ?.result}`
-                              : modelTestStatus[model.name]?.status === "error"
-                              ? `错误: ${modelTestStatus[model.name]?.result}`
-                              : "测试模型可用性"
-                          }
-                        >
+                        <div className={styles.modelListRight}>
+                          {/* 测试结果 */}
                           {modelTestStatus[model.name]?.status === "testing" ? (
-                            <LoadingIcon />
+                            <span
+                              className={`${styles.modelListTestResult} ${styles.testing}`}
+                            >
+                              测试中...
+                            </span>
                           ) : modelTestStatus[model.name]?.status ===
                             "success" ? (
-                            <span className={styles.testResult}>
+                            <span
+                              className={`${styles.modelListTestResult} ${styles.success}`}
+                            >
                               {modelTestStatus[model.name]?.result}
                             </span>
                           ) : modelTestStatus[model.name]?.status ===
                             "error" ? (
-                            <span className={styles.testResult}>
-                              {modelTestStatus[model.name]?.result}
+                            <span
+                              className={`${styles.modelListTestResult} ${styles.error}`}
+                              title={modelTestStatus[model.name]?.result}
+                            >
+                              失败
                             </span>
-                          ) : (
-                            <span className={styles.testIcon}>Test</span>
-                          )}
-                        </div>
-                        <div
-                          className={styles.visionToggle}
-                          onClick={(e) => {
-                            e.stopPropagation(); // 阻止冒泡，避免触发模型选择
-                            setModels(
-                              models.map((m) =>
-                                m.name === model.name
-                                  ? { ...m, enableVision: !m.enableVision }
-                                  : m,
-                              ),
-                            );
-                          }}
-                          title={
-                            model.enableVision ? "关闭视觉支持" : "开启视觉支持"
-                          }
-                        >
-                          {model.enableVision ? (
-                            <VisionIcon width="16" height="16" />
-                          ) : (
-                            <VisionOffIcon width="16" height="16" />
-                          )}
-                        </div>
-                        <div
-                          className={styles.modelEditButton}
-                          onClick={(e) => handleEditDisplayName(model, e)}
-                        >
-                          Edit
+                          ) : null}
+                          {/* 测试按钮 */}
+                          <div
+                            className={styles.modelTestIcon}
+                            onClick={(e) => testModelAvailability(model, e)}
+                            title="测试模型可用性"
+                          >
+                            {modelTestStatus[model.name]?.status ===
+                            "testing" ? (
+                              <LoadingIcon />
+                            ) : (
+                              <span className={styles.testIcon}>Test</span>
+                            )}
+                          </div>
+                          {/* 视觉开关 */}
+                          <div
+                            className={styles.visionToggle}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModels(
+                                models.map((m) =>
+                                  m.name === model.name
+                                    ? { ...m, enableVision: !m.enableVision }
+                                    : m,
+                                ),
+                              );
+                            }}
+                            title={
+                              model.enableVision
+                                ? "关闭视觉支持"
+                                : "开启视觉支持"
+                            }
+                          >
+                            {model.enableVision ? (
+                              <VisionIcon width="16" height="16" />
+                            ) : (
+                              <VisionOffIcon width="16" height="16" />
+                            )}
+                          </div>
+                          {/* 编辑按钮 */}
+                          <div
+                            className={styles.modelEditButton}
+                            onClick={(e) => handleEditDisplayName(model, e)}
+                          >
+                            Edit
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  /* 卡片网格视图 */
+                  <div className={styles.modelGrid}>
+                    {filteredModels.map((model) => (
+                      <div
+                        key={model.name}
+                        className={`${styles.modelItem} ${
+                          model.available ? styles.selected : ""
+                        }`}
+                        onClick={() => toggleModelSelection(model.name)}
+                      >
+                        <div className={styles.modelContent}>
+                          <div className={styles.modelName} title={model.name}>
+                            {model.displayName || model.name}
+                          </div>
+                        </div>
+                        <div className={styles.modelFooter}>
+                          <div
+                            className={`${styles.modelTestIcon} ${
+                              modelTestStatus[model.name]?.status === "testing"
+                                ? styles.testing
+                                : modelTestStatus[model.name]?.status ===
+                                  "success"
+                                ? styles.success
+                                : modelTestStatus[model.name]?.status ===
+                                  "error"
+                                ? styles.error
+                                : ""
+                            }`}
+                            onClick={(e) => testModelAvailability(model, e)}
+                            title={
+                              modelTestStatus[model.name]?.status === "success"
+                                ? `响应时间: ${modelTestStatus[model.name]
+                                    ?.result}`
+                                : modelTestStatus[model.name]?.status ===
+                                  "error"
+                                ? `错误: ${modelTestStatus[model.name]?.result}`
+                                : "测试模型可用性"
+                            }
+                          >
+                            {modelTestStatus[model.name]?.status ===
+                            "testing" ? (
+                              <LoadingIcon />
+                            ) : modelTestStatus[model.name]?.status ===
+                              "success" ? (
+                              <span className={styles.testResult}>
+                                {modelTestStatus[model.name]?.result}
+                              </span>
+                            ) : modelTestStatus[model.name]?.status ===
+                              "error" ? (
+                              <span className={styles.testResult}>
+                                {modelTestStatus[model.name]?.result}
+                              </span>
+                            ) : (
+                              <span className={styles.testIcon}>Test</span>
+                            )}
+                          </div>
+                          <div
+                            className={styles.visionToggle}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModels(
+                                models.map((m) =>
+                                  m.name === model.name
+                                    ? { ...m, enableVision: !m.enableVision }
+                                    : m,
+                                ),
+                              );
+                            }}
+                            title={
+                              model.enableVision
+                                ? "关闭视觉支持"
+                                : "开启视觉支持"
+                            }
+                          >
+                            {model.enableVision ? (
+                              <VisionIcon width="16" height="16" />
+                            ) : (
+                              <VisionOffIcon width="16" height="16" />
+                            )}
+                          </div>
+                          <div
+                            className={styles.modelEditButton}
+                            onClick={(e) => handleEditDisplayName(model, e)}
+                          >
+                            Edit
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
               ) : (
                 <div className={styles.emptyModels}>
                   <p>{Locale.CustomProvider.NoModelsFound}</p>

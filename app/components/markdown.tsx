@@ -954,6 +954,16 @@ export function PreCode(props: { children: any; status?: boolean }) {
           )}
         </div>
         <div className={styles["code-header-right"]}>
+          {enableCodeFold && showToggle && !showPreview && (
+            <button
+              className={styles["code-header-btn"]}
+              onClick={() => setCollapsed((v) => !v)}
+              title={collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
+              aria-label={collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
+            >
+              {collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
+            </button>
+          )}
           <button className={styles["code-header-btn"]} onClick={copyCode}>
             {Locale.Chat.Actions.Copy}
           </button>
@@ -1003,16 +1013,6 @@ export function PreCode(props: { children: any; status?: boolean }) {
                 : Locale.Chat.Actions.Preview}
             </button>
           ) : null}
-          {enableCodeFold && showToggle && !showPreview && (
-            <button
-              className={styles["code-header-btn"]}
-              onClick={() => setCollapsed((v) => !v)}
-              title={collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
-              aria-label={collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
-            >
-              {collapsed ? Locale.NewChat.More : Locale.NewChat.Less}
-            </button>
-          )}
         </div>
       </div>
       <div className={styles["code-content"]}>

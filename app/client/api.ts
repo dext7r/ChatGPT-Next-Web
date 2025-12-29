@@ -167,6 +167,7 @@ export interface userCustomProvider {
   description?: string;
   testModel?: string;
   paths?: ApiPaths;
+  useProxy?: boolean; // 是否通过服务器代理转发请求
   balance?: {
     amount: number;
     currency: string;
@@ -253,6 +254,7 @@ interface CustomProviderConfig {
   enableKeyList?: string[]; // 可选，启用的 API Key 列表
   paths?: ApiPaths;
   type?: string; // 可选，可能用于区分 Azure 等类型
+  useProxy?: boolean; // 可选，是否通过服务器代理转发请求
 }
 export function findProviderInLocalStorage(
   providerName: string,
@@ -271,6 +273,7 @@ export function findProviderInLocalStorage(
         typeof p.apiKey === "string" && // Ensure apiKey is a string
         p.apiKey.length > 0, // Ensure apiKey is not empty
     );
+
     return provider || null; // Return found provider or null
   } catch (error) {
     console.error(

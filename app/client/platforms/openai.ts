@@ -119,6 +119,7 @@ export class ChatGPTApi implements LLMApi {
   private readonly imagePath: string = "";
   private readonly speechPath: string = "";
   private readonly listModelPath: string = "";
+  private readonly useProxy: boolean = false; // 是否使用服务器代理
 
   constructor(providerName: string = "") {
     if (providerName) {
@@ -131,8 +132,17 @@ export class ChatGPTApi implements LLMApi {
         this.imagePath = CustomProviderConfig?.paths?.ImagePath || "";
         this.speechPath = CustomProviderConfig?.paths?.SpeechPath || "";
         this.listModelPath = CustomProviderConfig?.paths?.ListModelPath || "";
+        this.useProxy = CustomProviderConfig?.useProxy || false;
       }
     }
+  }
+
+  // 获取代理相关的请求头
+  private getProxyHeaders(): Record<string, string> {
+    if (this.useProxy && this.baseUrl) {
+      return { "X-Proxy-Target": this.baseUrl };
+    }
+    return {};
   }
 
   path(path: string): string {
@@ -140,6 +150,11 @@ export class ChatGPTApi implements LLMApi {
     // console.log("[openai.ts] access: ", accessStore);
     let baseUrl = "";
     if (this.baseUrl) {
+      // 自定义渠道
+      if (this.useProxy) {
+        // 使用代理时，返回代理端点 URL
+        return `/api/custom-proxy/${path.replace(/^\//, "")}`;
+      }
       baseUrl = this.baseUrl;
     } else {
       // if (accessStore.useCustomProvider) {
@@ -235,7 +250,10 @@ export class ChatGPTApi implements LLMApi {
         method: "POST",
         body: JSON.stringify(requestPayload),
         signal: controller.signal,
-        headers: getHeaders(false, this.apiKey, this.enableKeyList),
+        headers: {
+          ...getHeaders(false, this.apiKey, this.enableKeyList),
+          ...this.getProxyHeaders(),
+        },
       };
 
       // make a fetch request
@@ -457,7 +475,10 @@ export class ChatGPTApi implements LLMApi {
         method: "POST",
         body: JSON.stringify(requestPayload),
         signal: controller.signal,
-        headers: getHeaders(false, this.apiKey, this.enableKeyList),
+        headers: {
+          ...getHeaders(false, this.apiKey, this.enableKeyList),
+          ...this.getProxyHeaders(),
+        },
       };
 
       // make a fetch request
@@ -869,12 +890,18 @@ export class ChatGPTApi implements LLMApi {
         ),
         {
           method: "GET",
-          headers: getHeaders(false, this.apiKey, this.enableKeyList),
+          headers: {
+            ...getHeaders(false, this.apiKey, this.enableKeyList),
+            ...this.getProxyHeaders(),
+          },
         },
       ),
       fetch(this.path(OpenaiPath.SubsPath), {
         method: "GET",
-        headers: getHeaders(false, this.apiKey, this.enableKeyList),
+        headers: {
+          ...getHeaders(false, this.apiKey, this.enableKeyList),
+          ...this.getProxyHeaders(),
+        },
       }),
     ]);
 
@@ -927,6 +954,7 @@ export class ChatGPTApi implements LLMApi {
         method: "GET",
         headers: {
           ...getHeaders(false, this.apiKey, this.enableKeyList),
+          ...this.getProxyHeaders(),
         },
       },
     );

@@ -234,5 +234,9 @@ export const getServerSideConfig = () => {
     imgUploadFolder: process.env.IMG_UPLOAD_FOLDER || "NextChat",
     imgUploadNameType: process.env.IMG_UPLOAD_NAME_TYPE,
     imgUploadReturnFormat: process.env.IMG_UPLOAD_RETURN_FORMAT,
+
+    disableCustomProxy:
+      process.env.DISABLE_CUSTOM_PROXY === "1" ||
+      process.env.DISABLE_CUSTOM_PROXY === "true", // 禁用自定义渠道代理功能
   };
 };

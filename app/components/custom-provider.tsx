@@ -1236,6 +1236,7 @@ export function CustomProvider() {
                 </div>
               </div>
               <div className={styles.providerActions}>
+                {/* 启用/禁用开关 */}
                 <div className={styles.statusToggleContainer}>
                   <div
                     className={`${styles.toggleSwitch} ${
@@ -1265,6 +1266,37 @@ export function CustomProvider() {
                   >
                     <div className={styles.toggleSlider}></div>
                   </div>
+                </div>
+                {/* 代理开关 */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <IconButton
+                    text={provider.useProxy ? "代理" : "直连"}
+                    onClick={() => {
+                      const newUseProxy = !provider.useProxy;
+                      const updatedProviders = providers.map((p) =>
+                        p.id === provider.id
+                          ? { ...p, useProxy: newUseProxy }
+                          : p,
+                      );
+                      storeActions.setProviders(updatedProviders);
+                      showToast(
+                        newUseProxy ? "已启用服务器代理" : "已切换为直连",
+                      );
+                    }}
+                    title={
+                      provider.useProxy
+                        ? "点击切换为直连"
+                        : "点击启用服务器代理"
+                    }
+                    bordered
+                    style={{
+                      backgroundColor: provider.useProxy
+                        ? "#dbeafe"
+                        : undefined,
+                      borderColor: provider.useProxy ? "#3b82f6" : undefined,
+                      color: provider.useProxy ? "#1d4ed8" : undefined,
+                    }}
+                  />
                 </div>
                 <IconButton
                   icon={

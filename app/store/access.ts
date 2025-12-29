@@ -217,19 +217,29 @@ export const useAccessStore = createPersistStore(
       apiKey: string,
       modelspath: string = "/v1/models",
       type: string = "openai",
+      useProxy: boolean = false,
     ): Promise<string> {
       // if (fetchState !== 0) return Promise.resolve(DEFAULT_ACCESS_STATE.customModels);
       fetchState = 1;
-      const endpoint = [
-        url.replace(/\/$/, ""),
-        modelspath.replace(/^\//, ""),
-      ].join("/");
+
+      // 根据 useProxy 决定请求 URL 和 headers
+      let endpoint: string;
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      if (useProxy) {
+        endpoint = `/api/custom-proxy/${modelspath.replace(/^\//, "")}`;
+        headers["X-Proxy-Target"] = url.replace(/\/$/, "");
+      } else {
+        endpoint = [url.replace(/\/$/, ""), modelspath.replace(/^\//, "")].join(
+          "/",
+        );
+      }
 
       return fetch(endpoint, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
+        headers,
       })
         .then((res) => {
           if (!res.ok) {

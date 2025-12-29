@@ -256,6 +256,7 @@ export function ProviderModal(props: ProviderModalProps) {
     status: "inactive",
     enableKeyList: [],
     disableKeyList: [],
+    useProxy: false,
     paths: {
       ChatPath: "",
       SpeechPath: "",
@@ -345,6 +346,7 @@ export function ProviderModal(props: ProviderModalProps) {
         enableKeyList: props.provider.enableKeyList || [],
         disableKeyList: props.provider.disableKeyList || [],
         balance: props.provider.balance,
+        useProxy: props.provider.useProxy || false,
         testModel:
           props.provider.testModel ||
           providerTypeDefaultTestModel[props.provider.type],
@@ -380,8 +382,16 @@ export function ProviderModal(props: ProviderModalProps) {
         models: [],
         status: "active",
         balance: undefined,
+        useProxy: false,
+        enableKeyList: [],
+        disableKeyList: [],
         testModel: providerTypeDefaultTestModel["openai"],
-        paths: {},
+        paths: {
+          ChatPath: "",
+          SpeechPath: "",
+          ImagePath: "",
+          ListModelPath: "",
+        },
       });
       setModels([]);
       setKeyList([]);
@@ -473,6 +483,7 @@ export function ProviderModal(props: ProviderModalProps) {
       testModel:
         formData.testModel || providerTypeDefaultTestModel[formData.type],
       paths: formData.paths,
+      useProxy: formData.useProxy || false,
       enableKeyList: formData.enableKeyList || [],
       disableKeyList: formData.disableKeyList || [],
     };
@@ -544,6 +555,8 @@ export function ProviderModal(props: ProviderModalProps) {
         formData.baseUrl,
         api_key,
         formData.paths?.ListModelPath || "/v1/models",
+        formData.type,
+        formData.useProxy || false,
       );
 
       // 创建一个现有模型的映射，用于保留displayName
@@ -825,6 +838,7 @@ export function ProviderModal(props: ProviderModalProps) {
         enableKeyList: props.provider.enableKeyList || [],
         disableKeyList: props.provider.disableKeyList || [],
         balance: props.provider.balance,
+        useProxy: props.provider.useProxy || false,
         testModel:
           props.provider.testModel ||
           providerTypeDefaultTestModel[props.provider.type],
@@ -1062,14 +1076,23 @@ export function ProviderModal(props: ProviderModalProps) {
       let completionPath = formData.paths?.ChatPath || "/v1/chat/completions";
       const modelToTest = formData.testModel;
 
+      // 根据 useProxy 决定请求 URL 和 headers
+      const requestUrl = formData.useProxy
+        ? `/api/custom-proxy${completionPath}`
+        : `${formData.baseUrl}${completionPath}`;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      };
+      if (formData.useProxy && formData.baseUrl) {
+        headers["X-Proxy-Target"] = formData.baseUrl;
+      }
+
       const response = await fetchWithTimeout(
-        `${formData.baseUrl}${completionPath}`,
+        requestUrl,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
+          headers,
           body: JSON.stringify({
             model: modelToTest,
             messages: [{ role: "user", content: testMessage }],
@@ -1905,15 +1928,25 @@ export function ProviderModal(props: ProviderModalProps) {
         content: "Hello. Please respond with 'OK'.",
       };
       let completionPath = formData.paths?.ChatPath || "/v1/chat/completions";
+
+      // 根据 useProxy 决定请求 URL 和 headers
+      const requestUrl = formData.useProxy
+        ? `/api/custom-proxy${completionPath}`
+        : `${formData.baseUrl}${completionPath}`;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      };
+      if (formData.useProxy && formData.baseUrl) {
+        headers["X-Proxy-Target"] = formData.baseUrl;
+      }
+
       // 发送非流式请求
       const response = await fetchWithTimeout(
-        `${formData.baseUrl}${completionPath}`,
+        requestUrl,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
+          headers,
           body: JSON.stringify({
             model: modelName,
             messages: [testMessage],
@@ -2297,6 +2330,23 @@ export function ProviderModal(props: ProviderModalProps) {
                   </ListItem>
                 </>
               )}
+
+              {/* 服务器代理选项 - 独立于高级设置 */}
+              <ListItem
+                title="服务器代理"
+                subTitle="通过服务器转发请求，解决跨域问题"
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.useProxy || false}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      useProxy: e.target.checked,
+                    }))
+                  }
+                />
+              </ListItem>
 
               <ListItem
                 title="API Key"

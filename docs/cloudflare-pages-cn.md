@@ -40,3 +40,23 @@
 15. 在 "Configure Production compatibility flag" 和 "Configure Preview compatibility flag" 中填写 "nodejs_compat"。
 16. 前往 "Deployments"，点击 "Retry deployment"。
 17. Enjoy.
+
+---
+
+## 常见问题（Q&A）
+
+### Q: 部署成功但对话请求返回 500 错误 / 侧边栏标题、模型列表等显示异常
+
+**原因**：Cloudflare Pages 的 Compatibility date 设置过旧，导致 `nodejs_compat` 的内置 Node.js API/Polyfills 无法正常生效。
+
+根据 [Cloudflare 官方文档](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#nodejs-compatibility-flag)，要使 `nodejs_compat` 完全生效，**Compatibility date 必须设置为 `2024-09-23` 或更晚的日期**。
+
+**解决方法**：
+
+1. 进入 Cloudflare Dashboard → Pages → 你的项目
+2. 进入 **Settings** → **Functions**
+3. 找到 **Compatibility date** 设置项
+4. 将日期修改为 `2024-09-23` 或更晚（建议直接填写当天日期）
+5. 保存后重新部署项目
+
+> 注意：Production 和 Preview 环境的 Compatibility date 需要分别设置。

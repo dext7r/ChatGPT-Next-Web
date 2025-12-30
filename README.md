@@ -322,6 +322,14 @@
 
 - [claw 部署](https://console.run.claw.cloud/signin?link=4TLWOT0ZFPO3)：docker 容器化部署，操作快捷
 
+## 常见问题（Q&A）
+
+### Cloudflare Pages 部署后对话请求 500 错误 / 配置无法正确解析
+
+**原因**：Cloudflare Pages 的 Compatibility date 设置过旧。
+
+**解决**：将 Compatibility date 设置为 `2024-09-23` 或更晚。详见 [Cloudflare Pages 部署指南](./docs/cloudflare-pages-cn.md#常见问题qa)。
+
 
 ## 计划功能
 

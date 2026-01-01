@@ -277,6 +277,10 @@ const en: LocaleType = {
       },
     },
     Rename: "Rename Chat",
+    Navigator: {
+      Title: "Chat Navigator",
+      Empty: "No messages",
+    },
     Typing: "Typing…",
     GoToCustomProviderConfig: "Go to Custom AI Provider Config",
     Input: (submitKey: string, isMobileScreen: boolean = false) => {

@@ -257,6 +257,10 @@ const cn = {
       },
     },
     Rename: "重命名对话",
+    Navigator: {
+      Title: "对话导航",
+      Empty: "暂无消息",
+    },
     Typing: "正在输入…",
     GoToCustomProviderConfig: "点击跳转对应的渠道配置",
     Input: (submitKey: string, isMobileScreen: boolean = false) => {

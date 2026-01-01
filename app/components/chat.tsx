@@ -62,6 +62,7 @@ import AttachmentIcon from "../icons/paperclip.svg";
 import ToolboxIcon from "../icons/toolbox.svg";
 import EraserIcon from "../icons/eraser.svg";
 import DualModelIcon from "../icons/dual-model.svg";
+import ConfigIcon from "../icons/config.svg";
 
 import {
   ChatMessage,
@@ -1902,6 +1903,14 @@ function DualModelView(props: {
   const secondaryVirtuosoRef = useRef<VirtuosoHandle>(null);
   const [primaryHitBottom, setPrimaryHitBottom] = useState(true);
   const [secondaryHitBottom, setSecondaryHitBottom] = useState(true);
+  const [primaryVisibleRange, setPrimaryVisibleRange] = useState<{
+    startIndex: number;
+    endIndex: number;
+  } | null>(null);
+  const [secondaryVisibleRange, setSecondaryVisibleRange] = useState<{
+    startIndex: number;
+    endIndex: number;
+  } | null>(null);
 
   // 合并 context 和消息
   const primaryRenderMessages: RenderMessageType[] = useMemo(() => {
@@ -1976,6 +1985,26 @@ function DualModelView(props: {
     props.onScrollBothToBottom?.(scrollBothToBottom);
   }, [scrollBothToBottom, props.onScrollBothToBottom]);
 
+  // 计算当前可视范围对应的用户消息索引
+  const getCurrentUserIndex = useCallback(
+    (
+      visibleRange: { startIndex: number; endIndex: number } | null,
+      msgs: RenderMessageType[],
+    ) => {
+      if (!visibleRange) return null;
+      const midIndex = Math.floor(
+        (visibleRange.startIndex + visibleRange.endIndex) / 2,
+      );
+      for (let i = midIndex; i >= 0; i--) {
+        if (msgs[i]?.role === "user") {
+          return i;
+        }
+      }
+      return null;
+    },
+    [],
+  );
+
   return (
     <div className={styles["dual-model-container"]}>
       {/* 主模型面板 */}
@@ -2010,6 +2039,7 @@ function DualModelView(props: {
             atBottomThreshold={64}
             increaseViewportBy={{ top: 400, bottom: 800 }}
             computeItemKey={(index, m) => `primary-${m.id || index}`}
+            rangeChanged={(range) => setPrimaryVisibleRange(range)}
             itemContent={(index, message) =>
               props.renderMessage(message, index, false)
             }
@@ -2022,6 +2052,21 @@ function DualModelView(props: {
               <BottomIcon />
             </div>
           )}
+          <ChatNavigator
+            messages={primaryRenderMessages}
+            currentIndex={getCurrentUserIndex(
+              primaryVisibleRange,
+              primaryRenderMessages,
+            )}
+            onJumpTo={(index) => {
+              primaryVirtuosoRef.current?.scrollToIndex({
+                index,
+                align: "start",
+                behavior: "auto",
+              });
+            }}
+            inPanel
+          />
         </div>
       </div>
 
@@ -2060,6 +2105,7 @@ function DualModelView(props: {
             atBottomThreshold={64}
             increaseViewportBy={{ top: 400, bottom: 800 }}
             computeItemKey={(index, m) => `secondary-${m.id || index}`}
+            rangeChanged={(range) => setSecondaryVisibleRange(range)}
             itemContent={(index, message) =>
               props.renderMessage(message, index, true)
             }
@@ -2071,6 +2117,100 @@ function DualModelView(props: {
             >
               <BottomIcon />
             </div>
+          )}
+          <ChatNavigator
+            messages={secondaryRenderMessages}
+            currentIndex={getCurrentUserIndex(
+              secondaryVisibleRange,
+              secondaryRenderMessages,
+            )}
+            onJumpTo={(index) => {
+              secondaryVirtuosoRef.current?.scrollToIndex({
+                index,
+                align: "start",
+                behavior: "auto",
+              });
+            }}
+            inPanel
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 对话缩略导航组件
+function ChatNavigator(props: {
+  messages: ChatMessage[];
+  currentIndex: number | null;
+  onJumpTo: (index: number) => void;
+  inPanel?: boolean; // 是否在双模型 panel 内
+}) {
+  const PREVIEW_LENGTH = 20;
+  const listRef = useRef<HTMLDivElement>(null);
+  const activeItemRef = useRef<HTMLDivElement>(null);
+
+  // 过滤用户消息并生成缩略列表
+  const userMessages = useMemo(() => {
+    return props.messages
+      .map((msg, index) => ({
+        id: msg.id,
+        index,
+        preview: getMessageTextContent(msg).slice(0, PREVIEW_LENGTH),
+        role: msg.role,
+      }))
+      .filter((msg) => msg.role === "user");
+  }, [props.messages]);
+
+  // 当 hover 面板时，滚动到当前高亮项
+  const scrollToActiveItem = useCallback(() => {
+    if (activeItemRef.current && listRef.current) {
+      activeItemRef.current.scrollIntoView({
+        block: "center",
+        behavior: "auto",
+      });
+    }
+  }, []);
+
+  return (
+    <div
+      className={clsx(
+        styles["chat-navigator"],
+        props.inPanel && styles["chat-navigator-in-panel"],
+      )}
+      onMouseEnter={scrollToActiveItem}
+    >
+      <div className={styles["chat-navigator-toggle"]}>
+        <ConfigIcon />
+      </div>
+      <div className={styles["chat-navigator-panel"]}>
+        <div className={styles["chat-navigator-header"]}>
+          {Locale.Chat.Navigator.Title}
+        </div>
+        <div className={styles["chat-navigator-list"]} ref={listRef}>
+          {userMessages.length === 0 ? (
+            <div className={styles["chat-navigator-empty"]}>
+              {Locale.Chat.Navigator.Empty}
+            </div>
+          ) : (
+            userMessages.map((item) => {
+              const isActive = props.currentIndex === item.index;
+              return (
+                <div
+                  key={item.id}
+                  ref={isActive ? activeItemRef : null}
+                  className={clsx(
+                    styles["chat-navigator-item"],
+                    isActive && styles["chat-navigator-item-active"],
+                  )}
+                  onClick={() => props.onJumpTo(item.index)}
+                >
+                  <div className={styles["chat-navigator-item-preview"]}>
+                    {item.preview || "(空消息)"}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
@@ -3453,6 +3593,10 @@ function ChatComponent() {
       ? Math.max(0, Math.min(location.state.jumpToIndex, messages.length - 1))
       : undefined;
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+  const [visibleRange, setVisibleRange] = useState<{
+    startIndex: number;
+    endIndex: number;
+  } | null>(null);
 
   // 跳转到引用的消息并高亮具体文本
   const scrollToQuotedMessage = useCallback(
@@ -4976,6 +5120,7 @@ function ChatComponent() {
             atBottomThreshold={64}
             increaseViewportBy={{ top: 400, bottom: 800 }}
             computeItemKey={(index, m) => m.id}
+            rangeChanged={(range) => setVisibleRange(range)}
             itemContent={(index, message) => {
               const i = index;
               const isUser = message.role === "user";
@@ -5345,6 +5490,39 @@ function ChatComponent() {
                     avatar={config.avatar}
                   />
                 ) : null,
+            }}
+          />
+        )}
+
+        {/* 对话缩略导航 - 仅在非双模型模式下显示 */}
+        {!isDualMode && (
+          <ChatNavigator
+            messages={messages}
+            currentIndex={
+              // 计算当前可视范围中心的消息，如果是 assistant 则归属到其对应的 user
+              visibleRange
+                ? (() => {
+                    const midIndex = Math.floor(
+                      (visibleRange.startIndex + visibleRange.endIndex) / 2,
+                    );
+                    // 从中间位置向前找到最近的 user 消息
+                    for (let i = midIndex; i >= 0; i--) {
+                      if (messages[i]?.role === "user") {
+                        return i;
+                      }
+                    }
+                    return null;
+                  })()
+                : null
+            }
+            onJumpTo={(index) => {
+              virtuosoRef.current?.scrollToIndex({
+                index,
+                align: "start",
+                behavior: "auto",
+              });
+              setHighlightIndex(index);
+              setTimeout(() => setHighlightIndex(null), 3000);
             }}
           />
         )}

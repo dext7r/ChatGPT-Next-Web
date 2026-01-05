@@ -106,7 +106,7 @@
 html {
   height: var(--full-height);
 
-  font-family: var(--font-noto-sans), "Cascadia Code", "Consolas", "Noto Sans", "Microsoft YaHei", "SF Pro SC", "SF Pro Text", "SF Pro Icons",
+  font-family: "Cascadia Code", "Consolas", var(--font-noto-sans), "Microsoft YaHei", "SF Pro SC", "SF Pro Text", "SF Pro Icons",
     "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
 

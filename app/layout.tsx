@@ -7,6 +7,34 @@ import { Metadata, Viewport } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getServerSideConfig, getSidebarConfig } from "./config/server";
 import { GoogleTagManager } from "@next/third-parties/google";
+import localFont from "next/font/local";
+
+const notoSans = localFont({
+  src: [
+    {
+      path: "./fonts/NotoSans-Light.woff2",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "./fonts/NotoSans-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/NotoSans-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "./fonts/NotoSans-Black.woff2",
+      weight: "900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-noto-sans",
+  display: "swap",
+});
 
 const serverConfig = getServerSideConfig();
 const siderbarConfig = getSidebarConfig();
@@ -35,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={notoSans.variable}>
       <head>
         <meta name="config" content={JSON.stringify(getClientConfig())} />
         <meta

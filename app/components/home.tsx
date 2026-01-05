@@ -159,21 +159,6 @@ const useHasHydrated = () => {
   return hasHydrated;
 };
 
-const loadAsyncGoogleFont = () => {
-  const linkEl = document.createElement("link");
-  const proxyFontUrl = "/google-fonts";
-  const remoteFontUrl = "https://fonts.googleapis.com";
-  const googleFontUrl =
-    getClientConfig()?.buildMode === "export" ? remoteFontUrl : proxyFontUrl;
-  linkEl.rel = "stylesheet";
-  linkEl.href =
-    googleFontUrl +
-    "/css2?family=" +
-    encodeURIComponent("Noto Sans:wght@300;400;700;900") +
-    "&display=swap";
-  document.head.appendChild(linkEl);
-};
-
 function Screen() {
   const config = useAppConfig();
   const location = useLocation();
@@ -184,27 +169,6 @@ function Screen() {
   const isMobileScreen = useMobileScreen();
   const shouldTightBorder =
     getClientConfig()?.isApp || (config.tightBorder && !isMobileScreen);
-
-  // useEffect(() => {
-  //   loadAsyncGoogleFont();
-  // }, []);
-  useEffect(() => {
-    const load = () => {
-      try {
-        loadAsyncGoogleFont();
-      } catch {}
-    };
-    // 空闲时加载，低端网络或省流量模式直接跳过
-    const conn = (navigator as any).connection;
-    if (conn?.saveData || conn?.effectiveType === "2g") return;
-    if ("requestIdleCallback" in window) {
-      const id = (window as any).requestIdleCallback(load, { timeout: 2000 });
-      return () => (window as any).cancelIdleCallback?.(id);
-    } else {
-      const t = setTimeout(load, 1200);
-      return () => clearTimeout(t);
-    }
-  }, []);
 
   if (isArtifact) {
     return (

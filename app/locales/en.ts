@@ -55,6 +55,7 @@ const en: LocaleType = {
       Save: "Save",
       Cancel: "Cancel",
       FullScreen: "FullScreen",
+      ExitFullScreen: "Exit FullScreen",
       RefreshTitle: "Refresh Title",
       RefreshToast: "Title refresh request sent",
       FailTitleToast:

@@ -620,6 +620,24 @@ export function ChatActions(props: {
 
   const [showTools, setShowTools] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
+  const toolsCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  const handleToolsMouseEnter = () => {
+    if (toolsCloseTimeoutRef.current) {
+      clearTimeout(toolsCloseTimeoutRef.current);
+      toolsCloseTimeoutRef.current = null;
+    }
+    setShowTools(true);
+  };
+
+  const handleToolsMouseLeave = () => {
+    toolsCloseTimeoutRef.current = setTimeout(() => {
+      setShowTools(false);
+    }, 150);
+  };
+
   useEffect(() => {
     if (!showTools) return; // 菜单没开时不监听，省一次注册
     const handle = (e: MouseEvent) => {
@@ -1478,6 +1496,8 @@ export function ChatActions(props: {
         <div
           ref={toolsRef}
           className={clsx(styles["desktop-only"], styles["tool-wrapper"])}
+          onMouseEnter={handleToolsMouseEnter}
+          onMouseLeave={handleToolsMouseLeave}
         >
           <ChatAction
             onClick={() => setShowTools((v) => !v)}
@@ -4677,8 +4697,16 @@ function ChatComponent() {
               <IconButton
                 icon={config.tightBorder ? <MinIcon /> : <MaxIcon />}
                 bordered
-                title={Locale.Chat.Actions.FullScreen}
-                aria={Locale.Chat.Actions.FullScreen}
+                title={
+                  config.tightBorder
+                    ? Locale.Chat.Actions.ExitFullScreen
+                    : Locale.Chat.Actions.FullScreen
+                }
+                aria={
+                  config.tightBorder
+                    ? Locale.Chat.Actions.ExitFullScreen
+                    : Locale.Chat.Actions.FullScreen
+                }
                 onClick={() => {
                   config.update(
                     (config) => (config.tightBorder = !config.tightBorder),
@@ -5879,8 +5907,16 @@ function ChatComponent() {
               <IconButton
                 icon={isExpanded ? <MinIcon /> : <MaxIcon />}
                 bordered
-                title={Locale.Chat.Actions.FullScreen}
-                aria={Locale.Chat.Actions.FullScreen}
+                title={
+                  isExpanded
+                    ? Locale.Chat.Actions.ExitFullScreen
+                    : Locale.Chat.Actions.FullScreen
+                }
+                aria={
+                  isExpanded
+                    ? Locale.Chat.Actions.ExitFullScreen
+                    : Locale.Chat.Actions.FullScreen
+                }
                 onClick={toggleExpand}
               />
               <IconButton

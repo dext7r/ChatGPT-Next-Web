@@ -53,6 +53,7 @@ const cn = {
       Save: "保存",
       Cancel: "取消",
       FullScreen: "全屏",
+      ExitFullScreen: "退出全屏",
       RefreshTitle: "刷新标题",
       RefreshToast: "已发送刷新标题请求",
       FailTitleToast: "标题生成失败，检查压缩模型设置后点击🔄手动刷新标题",

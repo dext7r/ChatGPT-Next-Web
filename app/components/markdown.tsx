@@ -536,7 +536,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
         setOriginalCode(code);
 
         const langClass = codeElement.className.match(/language-(\w+)/);
-        let lang = langClass ? langClass[1] : "";
+        let lang = langClass ? langClass[1] : "text";
         if (code.startsWith("<!DOCTYPE") || code.startsWith("<?xml")) {
           lang = "html";
         }
@@ -549,6 +549,7 @@ export function PreCode(props: { children: any; status?: boolean }) {
           setContentType("svg");
           setPreviewContent(code);
           setLanguage("svg");
+          lang = "svg";
         } else if (lang === "html") {
           setLanguage("html");
           setContentType("html");

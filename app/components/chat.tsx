@@ -119,6 +119,7 @@ import {
   showConfirm,
   showPrompt,
   showToast,
+  showImageModal,
 } from "./ui-lib";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FileIcon, defaultStyles } from "react-file-icon";
@@ -4957,7 +4958,14 @@ function ChatComponent() {
                             alt=""
                             width={80}
                             height={80}
-                            style={{ maxWidth: "100%", height: "auto" }}
+                            style={{
+                              maxWidth: "100%",
+                              height: "auto",
+                              cursor: "pointer",
+                            }}
+                            onClick={() =>
+                              showImageModal(getMessageImages(message)[0])
+                            }
                           />
                         )}
                         {getMessageImages(message).length > 1 && (
@@ -4980,7 +4988,12 @@ function ChatComponent() {
                                 alt=""
                                 width={80}
                                 height={80}
-                                style={{ maxWidth: "100%", height: "auto" }}
+                                style={{
+                                  maxWidth: "100%",
+                                  height: "auto",
+                                  cursor: "pointer",
+                                }}
+                                onClick={() => showImageModal(image)}
                               />
                             ))}
                           </div>
@@ -5379,7 +5392,14 @@ function ChatComponent() {
                             alt=""
                             width={80}
                             height={80}
-                            style={{ maxWidth: "100%", height: "auto" }}
+                            style={{
+                              maxWidth: "100%",
+                              height: "auto",
+                              cursor: "pointer",
+                            }}
+                            onClick={() =>
+                              showImageModal(getMessageImages(message)[0])
+                            }
                           />
                         )}
                         {getMessageImages(message).length > 1 && (
@@ -5403,7 +5423,12 @@ function ChatComponent() {
                                   alt=""
                                   width={80}
                                   height={80}
-                                  style={{ maxWidth: "100%", height: "auto" }}
+                                  style={{
+                                    maxWidth: "100%",
+                                    height: "auto",
+                                    cursor: "pointer",
+                                  }}
+                                  onClick={() => showImageModal(image)}
                                 />
                               );
                             })}

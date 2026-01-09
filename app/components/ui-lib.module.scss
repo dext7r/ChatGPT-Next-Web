@@ -98,17 +98,61 @@
     // 检测子元素中有 select 或 .select-with-icon 时，使用垂直布局
     &:has(> select, > .select-with-icon) {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       gap: 8px;
 
       .list-header {
         width: 100%;
+        text-align: center;
       }
 
       > select,
       > .select-with-icon {
         width: 100%;
         max-width: 100%;
+      }
+    }
+
+    // 移动端：只包含单个 input 或 range 的 ListItem 居中对齐
+    // 排除包含子组件容器的情况（如 PasswordInput、checkbox + button 组合等）
+    &:has(> input:not([type="checkbox"]):not([type="password"])),
+    &:has(> .input-range) {
+      justify-content: center;
+
+      .list-header {
+        width: 100%;
+        text-align: center;
+      }
+
+      > input,
+      > .input-range {
+        align-self: center;
+      }
+    }
+
+    // 包含 div 子组件时，保持子组件内部结构不拆分，只让整个容器居中
+    // 并覆盖 div 内部的 justifyContent，让组合在移动端居中
+    &:has(> div) {
+      justify-content: center;
+
+      .list-header {
+        width: 100%;
+        text-align: center;
+      }
+
+      // 子组件容器在移动端居中
+      > div {
+        justify-content: center !important;
+      }
+    }
+
+    // 单独的 checkbox 也居中
+    &:has(> input[type="checkbox"]:only-child) {
+      justify-content: center;
+
+      .list-header {
+        width: 100%;
+        text-align: center;
       }
     }
   }
@@ -321,6 +365,37 @@
     background-color: var(--white);
     color: var(--black);
     text-align: center;
+    max-width: 100%;
+
+    // select 内部选项样式 - 使用 box-shadow 模拟分隔线
+    option {
+      padding: 10px 12px;
+      background-color: var(--white);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    option:last-child {
+      border-bottom: none;
+      box-shadow: none;
+    }
+
+    // optgroup 标签样式 - 添加更明显的分隔
+    optgroup {
+      font-weight: bold;
+      color: var(--black);
+      background-color: rgba(0, 0, 0, 0.04);
+      border-top: 2px solid rgba(0, 0, 0, 0.15);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      margin-top: 4px;
+      padding-top: 8px;
+    }
+
+    // optgroup 内的选项样式
+    optgroup option {
+      margin-top: 2px;
+      padding-left: 16px;
+    }
   }
 
   .select-with-icon-icon {
@@ -329,6 +404,19 @@
     right: 10px;
     transform: translateY(-50%);
     pointer-events: none;
+  }
+
+  // 移动端优化：限制 select 最大宽度
+  @media screen and (max-width: 600px) {
+    max-width: 100%;
+
+    .select-with-icon-select {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 

@@ -347,7 +347,7 @@ export function ModelConfigList(props: {
         title={Locale.Settings.Temperature.Title}
         subTitle={Locale.Settings.Temperature.SubTitle}
       >
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
           <input
             aria-label={Locale.Settings.Temperature.Title}
             type="number"
@@ -384,7 +384,7 @@ export function ModelConfigList(props: {
         title={Locale.Settings.TopP.Title}
         subTitle={Locale.Settings.TopP.SubTitle}
       >
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
           <input
             aria-label={Locale.Settings.TopP.Title}
             type="number"
@@ -421,7 +421,7 @@ export function ModelConfigList(props: {
         title={Locale.Settings.MaxTokens.Title}
         subTitle={Locale.Settings.MaxTokens.SubTitle}
       >
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
           <input
             aria-label={Locale.Settings.MaxTokens.Title}
             type="number"
@@ -461,7 +461,7 @@ export function ModelConfigList(props: {
             title={Locale.Settings.PresencePenalty.Title}
             subTitle={Locale.Settings.PresencePenalty.SubTitle}
           >
-            <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
               <input
                 aria-label={Locale.Settings.PresencePenalty.Title}
                 type="number"
@@ -500,7 +500,7 @@ export function ModelConfigList(props: {
             title={Locale.Settings.FrequencyPenalty.Title}
             subTitle={Locale.Settings.FrequencyPenalty.SubTitle}
           >
-            <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
               <input
                 aria-label={Locale.Settings.FrequencyPenalty.Title}
                 type="number"

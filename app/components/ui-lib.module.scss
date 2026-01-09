@@ -90,6 +90,30 @@
   border: 0;
 }
 
+// 移动端优化：包含 Select 的 ListItem 自动变为垂直布局
+@media screen and (max-width: 600px) {
+  .list-item {
+    flex-wrap: wrap;
+
+    // 检测子元素中有 select 或 .select-with-icon 时，使用垂直布局
+    &:has(> select, > .select-with-icon) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+
+      .list-header {
+        width: 100%;
+      }
+
+      > select,
+      > .select-with-icon {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+  }
+}
+
 .modal-container {
   box-shadow: var(--card-shadow);
   background-color: var(--white);

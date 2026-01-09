@@ -3463,19 +3463,27 @@ function ChatComponent() {
   }
 
   const context: RenderMessage[] = useMemo(() => {
-    return session.mask.hideContext ? [] : session.mask.context.slice();
-  }, [session.mask.context, session.mask.hideContext]);
+    const ctx = session.mask.hideContext ? [] : session.mask.context.slice();
 
-  if (
-    context.length === 0 &&
-    session.messages.at(0)?.content !== BOT_HELLO.content
-  ) {
-    const copiedHello = Object.assign({}, BOT_HELLO);
-    if (!accessStore.isAuthorized()) {
-      copiedHello.content = Locale.Error.Unauthorized;
+    if (
+      ctx.length === 0 &&
+      session.messages.at(0)?.content !== BOT_HELLO.content
+    ) {
+      const copiedHello = Object.assign({}, BOT_HELLO);
+      if (!accessStore.isAuthorized()) {
+        copiedHello.content = Locale.Error.Unauthorized;
+      }
+      ctx.push(copiedHello);
     }
-    context.push(copiedHello);
-  }
+
+    return ctx;
+  }, [
+    session.mask.context,
+    session.mask.hideContext,
+    session.messages,
+    accessStore.customHello,
+    accessStore.accessCode,
+  ]);
 
   function InputPreviewBubble(props: {
     text: string;
@@ -3875,7 +3883,6 @@ function ChatComponent() {
 
       // 在目标节点中查找实际的文本位置
       const targetNodeText = targetNode.textContent || "";
-      const cleanTargetText = cleanText(targetNodeText);
 
       // 计算在原始文本中的偏移量
       let actualOffset = 0;
@@ -5160,7 +5167,7 @@ function ChatComponent() {
             atBottomStateChange={setHitBottom}
             atBottomThreshold={64}
             increaseViewportBy={{ top: 400, bottom: 800 }}
-            computeItemKey={(index, m) => m.id}
+            computeItemKey={(_index, m) => m.id}
             rangeChanged={(range) => setVisibleRange(range)}
             itemContent={(index, message) => {
               const i = index;

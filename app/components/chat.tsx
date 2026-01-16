@@ -432,62 +432,27 @@ export function ChatAction(props: {
   onClick: () => void;
 }) {
   const isMobileScreen = useMobileScreen();
-  const shouldAlawayShowText = !isMobileScreen && props.alwaysShowText;
-
-  const iconRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState({
-    full: 16,
-    icon: 16,
-  });
-  const { text, icon } = props;
-  useLayoutEffect(() => {
-    updateWidth();
-  }, [shouldAlawayShowText, text, icon]);
-
-  function updateWidth() {
-    if (!iconRef.current || !textRef.current) return;
-    const getWidth = (dom: HTMLDivElement) => dom.getBoundingClientRect().width;
-    const textWidth = getWidth(textRef.current);
-    const iconWidth = getWidth(iconRef.current);
-    setWidth({
-      full: textWidth + iconWidth,
-      icon: iconWidth,
-    });
-  }
+  const shouldAlwaysShowText = !isMobileScreen && props.alwaysShowText;
+  const [showTooltip, setShowTooltip] = useState(false);
 
   return (
-    <div
-      className={`${styles["chat-input-action"]} clickable ${
-        shouldAlawayShowText ? styles["always-show-text"] : ""
-      }`}
-      onClick={() => {
-        props.onClick();
-        setTimeout(updateWidth, 1);
-      }}
-      onMouseEnter={!shouldAlawayShowText ? updateWidth : undefined}
-      onTouchStart={!shouldAlawayShowText ? updateWidth : undefined}
-      style={
-        {
-          "--icon-width": `${width.icon}px`,
-          "--full-width": `${width.full}px`,
-        } as React.CSSProperties
-      }
-    >
-      <div ref={iconRef} className={styles["icon"]}>
-        {props.icon}
-      </div>
+    <div className={styles["chat-action-wrapper"]}>
       <div
-        className={styles["text"]}
-        ref={textRef}
-        style={
-          shouldAlawayShowText
-            ? { opacity: 1, transform: "translate(0)", pointerEvents: "auto" }
-            : {}
-        }
+        className={`${styles["chat-input-action"]} clickable ${
+          shouldAlwaysShowText ? styles["always-show-text"] : ""
+        }`}
+        onClick={props.onClick}
+        onMouseEnter={() => !shouldAlwaysShowText && setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
       >
-        {text}
+        <div className={styles["icon"]}>{props.icon}</div>
+        {shouldAlwaysShowText && (
+          <div className={styles["text"]}>{props.text}</div>
+        )}
       </div>
+      {showTooltip && !shouldAlwaysShowText && (
+        <div className={styles["chat-action-tooltip"]}>{props.text}</div>
+      )}
     </div>
   );
 }

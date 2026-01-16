@@ -226,6 +226,67 @@ export function Toast(props: ToastProps) {
   );
 }
 
+type TimedToastProps = ToastProps & {
+  showTimer?: boolean;
+};
+
+function TimedToast(props: TimedToastProps) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!props.showTimer) return;
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [props.showTimer]);
+
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m${secs}s`;
+  };
+
+  // 分割内容，支持多行显示（第一行为任务描述，第二行为模型名称）
+  const lines = props.content.split("\n");
+  const mainContent = lines[0];
+  const subContent = lines.length > 1 ? lines.slice(1).join("\n") : null;
+
+  return (
+    <div className={styles["toast-container"]}>
+      <div className={styles["toast-content"]}>
+        <div className={styles["toast-text"]}>
+          <span>
+            {mainContent}
+            {props.showTimer && (
+              <span className={styles["toast-timer"]}>
+                {" "}
+                ({formatTime(elapsed)})
+              </span>
+            )}
+          </span>
+          {subContent && (
+            <span className={styles["toast-sub"]}>{subContent}</span>
+          )}
+        </div>
+        {props.action && (
+          <button
+            onClick={() => {
+              props.action?.onClick?.();
+              props.onClose?.();
+            }}
+            className={styles["toast-action"]}
+          >
+            {props.action.text}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function showToast(
   content: string,
   action?: ToastProps["action"],
@@ -250,6 +311,74 @@ export function showToast(
   }, delay);
 
   root.render(<Toast content={content} action={action} onClose={close} />);
+}
+
+export type PersistentToastController = {
+  update: (content: string, autoCloseDelay?: number) => void;
+  close: () => void;
+};
+
+export function showPersistentToast(
+  content: string,
+  action?: ToastProps["action"],
+): PersistentToastController {
+  const div = document.createElement("div");
+  div.className = styles.show;
+  document.body.appendChild(div);
+
+  const root = createRoot(div);
+  let isClosed = false;
+  let showTimer = true;
+  let autoCloseTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const close = () => {
+    if (isClosed) return;
+    isClosed = true;
+    if (autoCloseTimer) {
+      clearTimeout(autoCloseTimer);
+      autoCloseTimer = null;
+    }
+    div.classList.add(styles.hide);
+    setTimeout(() => {
+      root.unmount();
+      div.remove();
+    }, 300);
+  };
+
+  const update = (newContent: string, autoCloseDelay?: number) => {
+    if (isClosed) return;
+    // 更新时停止计时显示
+    if (autoCloseDelay !== undefined && autoCloseDelay > 0) {
+      showTimer = false;
+    }
+    root.render(
+      <TimedToast
+        content={newContent}
+        action={action}
+        onClose={close}
+        showTimer={showTimer}
+      />,
+    );
+    if (autoCloseDelay !== undefined && autoCloseDelay > 0) {
+      if (autoCloseTimer) {
+        clearTimeout(autoCloseTimer);
+      }
+      autoCloseTimer = setTimeout(() => {
+        close();
+      }, autoCloseDelay);
+    }
+  };
+
+  root.render(
+    <TimedToast
+      content={content}
+      action={action}
+      onClose={close}
+      showTimer={showTimer}
+    />,
+  );
+
+  return { update, close };
 }
 
 export type InputProps = React.HTMLProps<HTMLTextAreaElement> & {

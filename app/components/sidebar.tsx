@@ -303,6 +303,8 @@ export function SideBar(props: { className?: string }) {
           <IconButton
             icon={<MaskIcon />}
             text={shouldNarrow ? undefined : Locale.Mask.Name}
+            title={shouldNarrow ? Locale.Mask.Name : undefined}
+            tooltipPosition="right"
             className={styles["sidebar-bar-button"]}
             onClick={() => {
               if (config.dontShowMaskSplashScreen !== true) {
@@ -316,6 +318,8 @@ export function SideBar(props: { className?: string }) {
           <IconButton
             icon={<DiscoveryIcon />}
             text={shouldNarrow ? undefined : Locale.Discovery.Name}
+            title={shouldNarrow ? Locale.Discovery.Name : undefined}
+            tooltipPosition="right"
             className={styles["sidebar-bar-button"]}
             onClick={() => setShowPluginSelector(true)}
             shadow
@@ -358,6 +362,8 @@ export function SideBar(props: { className?: string }) {
             <div className={styles["sidebar-action"] + " " + styles.mobile}>
               <IconButton
                 icon={<DeleteIcon />}
+                title={Locale.Home.DeleteChat}
+                tooltipPosition={shouldNarrow ? "right" : "top"}
                 onClick={async () => {
                   if (await showConfirm(Locale.Home.DeleteChat)) {
                     chatStore.deleteSession(chatStore.currentSessionIndex);
@@ -368,6 +374,12 @@ export function SideBar(props: { className?: string }) {
             <div className={styles["sidebar-action"]}>
               <Link to={isSettingsRoute ? Path.Home : Path.Settings}>
                 <IconButton
+                  title={
+                    isSettingsRoute
+                      ? Locale.NewChat.Return
+                      : Locale.Settings.Title
+                  }
+                  tooltipPosition={shouldNarrow ? "right" : "top"}
                   aria={
                     isSettingsRoute
                       ? Locale.NewChat.Return
@@ -381,6 +393,8 @@ export function SideBar(props: { className?: string }) {
             <div className={styles["sidebar-action"]}>
               <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
                 <IconButton
+                  title="GitHub"
+                  tooltipPosition={shouldNarrow ? "right" : "top"}
                   aria={Locale.Export.MessageFromChatGPT}
                   icon={<GithubIcon />}
                   shadow
@@ -392,6 +406,12 @@ export function SideBar(props: { className?: string }) {
                 to={isCustomProviderRoute ? Path.Home : Path.CustomProvider}
               >
                 <IconButton
+                  title={
+                    isCustomProviderRoute
+                      ? Locale.NewChat.Return
+                      : Locale.CustomProvider.Title
+                  }
+                  tooltipPosition={shouldNarrow ? "right" : "top"}
                   aria={
                     isCustomProviderRoute
                       ? Locale.NewChat.Return
@@ -414,6 +434,8 @@ export function SideBar(props: { className?: string }) {
           <IconButton
             icon={<AddIcon />}
             text={shouldNarrow ? undefined : Locale.Home.NewChat}
+            title={shouldNarrow ? Locale.Home.NewChat : undefined}
+            tooltipPosition={shouldNarrow ? "right" : "top"}
             onClick={() => {
               if (config.dontShowMaskSplashScreen) {
                 chatStore.newSession();

@@ -77,6 +77,11 @@
   width: 100%;
 }
 
+.copy-think-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
 .copy-think-button {
   font-size: var(--text-sm);
   cursor: pointer;
@@ -85,6 +90,31 @@
 
   &:hover {
     opacity: 1;
+  }
+}
+
+.copy-think-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background-color: var(--primary);
+  color: var(--white);
+  font-size: var(--text-xs);
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--primary);
   }
 }
 

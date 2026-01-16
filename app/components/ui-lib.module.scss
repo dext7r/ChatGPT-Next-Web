@@ -337,6 +337,23 @@
         opacity: 1;
       }
     }
+
+    .toast-text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .toast-timer {
+      opacity: 0.6;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toast-sub {
+      font-size: var(--text-xs);
+      opacity: 0.6;
+    }
   }
 }
 

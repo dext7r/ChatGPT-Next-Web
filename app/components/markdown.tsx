@@ -131,6 +131,7 @@ const ThinkCollapse = ({
   // 如果是 NoThink 状态，禁用
   const disabled = title === Locale.NewChat.NoThink;
   const [activeKeys, setActiveKeys] = useState(defaultActive);
+  const [showCopyTooltip, setShowCopyTooltip] = useState(false);
 
   // 当标题从 Thinking 变为 Think 或 NoThink 时自动折叠
   useEffect(() => {
@@ -212,11 +213,21 @@ const ThinkCollapse = ({
                 <span>{title}</span>
                 {!disabled && (
                   <span
-                    className={styles["copy-think-button"]}
-                    onClick={handleCopyContent}
-                    title={Locale.Chat.Actions.Copy}
+                    className={styles["copy-think-wrapper"]}
+                    onMouseEnter={() => setShowCopyTooltip(true)}
+                    onMouseLeave={() => setShowCopyTooltip(false)}
                   >
-                    📋
+                    <span
+                      className={styles["copy-think-button"]}
+                      onClick={handleCopyContent}
+                    >
+                      📋
+                    </span>
+                    {showCopyTooltip && (
+                      <span className={styles["copy-think-tooltip"]}>
+                        {Locale.Chat.Actions.Copy}
+                      </span>
+                    )}
                   </span>
                 )}
               </div>

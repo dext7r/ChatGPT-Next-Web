@@ -119,6 +119,7 @@ import {
   showConfirm,
   showPrompt,
   showToast,
+  showPersistentToast,
   showImageModal,
 } from "./ui-lib";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -697,7 +698,6 @@ export function ChatActions(props: {
       return;
     }
     setIsTranslating(true);
-    showToast(Locale.Chat.InputActions.Translate.isTranslatingToast);
     //
     const modelConfig = session.mask.modelConfig;
     // let translateModel = modelConfig.translateModel;
@@ -711,6 +711,17 @@ export function ChatActions(props: {
         access.textProcessModel.split(/@(?=[^@]*$)/);
       providerName = providerNameStr as ServiceProvider;
     }
+
+    const modelInfo = modelTable.find(
+      (m) =>
+        m.name === textProcessModel &&
+        m.provider?.providerName === providerName,
+    );
+    const displayName = modelInfo?.displayName || textProcessModel;
+
+    const toastController = showPersistentToast(
+      `${Locale.Chat.InputActions.Translate.isTranslatingToast}\n${displayName}`,
+    );
 
     const api: ClientApi = getClientApi(providerName);
     api.llm.chat({
@@ -734,7 +745,11 @@ export function ChatActions(props: {
             message = message.content;
           }
           if (!isValidMessage(message)) {
-            showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
+            toastController.update(
+              Locale.Chat.InputActions.Translate.FailTranslateToast,
+              3000,
+            );
+            setIsTranslating(false);
             return;
           }
 
@@ -746,9 +761,15 @@ export function ChatActions(props: {
           setTranslatedText(translatedContent);
           props.setUserInput(translatedContent);
 
-          showToast(Locale.Chat.InputActions.Translate.SuccessTranslateToast);
+          toastController.update(
+            Locale.Chat.InputActions.Translate.SuccessTranslateToast,
+            3000,
+          );
         } else {
-          showToast(Locale.Chat.InputActions.Translate.FailTranslateToast);
+          toastController.update(
+            Locale.Chat.InputActions.Translate.FailTranslateToast,
+            3000,
+          );
         }
         setIsTranslating(false);
       },
@@ -766,7 +787,6 @@ export function ChatActions(props: {
       }
     }
     setIsOCRing(true);
-    showToast(Locale.Chat.InputActions.OCR.isDetectingToast);
     //
     const modelConfig = session.mask.modelConfig;
     let ocrModel = modelConfig.ocrModel;
@@ -776,6 +796,15 @@ export function ChatActions(props: {
       [ocrModel, providerNameStr] = access.ocrModel.split(/@(?=[^@]*$)/);
       providerName = providerNameStr as ServiceProvider;
     }
+
+    const modelInfo = modelTable.find(
+      (m) => m.name === ocrModel && m.provider?.providerName === providerName,
+    );
+    const displayName = modelInfo?.displayName || ocrModel;
+
+    const toastController = showPersistentToast(
+      `${Locale.Chat.InputActions.OCR.isDetectingToast}\n${displayName}`,
+    );
 
     const api: ClientApi = getClientApi(providerName);
     let textValue = Locale.Chat.InputActions.OCR.DetectPrompt;
@@ -808,16 +837,26 @@ export function ChatActions(props: {
             message = message.content;
           }
           if (!isValidMessage(message)) {
-            showToast(Locale.Chat.InputActions.OCR.FailDetectToast);
+            toastController.update(
+              Locale.Chat.InputActions.OCR.FailDetectToast,
+              3000,
+            );
+            setIsOCRing(false);
             return;
           }
           props.setUserInput(
             `${props.userInput}${props.userInput ? "\n" : ""}${message}`,
           );
           props.setAttachImages([]);
-          showToast(Locale.Chat.InputActions.OCR.SuccessDetectToast);
+          toastController.update(
+            Locale.Chat.InputActions.OCR.SuccessDetectToast,
+            3000,
+          );
         } else {
-          showToast(Locale.Chat.InputActions.OCR.FailDetectToast);
+          toastController.update(
+            Locale.Chat.InputActions.OCR.FailDetectToast,
+            3000,
+          );
         }
         setIsOCRing(false);
       },
@@ -837,7 +876,6 @@ export function ChatActions(props: {
       return;
     }
     setIsImprovingPrompt(true);
-    showToast(Locale.Chat.InputActions.ImprovePrompt.isImprovingToast);
     //
     const modelConfig = session.mask.modelConfig;
     let textProcessModel = modelConfig.textProcessModel;
@@ -848,6 +886,16 @@ export function ChatActions(props: {
         access.textProcessModel.split(/@(?=[^@]*$)/);
       providerName = providerNameStr as ServiceProvider;
     }
+    const modelInfo = modelTable.find(
+      (m) =>
+        m.name === textProcessModel &&
+        m.provider?.providerName === providerName,
+    );
+    const displayName = modelInfo?.displayName || textProcessModel;
+
+    const toastController = showPersistentToast(
+      `${Locale.Chat.InputActions.ImprovePrompt.isImprovingToast}\n${displayName}`,
+    );
 
     const api: ClientApi = getClientApi(providerName);
     api.llm.chat({
@@ -871,9 +919,11 @@ export function ChatActions(props: {
             message = message.content;
           }
           if (!isValidMessage(message)) {
-            showToast(
+            toastController.update(
               Locale.Chat.InputActions.ImprovePrompt.FailImprovingToast,
+              3000,
             );
+            setIsImprovingPrompt(false);
             return;
           }
 
@@ -885,11 +935,15 @@ export function ChatActions(props: {
           setOptimizedPrompt(optimizedContent);
           props.setUserInput(optimizedContent);
 
-          showToast(
+          toastController.update(
             Locale.Chat.InputActions.ImprovePrompt.SuccessImprovingToast,
+            3000,
           );
         } else {
-          showToast(Locale.Chat.InputActions.ImprovePrompt.FailImprovingToast);
+          toastController.update(
+            Locale.Chat.InputActions.ImprovePrompt.FailImprovingToast,
+            3000,
+          );
         }
         setIsImprovingPrompt(false);
       },
@@ -1857,6 +1911,7 @@ function DualModelToggle(props: { enabled: boolean; onToggle: () => void }) {
         icon={<DualModelIcon />}
         bordered
         title={props.enabled ? "关闭双模型对话" : "开启双模型对话"}
+        tooltipPosition="bottom"
         onClick={props.onToggle}
         className={props.enabled ? styles["dual-model-active"] : ""}
       />
@@ -4637,6 +4692,7 @@ function ChatComponent() {
               icon={<ReloadIcon />}
               bordered
               title={Locale.Chat.Actions.RefreshTitle}
+              tooltipPosition="bottom"
               onClick={() => {
                 showToast(Locale.Chat.Actions.RefreshToast);
                 chatStore.summarizeSession(true, session);
@@ -4649,6 +4705,7 @@ function ChatComponent() {
                 icon={<RenameIcon />}
                 bordered
                 title={Locale.Chat.EditMessage.Title}
+                tooltipPosition="bottom"
                 aria={Locale.Chat.EditMessage.Title}
                 onClick={() => setIsEditingMessage(true)}
               />
@@ -4659,6 +4716,7 @@ function ChatComponent() {
               icon={<ExportIcon />}
               bordered
               title={Locale.Chat.Actions.Export}
+              tooltipPosition="bottom"
               onClick={() => {
                 setShowExport(true);
               }}
@@ -4674,6 +4732,7 @@ function ChatComponent() {
                     ? Locale.Chat.Actions.ExitFullScreen
                     : Locale.Chat.Actions.FullScreen
                 }
+                tooltipPosition="bottom"
                 aria={
                   config.tightBorder
                     ? Locale.Chat.Actions.ExitFullScreen

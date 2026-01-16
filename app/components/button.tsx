@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState } from "react";
 
 import styles from "./button.module.scss";
 import { CSSProperties } from "react";
@@ -19,44 +20,62 @@ export function IconButton(props: {
   autoFocus?: boolean;
   style?: CSSProperties;
   aria?: string;
+  tooltipPosition?: "top" | "bottom" | "left" | "right";
 }) {
-  return (
-    <button
-      className={
-        styles["icon-button"] +
-        ` ${props.bordered && styles.border} ${props.shadow && styles.shadow} ${
-          props.className ?? ""
-        } clickable ${styles[props.type ?? ""]}`
-      }
-      onClick={props.onClick}
-      title={props.title}
-      disabled={props.disabled}
-      role="button"
-      tabIndex={props.tabIndex}
-      autoFocus={props.autoFocus}
-      style={props.style}
-      aria-label={props.aria}
-    >
-      {props.icon && (
-        <div
-          aria-label={props.text || props.title}
-          className={
-            styles["icon-button-icon"] +
-            ` ${props.type === "primary" && "no-dark"}`
-          }
-        >
-          {props.icon}
-        </div>
-      )}
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipPosition = props.tooltipPosition || "top";
 
-      {props.text && (
+  return (
+    <div
+      className={`${styles["icon-button-wrapper"]} ${props.className ?? ""}`}
+    >
+      <button
+        className={
+          styles["icon-button"] +
+          ` ${props.bordered && styles.border} ${
+            props.shadow && styles.shadow
+          } clickable ${styles[props.type ?? ""]}`
+        }
+        onClick={props.onClick}
+        disabled={props.disabled}
+        role="button"
+        tabIndex={props.tabIndex}
+        autoFocus={props.autoFocus}
+        style={props.style}
+        aria-label={props.aria || props.title}
+        onMouseEnter={() => props.title && setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        {props.icon && (
+          <div
+            aria-label={props.text || props.title}
+            className={
+              styles["icon-button-icon"] +
+              ` ${props.type === "primary" && "no-dark"}`
+            }
+          >
+            {props.icon}
+          </div>
+        )}
+
+        {props.text && (
+          <div
+            aria-label={props.text || props.title}
+            className={styles["icon-button-text"]}
+          >
+            {props.text}
+          </div>
+        )}
+      </button>
+      {showTooltip && props.title && !props.text && (
         <div
-          aria-label={props.text || props.title}
-          className={styles["icon-button-text"]}
+          className={`${styles["icon-button-tooltip"]} ${
+            styles[`tooltip-${tooltipPosition}`]
+          }`}
         >
-          {props.text}
+          {props.title}
         </div>
       )}
-    </button>
+    </div>
   );
 }

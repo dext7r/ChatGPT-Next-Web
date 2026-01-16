@@ -1903,6 +1903,59 @@ function ChatInputActions(props: {
   );
 }
 
+// 通用 Tooltip 包装组件
+function Tooltip(props: {
+  content: string;
+  children: React.ReactNode;
+  position?: "top" | "bottom";
+}) {
+  const [show, setShow] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const position = props.position || "bottom";
+
+  const updatePosition = useCallback(() => {
+    if (wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const style: React.CSSProperties = {
+        position: "fixed",
+        left: rect.left + rect.width / 2,
+        transform: "translateX(-50%)",
+      };
+      if (position === "bottom") {
+        style.top = rect.bottom + 8;
+      } else {
+        style.bottom = window.innerHeight - rect.top + 8;
+      }
+      setTooltipStyle(style);
+    }
+  }, [position]);
+
+  return (
+    <div
+      ref={wrapperRef}
+      className={styles["tooltip-wrapper"]}
+      onMouseEnter={() => {
+        updatePosition();
+        setShow(true);
+      }}
+      onMouseLeave={() => setShow(false)}
+    >
+      {props.children}
+      {show && (
+        <div
+          className={`${styles["tooltip-content"]} ${
+            styles[`tooltip-${position}`]
+          }`}
+          style={tooltipStyle}
+        >
+          {props.content}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // 双模型切换按钮组件
 function DualModelToggle(props: { enabled: boolean; onToggle: () => void }) {
   return (
@@ -2051,24 +2104,26 @@ function DualModelView(props: {
       {/* 主模型面板 */}
       <div className={styles["model-panel"]}>
         <div className={styles["panel-header"]}>
-          <div
-            className={styles["panel-title-clickable"]}
-            onClick={props.onPrimaryModelSelect}
-            title="点击切换主模型"
-          >
-            <span className={styles["panel-title"]}>
-              {props.primaryModelName}
+          <Tooltip content="点击切换主模型">
+            <div
+              className={styles["panel-title-clickable"]}
+              onClick={props.onPrimaryModelSelect}
+            >
+              <span className={styles["panel-title"]}>
+                {props.primaryModelName}
+              </span>
+              <span className={styles["panel-title-arrow"]}>▼</span>
+            </div>
+          </Tooltip>
+          <Tooltip content="点击切换主模型">
+            <span
+              className={styles["panel-badge-primary"]}
+              onClick={props.onPrimaryModelSelect}
+              style={{ cursor: "pointer" }}
+            >
+              主模型
             </span>
-            <span className={styles["panel-title-arrow"]}>▼</span>
-          </div>
-          <span
-            className={styles["panel-badge-primary"]}
-            onClick={props.onPrimaryModelSelect}
-            style={{ cursor: "pointer" }}
-            title="点击切换主模型"
-          >
-            主模型
-          </span>
+          </Tooltip>
         </div>
         <div className={styles["panel-body"]}>
           <Virtuoso
@@ -2117,24 +2172,26 @@ function DualModelView(props: {
       {/* 副模型面板 */}
       <div className={styles["model-panel"]}>
         <div className={styles["panel-header"]}>
-          <div
-            className={styles["panel-title-clickable"]}
-            onClick={props.onSecondaryModelSelect}
-            title="点击切换副模型"
-          >
-            <span className={styles["panel-title"]}>
-              {props.secondaryModelName}
+          <Tooltip content="点击切换副模型">
+            <div
+              className={styles["panel-title-clickable"]}
+              onClick={props.onSecondaryModelSelect}
+            >
+              <span className={styles["panel-title"]}>
+                {props.secondaryModelName}
+              </span>
+              <span className={styles["panel-title-arrow"]}>▼</span>
+            </div>
+          </Tooltip>
+          <Tooltip content="点击切换副模型">
+            <span
+              className={styles["panel-badge-secondary"]}
+              onClick={props.onSecondaryModelSelect}
+              style={{ cursor: "pointer" }}
+            >
+              副模型
             </span>
-            <span className={styles["panel-title-arrow"]}>▼</span>
-          </div>
-          <span
-            className={styles["panel-badge-secondary"]}
-            onClick={props.onSecondaryModelSelect}
-            style={{ cursor: "pointer" }}
-            title="点击切换副模型"
-          >
-            副模型
-          </span>
+          </Tooltip>
         </div>
         <div className={styles["panel-body"]}>
           <Virtuoso

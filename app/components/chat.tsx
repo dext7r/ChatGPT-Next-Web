@@ -1997,6 +1997,9 @@ function DualModelView(props: {
   const secondaryVirtuosoRef = useRef<VirtuosoHandle>(null);
   const [primaryHitBottom, setPrimaryHitBottom] = useState(true);
   const [secondaryHitBottom, setSecondaryHitBottom] = useState(true);
+  // 使用 ref 跟踪是否应该自动滚动，避免被 atBottomStateChange 覆盖
+  const primaryAutoScrollRef = useRef(true);
+  const secondaryAutoScrollRef = useRef(true);
   const [primaryVisibleRange, setPrimaryVisibleRange] = useState<{
     startIndex: number;
     endIndex: number;
@@ -2045,6 +2048,8 @@ function DualModelView(props: {
 
   const scrollPrimaryToBottom = useCallback(
     (instant?: boolean) => {
+      setPrimaryHitBottom(true);
+      primaryAutoScrollRef.current = true;
       primaryVirtuosoRef.current?.scrollToIndex({
         index: primaryRenderMessages.length - 1,
         behavior: instant ? "auto" : "smooth",
@@ -2056,6 +2061,8 @@ function DualModelView(props: {
 
   const scrollSecondaryToBottom = useCallback(
     (instant?: boolean) => {
+      setSecondaryHitBottom(true);
+      secondaryAutoScrollRef.current = true;
       secondaryVirtuosoRef.current?.scrollToIndex({
         index: secondaryRenderMessages.length - 1,
         behavior: instant ? "auto" : "smooth",
@@ -2078,6 +2085,61 @@ function DualModelView(props: {
   useEffect(() => {
     props.onScrollBothToBottom?.(scrollBothToBottom);
   }, [scrollBothToBottom, props.onScrollBothToBottom]);
+
+  // 流式输出时自动滚动：followOutput 只在新消息添加时触发，
+  // 但不会在现有消息高度变化时自动滚动，需要手动处理
+  const primaryLastMessage =
+    primaryRenderMessages[primaryRenderMessages.length - 1];
+  const secondaryLastMessage =
+    secondaryRenderMessages[secondaryRenderMessages.length - 1];
+  const primaryIsStreaming =
+    primaryLastMessage?.streaming || primaryLastMessage?.preview;
+  const secondaryIsStreaming =
+    secondaryLastMessage?.streaming || secondaryLastMessage?.preview;
+  const primaryStreamingContent =
+    primaryIsStreaming && primaryLastMessage
+      ? getMessageTextContent(primaryLastMessage)
+      : "";
+  const secondaryStreamingContent =
+    secondaryIsStreaming && secondaryLastMessage
+      ? getMessageTextContent(secondaryLastMessage)
+      : "";
+
+  useEffect(() => {
+    if (!primaryAutoScrollRef.current && !primaryHitBottom) return;
+    if (!primaryIsStreaming) return;
+    const id = requestAnimationFrame(() => {
+      primaryVirtuosoRef.current?.scrollToIndex({
+        index: primaryRenderMessages.length - 1,
+        align: "end",
+        behavior: "auto",
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [
+    primaryHitBottom,
+    primaryIsStreaming,
+    primaryStreamingContent,
+    primaryRenderMessages.length,
+  ]);
+
+  useEffect(() => {
+    if (!secondaryAutoScrollRef.current && !secondaryHitBottom) return;
+    if (!secondaryIsStreaming) return;
+    const id = requestAnimationFrame(() => {
+      secondaryVirtuosoRef.current?.scrollToIndex({
+        index: secondaryRenderMessages.length - 1,
+        align: "end",
+        behavior: "auto",
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [
+    secondaryHitBottom,
+    secondaryIsStreaming,
+    secondaryStreamingContent,
+    secondaryRenderMessages.length,
+  ]);
 
   // 计算当前可视范围对应的用户消息索引
   const getCurrentUserIndex = useCallback(
@@ -2131,7 +2193,10 @@ function DualModelView(props: {
             style={{ height: "100%" }}
             data={primaryRenderMessages}
             followOutput={primaryHitBottom ? "smooth" : false}
-            atBottomStateChange={setPrimaryHitBottom}
+            atBottomStateChange={(atBottom) => {
+              setPrimaryHitBottom(atBottom);
+              primaryAutoScrollRef.current = atBottom;
+            }}
             atBottomThreshold={64}
             increaseViewportBy={{ top: 400, bottom: 800 }}
             computeItemKey={(index, m) => `primary-${m.id || index}`}
@@ -2199,7 +2264,10 @@ function DualModelView(props: {
             style={{ height: "100%" }}
             data={secondaryRenderMessages}
             followOutput={secondaryHitBottom ? "smooth" : false}
-            atBottomStateChange={setSecondaryHitBottom}
+            atBottomStateChange={(atBottom) => {
+              setSecondaryHitBottom(atBottom);
+              secondaryAutoScrollRef.current = atBottom;
+            }}
             atBottomThreshold={64}
             increaseViewportBy={{ top: 400, bottom: 800 }}
             computeItemKey={(index, m) => `secondary-${m.id || index}`}
@@ -2894,6 +2962,10 @@ function ChatComponent() {
     if (!isMobileScreen) inputRef.current?.focus();
     // setAutoScroll(true);
     scrollToBottom();
+    // 双模型模式下同时滚动两个面板
+    if (isDualMode) {
+      dualModelScrollToBottomRef.current?.(true);
+    }
     setLastExpansion(null);
   };
 
@@ -3660,6 +3732,9 @@ function ChatComponent() {
       const v = virtuosoRef.current;
       if (!v) return;
 
+      // 显式滚动到底部时，启用自动跟随
+      setHitBottom(true);
+
       const behavior: ScrollBehavior = instant ? "auto" : "smooth";
 
       // Footer 内有预览，或者强制要求到底，就直接滚到最底（含 Footer）
@@ -3692,6 +3767,27 @@ function ChatComponent() {
     previewVisible,
     hitBottom,
   ]);
+
+  // 流式输出时自动滚动：followOutput 只在新消息添加时触发，
+  // 但不会在现有消息高度变化时自动滚动，需要手动处理
+  const lastMessage = messages[messages.length - 1];
+  const isStreaming = lastMessage?.streaming || lastMessage?.preview;
+  const streamingContent =
+    isStreaming && lastMessage ? getMessageTextContent(lastMessage) : "";
+
+  useEffect(() => {
+    if (!hitBottom) return;
+    if (!isStreaming) return;
+    // 流式输出时滚动到底部
+    const id = requestAnimationFrame(() => {
+      virtuosoRef.current?.scrollToIndex({
+        index: messages.length - 1,
+        align: "end",
+        behavior: "auto",
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [hitBottom, isStreaming, streamingContent, messages.length]);
 
   const location = useLocation() as { state?: { jumpToIndex?: number } };
   const jumpToIndex =

@@ -261,6 +261,8 @@ const cn = {
     Navigator: {
       Title: "对话导航",
       Empty: "暂无消息",
+      Search: "搜索消息...",
+      NoResults: "无匹配结果",
     },
     Typing: "正在输入…",
     GoToCustomProviderConfig: "点击跳转对应的渠道配置",

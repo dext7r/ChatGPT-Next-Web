@@ -2315,18 +2315,51 @@ function ChatNavigator(props: {
   const PREVIEW_LENGTH = 20;
   const listRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLDivElement>(null);
+  const navigatorRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // 过滤用户消息并生成缩略列表
-  const userMessages = useMemo(() => {
-    return props.messages
-      .map((msg, index) => ({
-        id: msg.id,
-        index,
-        preview: getMessageTextContent(msg).slice(0, PREVIEW_LENGTH),
-        role: msg.role,
-      }))
-      .filter((msg) => msg.role === "user");
-  }, [props.messages]);
+  // 面板是否应该保持展开（搜索框聚焦或有搜索内容时）
+  const shouldKeepOpen = isSearchFocused || searchQuery.trim().length > 0;
+
+  // 点击导航区外部时清空搜索
+  useEffect(() => {
+    if (!shouldKeepOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        navigatorRef.current &&
+        !navigatorRef.current.contains(e.target as Node)
+      ) {
+        setSearchQuery("");
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [shouldKeepOpen]);
+
+  // 生成消息列表（用户消息 or 搜索结果）
+  const displayMessages = useMemo(() => {
+    const allMessages = props.messages.map((msg, index) => ({
+      id: msg.id,
+      index,
+      content: getMessageTextContent(msg),
+      preview: getMessageTextContent(msg).slice(0, PREVIEW_LENGTH),
+      role: msg.role,
+    }));
+
+    // 如果有搜索词，搜索所有消息
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      return allMessages.filter((msg) =>
+        msg.content.toLowerCase().includes(query),
+      );
+    }
+
+    // 否则只显示用户消息
+    return allMessages.filter((msg) => msg.role === "user");
+  }, [props.messages, searchQuery]);
 
   // 当 hover 面板时，滚动到当前高亮项
   const scrollToActiveItem = useCallback(() => {
@@ -2340,9 +2373,11 @@ function ChatNavigator(props: {
 
   return (
     <div
+      ref={navigatorRef}
       className={clsx(
         styles["chat-navigator"],
         props.inPanel && styles["chat-navigator-in-panel"],
+        shouldKeepOpen && styles["chat-navigator-active"],
       )}
       onMouseEnter={scrollToActiveItem}
     >
@@ -2351,15 +2386,28 @@ function ChatNavigator(props: {
       </div>
       <div className={styles["chat-navigator-panel"]}>
         <div className={styles["chat-navigator-header"]}>
-          {Locale.Chat.Navigator.Title}
+          <span className={styles["chat-navigator-title"]}>
+            {Locale.Chat.Navigator.Title}
+          </span>
+          <input
+            type="text"
+            placeholder={Locale.Chat.Navigator.Search}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            className={styles["chat-navigator-search-input"]}
+          />
         </div>
         <div className={styles["chat-navigator-list"]} ref={listRef}>
-          {userMessages.length === 0 ? (
+          {displayMessages.length === 0 ? (
             <div className={styles["chat-navigator-empty"]}>
-              {Locale.Chat.Navigator.Empty}
+              {searchQuery.trim()
+                ? Locale.Chat.Navigator.NoResults
+                : Locale.Chat.Navigator.Empty}
             </div>
           ) : (
-            userMessages.map((item) => {
+            displayMessages.map((item) => {
               const isActive = props.currentIndex === item.index;
               return (
                 <div
@@ -2371,6 +2419,9 @@ function ChatNavigator(props: {
                   )}
                   onClick={() => props.onJumpTo(item.index)}
                 >
+                  <div className={styles["chat-navigator-item-role"]}>
+                    {item.role === "user" ? "👨" : "💡"}
+                  </div>
                   <div className={styles["chat-navigator-item-preview"]}>
                     {item.preview || "(空消息)"}
                   </div>

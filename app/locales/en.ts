@@ -281,6 +281,8 @@ const en: LocaleType = {
     Navigator: {
       Title: "Chat Navigator",
       Empty: "No messages",
+      Search: "Search messages...",
+      NoResults: "No matches found",
     },
     Typing: "Typing…",
     GoToCustomProviderConfig: "Go to Custom AI Provider Config",

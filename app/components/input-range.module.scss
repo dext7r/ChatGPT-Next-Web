@@ -5,9 +5,12 @@
   font-size: var(--text-xs);
   display: flex;
   justify-content: space-between;
-  max-width: 40%;
+  width: 100px;
+  min-width: 80px;
+  max-width: 120px;
+  flex-shrink: 0;
 
   input[type="range"] {
-    max-width: calc(100% - 34px);
+    max-width: calc(100% - 30px);
   }
 }

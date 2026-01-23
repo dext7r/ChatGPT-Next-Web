@@ -582,7 +582,7 @@ const cn = {
       },
       OpenAI: {
         ApiKey: {
-          Title: "API Key",
+          Title: "接口密钥",
           SubTitle: "使用自定义 OpenAI Key 绕过密码访问限制",
           Placeholder: "OpenAI API Key",
         },
@@ -735,29 +735,29 @@ const cn = {
       SubTitle: "请求超时的时间，单位为秒",
     },
     Temperature: {
-      Title: "随机性 (temperature)",
-      SubTitle: "值越大，回复越随机",
+      Title: "随机性",
+      SubTitle: "temperature，值越大，回复越随机",
     },
     TopP: {
-      Title: "核采样 (top_p)",
-      SubTitle: "与随机性类似，但不要和随机性一起更改",
+      Title: "核采样",
+      SubTitle: "top_p，与随机性类似，但不要和随机性一起更改",
     },
     MaxTokens: {
-      Title: "单次回复限制 (max_tokens)",
-      SubTitle: "单次交互所用的最大 Token 数",
+      Title: "单次回复限制",
+      SubTitle: "max_tokens，单次交互所用的最大 Token 数",
     },
     PresencePenalty: {
-      Title: "话题新鲜度 (presence_penalty)",
-      SubTitle: "值越大，越有可能扩展到新话题",
+      Title: "话题新鲜度",
+      SubTitle: "presence_penalty，值越大，越有可能扩展到新话题",
     },
     FrequencyPenalty: {
-      Title: "频率惩罚度 (frequency_penalty)",
-      SubTitle: "值越大，越有可能降低重复字词",
+      Title: "频率惩罚度",
+      SubTitle: "frequency_penalty，值越大，越有可能降低重复字词",
     },
     ReasoningEffort: {
-      Title: "推理努力程度(reasoning_effort)",
+      Title: "推理努力程度",
       SubTitle:
-        "约束推理模型的努力程度和思考时间，仅适用于支持该参数的模型和供应商（当前仅grok)",
+        "reasoning_effort，约束推理模型的努力程度和思考时间，仅适用于支持该参数的模型和供应商（当前仅grok)",
     },
     ParameterOverride: {
       Title: "参数覆盖",

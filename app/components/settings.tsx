@@ -1192,7 +1192,6 @@ export function Settings() {
             subTitle={Locale.Settings.Access.OpenAI.ApiKey.SubTitle}
           >
             <PasswordInput
-              style={{ width: "300px" }}
               aria={Locale.Settings.ShowPassword}
               aria-label={Locale.Settings.Access.OpenAI.ApiKey.Title}
               value={accessStore.openaiApiKey}
@@ -1724,6 +1723,7 @@ export function Settings() {
           <ListItem
             title={Locale.Settings.Access.CustomEndpoint.Title}
             subTitle={Locale.Settings.Access.CustomEndpoint.SubTitle}
+            vertical={true}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
               <IconButton

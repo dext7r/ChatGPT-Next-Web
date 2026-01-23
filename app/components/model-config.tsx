@@ -146,7 +146,7 @@ export function ModelConfigList(props: {
 
   return (
     <>
-      <ListItem title={Locale.Settings.Model}>
+      <ListItem title={Locale.Settings.Model} vertical={true}>
         <Select
           aria-label={Locale.Settings.Model}
           value={chatModelValue}
@@ -182,6 +182,7 @@ export function ModelConfigList(props: {
       <ListItem
         title={Locale.Settings.CompressModel.Title}
         subTitle={Locale.Settings.CompressModel.SubTitle}
+        vertical={true}
       >
         <Select
           aria-label={Locale.Settings.CompressModel.Title}
@@ -221,6 +222,7 @@ export function ModelConfigList(props: {
       <ListItem
         title={Locale.Settings.TextProcessModel.Title}
         subTitle={Locale.Settings.TextProcessModel.SubTitle}
+        vertical={true}
       >
         <Select
           aria-label={Locale.Settings.TextProcessModel.Title}
@@ -259,6 +261,7 @@ export function ModelConfigList(props: {
       <ListItem
         title={Locale.Settings.OCRModel.Title}
         subTitle={Locale.Settings.OCRModel.SubTitle}
+        vertical={true}
       >
         <Select
           aria-label={Locale.Settings.OCRModel.Title}
@@ -347,7 +350,13 @@ export function ModelConfigList(props: {
         title={Locale.Settings.Temperature.Title}
         subTitle={Locale.Settings.Temperature.SubTitle}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+          }}
+        >
           <input
             aria-label={Locale.Settings.Temperature.Title}
             type="number"
@@ -356,7 +365,7 @@ export function ModelConfigList(props: {
             value={props.modelConfig.temperature}
             disabled={!props.modelConfig.temperature_enabled}
             style={{
-              width: "150px",
+              width: "80px",
               backgroundColor: props.modelConfig.temperature_enabled
                 ? "inherit"
                 : "#e0e0e0",
@@ -384,7 +393,13 @@ export function ModelConfigList(props: {
         title={Locale.Settings.TopP.Title}
         subTitle={Locale.Settings.TopP.SubTitle}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+          }}
+        >
           <input
             aria-label={Locale.Settings.TopP.Title}
             type="number"
@@ -393,7 +408,7 @@ export function ModelConfigList(props: {
             value={props.modelConfig.top_p ?? 1}
             disabled={!props.modelConfig.top_p_enabled}
             style={{
-              width: "150px",
+              width: "80px",
               backgroundColor: props.modelConfig.top_p_enabled
                 ? "inherit"
                 : "#e0e0e0",
@@ -421,7 +436,13 @@ export function ModelConfigList(props: {
         title={Locale.Settings.MaxTokens.Title}
         subTitle={Locale.Settings.MaxTokens.SubTitle}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+          }}
+        >
           <input
             aria-label={Locale.Settings.MaxTokens.Title}
             type="number"
@@ -430,7 +451,7 @@ export function ModelConfigList(props: {
             value={props.modelConfig.max_tokens}
             disabled={!props.modelConfig.max_tokens_enabled}
             style={{
-              width: "150px",
+              width: "80px",
               backgroundColor: props.modelConfig.max_tokens_enabled
                 ? "inherit"
                 : "#e0e0e0",
@@ -461,7 +482,13 @@ export function ModelConfigList(props: {
             title={Locale.Settings.PresencePenalty.Title}
             subTitle={Locale.Settings.PresencePenalty.SubTitle}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+              }}
+            >
               <input
                 aria-label={Locale.Settings.PresencePenalty.Title}
                 type="number"
@@ -470,7 +497,7 @@ export function ModelConfigList(props: {
                 value={props.modelConfig.presence_penalty}
                 disabled={!props.modelConfig.presence_penalty_enabled}
                 style={{
-                  width: "150px",
+                  width: "80px",
                   backgroundColor: props.modelConfig.presence_penalty_enabled
                     ? "inherit"
                     : "#e0e0e0",
@@ -500,7 +527,13 @@ export function ModelConfigList(props: {
             title={Locale.Settings.FrequencyPenalty.Title}
             subTitle={Locale.Settings.FrequencyPenalty.SubTitle}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+              }}
+            >
               <input
                 aria-label={Locale.Settings.FrequencyPenalty.Title}
                 type="number"
@@ -509,7 +542,7 @@ export function ModelConfigList(props: {
                 value={props.modelConfig.frequency_penalty}
                 disabled={!props.modelConfig.frequency_penalty_enabled}
                 style={{
-                  width: "150px",
+                  width: "80px",
                   backgroundColor: props.modelConfig.frequency_penalty_enabled
                     ? "inherit"
                     : "#e0e0e0",

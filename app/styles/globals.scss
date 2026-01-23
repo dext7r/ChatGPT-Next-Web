@@ -460,16 +460,19 @@ pre {
 }
 
 .password-input-container {
-  max-width: 50%;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-shrink: 0;
 
   .password-eye {
     margin-right: 4px;
   }
 
   .password-input {
-    min-width: 80%;
+    width: 100px;
+    min-width: 80px;
+    max-width: 120px;
   }
 }
 

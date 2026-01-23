@@ -72,14 +72,17 @@ export function ListItem(props: {
         {props.icon && <div className={styles["list-icon"]}>{props.icon}</div>}
         <div className={styles["list-item-title"]}>
           <div>{props.title}</div>
-          {props.subTitle && (
+          {props.vertical && props.subTitle && (
             <div className={styles["list-item-sub-title"]}>
               {props.subTitle}
             </div>
           )}
         </div>
       </div>
-      {props.children}
+      <div className={styles["list-item-control"]}>{props.children}</div>
+      {!props.vertical && props.subTitle && (
+        <div className={styles["list-item-sub-title"]}>{props.subTitle}</div>
+      )}
     </div>
   );
 }
@@ -994,6 +997,7 @@ export function SearchSelector<T>(props: {
                 icon={<Avatar model={item.title as string} />}
                 title={item.title}
                 subTitle={item.subTitle}
+                vertical={true}
                 onClick={(e) => {
                   if (item.disable) {
                     e.stopPropagation();

@@ -68,21 +68,37 @@ export function ListItem(props: {
       }
       onClick={props.onClick}
     >
-      <div className={styles["list-header"]}>
-        {props.icon && <div className={styles["list-icon"]}>{props.icon}</div>}
-        <div className={styles["list-item-title"]}>
-          <div>{props.title}</div>
-          {props.vertical && props.subTitle && (
-            <div className={styles["list-item-sub-title"]}>
-              {props.subTitle}
-            </div>
+      {/* 大屏布局：title/subtitle 在左，控件在右 */}
+      <div className={styles["list-item-desktop"]}>
+        <div className={styles["list-header"]}>
+          {props.icon && (
+            <div className={styles["list-icon"]}>{props.icon}</div>
           )}
+          <div className={styles["list-item-title"]}>
+            <div>{props.title}</div>
+            {props.subTitle && (
+              <div className={styles["list-item-sub-title"]}>
+                {props.subTitle}
+              </div>
+            )}
+          </div>
         </div>
+        <div className={styles["list-item-control"]}>{props.children}</div>
       </div>
-      <div className={styles["list-item-control"]}>{props.children}</div>
-      {!props.vertical && props.subTitle && (
-        <div className={styles["list-item-sub-title"]}>{props.subTitle}</div>
-      )}
+      {/* 小屏布局：非 vertical 时 title+控件 第一行，subtitle 第二行 */}
+      {/* 小屏布局：vertical 时 title、subtitle、控件 各占一行 */}
+      <div className={styles["list-item-mobile"]}>
+        <div className={styles["list-header"]}>
+          {props.icon && (
+            <div className={styles["list-icon"]}>{props.icon}</div>
+          )}
+          <div className={styles["list-item-title"]}>{props.title}</div>
+        </div>
+        {props.subTitle && (
+          <div className={styles["list-item-sub-title"]}>{props.subTitle}</div>
+        )}
+        <div className={styles["list-item-control"]}>{props.children}</div>
+      </div>
     </div>
   );
 }

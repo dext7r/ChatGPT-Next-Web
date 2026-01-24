@@ -50,7 +50,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  border: none;
+  border: 1px solid var(--border-in-light-color, rgba(0, 0, 0, 0.1));
   border-radius: 8px;
   background: transparent;
   color: var(--black);
@@ -61,15 +61,18 @@
 
   &:hover {
     background: var(--hover-color);
+    border-color: var(--primary);
   }
 }
 
 .settings-tab-active {
   background: var(--primary);
   color: white;
+  border-color: var(--primary);
 
   &:hover {
     background: var(--primary);
+    border-color: var(--primary);
   }
 }
 

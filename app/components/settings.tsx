@@ -1613,20 +1613,19 @@ export function Settings() {
           title={Locale.Settings.FontSize.Title}
           subTitle={Locale.Settings.FontSize.SubTitle}
         >
-          <InputRange
-            aria={Locale.Settings.FontSize.Title}
-            title={`${config.fontSize ?? 14}px`}
-            value={config.fontSize}
-            min="12"
-            max="40"
-            step="1"
+          <input
+            aria-label={Locale.Settings.FontSize.Title}
+            type="number"
+            min={12}
+            max={40}
+            value={config.fontSize ?? 14}
             onChange={(e) =>
               updateConfig(
                 (config) =>
                   (config.fontSize = Number.parseInt(e.currentTarget.value)),
               )
             }
-          ></InputRange>
+          />
         </ListItem>
 
         <ListItem
@@ -1723,9 +1722,17 @@ export function Settings() {
           <ListItem
             title={Locale.Settings.Access.CustomEndpoint.Title}
             subTitle={Locale.Settings.Access.CustomEndpoint.SubTitle}
-            vertical={true}
+            className="mobile-vertical"
+            // vertical={true}
           >
-            <div style={{ display: "flex", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+              }}
+            >
               <IconButton
                 text={Locale.Settings.Access.CustomEndpoint.Advanced}
                 type="info"
@@ -1878,6 +1885,7 @@ export function Settings() {
         <ListItem
           title={Locale.Settings.Access.CustomModel.Title}
           subTitle={Locale.Settings.Access.CustomModel.SubTitle}
+          className="mobile-vertical"
           vertical={true}
         >
           <input

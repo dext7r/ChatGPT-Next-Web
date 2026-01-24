@@ -428,6 +428,7 @@
 @media screen and (max-width: 768px) {
   .providerList {
     padding: 0 4vw;
+    max-height: calc(100vh - 220px); // 移动端 header 更高，调整列表高度
 
     .providerItem {
       flex-direction: column;
@@ -1024,28 +1025,56 @@
 @media screen and (max-width: 768px) {
   .modelSearchRow {
     flex-direction: column;
-    
+
     .modelSearchInput {
       width: 100%;
     }
   }
-  
+
   .modelGrid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
   }
-  
+
   .modal .modalContent {
     width: 95%;
     max-height: 80vh;
   }
-  
+
   .header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+
+    .headerLeft {
+      width: 100%;
+      gap: 8px;
+
+      h1 {
+        font-size: var(--text-base);
+      }
+
+      .providerCount {
+        font-size: var(--text-xs);
+        margin-top: 2px;
+      }
+    }
+
     .actions {
-      align-self: flex-end;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-start;
+
+      button,
+      .icon-button {
+        flex: 1 1 auto;
+        min-width: 70px;
+        font-size: var(--text-xs);
+        padding: 6px 8px;
+        white-space: nowrap;
+      }
     }
   }
 }

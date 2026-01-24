@@ -35,14 +35,23 @@
 }
 
 .list-item {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  align-items: center;
   min-height: 40px;
   border-bottom: var(--border-in-light);
   padding: 10px 20px;
   animation: slide-in ease 0.6s;
+
+  // 大屏布局容器
+  .list-item-desktop {
+    display: none;
+  }
+
+  // 小屏布局容器
+  .list-item-mobile {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+  }
 
   .list-header {
     display: flex;
@@ -61,14 +70,6 @@
       word-break: break-word;
       flex: 1;
       min-width: 0;
-
-      .list-item-sub-title {
-        margin-top: 2px;
-        font-size: var(--text-xs);
-        font-weight: normal;
-        color: var(--black);
-        opacity: 0.6;
-      }
     }
   }
 
@@ -78,6 +79,11 @@
     justify-content: flex-end;
     flex-shrink: 0;
     margin-left: 10px;
+  }
+
+  .list-item-sub-title {
+    font-size: var(--text-xs);
+    font-weight: normal;
   }
 
   // 输入框基础宽度
@@ -93,52 +99,90 @@
     padding: 6px 8px;
   }
 
-  &.vertical {
-    flex-wrap: wrap;
+  // 小屏非 vertical：title+控件 一行，subtitle 独占第二行
+  &:not(.vertical) {
+    .list-item-mobile {
+      flex-wrap: wrap;
+    }
 
-    .list-header {
+    .list-item-mobile .list-item-sub-title {
       width: 100%;
-      margin-bottom: 8px;
+      margin-top: 6px;
+      order: 3;
+    }
 
-      .list-item-title {
-        .list-item-sub-title {
-          margin-top: 4px;
-        }
+    .list-item-mobile .list-header {
+      order: 1;
+    }
+
+    .list-item-mobile .list-item-control {
+      order: 2;
+    }
+  }
+
+  // 小屏 vertical 模式：title、subtitle、控件 各占一行
+  &.vertical {
+    .list-item-mobile {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .list-item-mobile .list-header {
+      width: 100%;
+    }
+
+    .list-item-mobile .list-item-sub-title {
+      margin-top: 6px;
+    }
+
+    .list-item-mobile .list-item-control {
+      width: 100%;
+      margin-left: 0;
+      margin-top: 8px;
+
+      // 统一 select 宽度
+      select {
+        width: 100%;
+      }
+
+      // Select 组件容器也需要占满宽度
+      .select-with-icon {
+        max-width: 100%;
+        width: 100%;
       }
     }
 
-    .list-item-control {
-      width: 100%;
-      margin-left: 0;
-    }
-
-    // vertical 模式下输入框可以更宽
     input[type="text"] {
       max-width: 100%;
     }
   }
 }
 
-// 非 vertical 模式下的 subtitle（独立成行，需要单独处理）
-.list-item:not(.vertical) {
-  flex-wrap: wrap;
+// 大屏：显示 desktop 布局，隐藏 mobile 布局
+@media screen and (min-width: 601px) {
+  .list-item {
+    .list-item-desktop {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
 
-  > .list-item-sub-title {
-    width: 100%;
-    margin-top: 6px;
-    font-size: var(--text-xs);
-    font-weight: normal;
-    color: var(--black);
-    opacity: 0.6;
-    order: 3; // 确保 subtitle 在最后
-  }
+    .list-item-mobile {
+      display: none;
+    }
 
-  .list-header {
-    order: 1;
-  }
+    .list-item-sub-title {
+      margin-top: 4px;
+    }
 
-  .list-item-control {
-    order: 2;
+    // 大屏时 vertical 也使用 desktop 布局
+    &.vertical {
+      input[type="text"] {
+        max-width: 200px;
+      }
+    }
   }
 }
 
@@ -486,35 +530,39 @@
       .list-item {
         cursor: pointer;
         background-color: var(--white);
-        // 覆盖 vertical 模式，保持水平布局
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: flex-start;
         padding: 12px 16px;
+
+        // selector 中始终使用 desktop 布局
+        .list-item-desktop {
+          display: flex !important;
+          align-items: flex-start;
+        }
+
+        .list-item-mobile {
+          display: none !important;
+        }
 
         .list-header {
           flex: 1;
           min-width: 100px;
           align-items: flex-start;
-          margin-bottom: 0 !important;
         }
 
         .list-item-title {
           word-break: break-word;
           line-height: 1.4;
           min-width: 80px;
+        }
 
-          .list-item-sub-title {
-            margin-top: 4px;
-            line-height: 1.3;
-          }
+        .list-item-sub-title {
+          margin-top: 4px;
+          line-height: 1.3;
         }
 
         .list-item-control {
           flex-shrink: 0;
           margin-left: 12px;
           margin-top: 2px;
-          width: auto !important;
         }
 
         &:hover {
@@ -525,18 +573,6 @@
           filter: brightness(0.9);
         }
       }
-    }
-  }
-  &-item {
-    // 模型选择器项目特定样式
-    .list-header {
-      flex: 1;
-      min-width: 100px;
-    }
-
-    .list-item-control {
-      flex-shrink: 0;
-      margin-left: 12px;
     }
   }
   &-search {
@@ -588,17 +624,22 @@
       flex-direction: column;
 
       .list .list-item {
-        // 移动端模型选择器保持水平布局
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
         padding: 10px 12px;
-        align-items: flex-start;
+
+        // selector 中始终使用 desktop 布局
+        .list-item-desktop {
+          display: flex !important;
+          align-items: flex-start;
+        }
+
+        .list-item-mobile {
+          display: none !important;
+        }
 
         .list-header {
           flex: 1;
           min-width: 80px;
           align-items: flex-start;
-          margin-bottom: 0 !important;
         }
 
         .list-item-title {
@@ -609,7 +650,6 @@
           flex-shrink: 0;
           margin-left: 8px;
           margin-top: 2px;
-          width: auto !important;
         }
       }
     }

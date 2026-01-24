@@ -1011,7 +1011,8 @@ const en: LocaleType = {
     Type: "Type",
     CustomAPI: "Custom API",
     DescriptionPlaceholder: "Add description (optional)",
-    ApiKeyPlaceholder: "Enter your API Key",
+    ApiKeyPlaceholder:
+      "Enter API Key, supports comma or space separated multiple keys; supports filtering matches (including response errors)",
     Show: "Show",
     Hide: "Hide",
     Previous: "Previous",
@@ -1027,13 +1028,14 @@ const en: LocaleType = {
     NameSubtitle: "Set a recognizable name for your AI provider",
     ApiUrlSubtitle: "Base API URL. For OpenAI, use: https://api.openai.com",
     ApiKeySubtitle:
-      "Your API key will be securely stored locally and used for API requests",
+      "Your API key will be securely stored locally and used for API requests. Switch to list view to check key balance",
     ApiNameRequired: "API name is required",
     ApiUrlRequired: "API URL is required",
     ApiKeyRequired: "API key is required",
     ApiConfigRequired: "Please fill in API Key and API URL first",
     ModelNameRequired: "Please fill in Model Name first",
-    SearchModel: "Search or add models...",
+    SearchModel:
+      "Search or add models (supports comma/space separated multiple models, supports regex)",
     Select: {
       All: "Select All",
       Clear: "Clear",
@@ -1065,8 +1067,8 @@ const en: LocaleType = {
     ParsingPlaceholder:
       "Please provide a sample request or the text containing the API information you would like me to parse.",
     IntelligentParsing: "IntelligentParsing",
-    KeyListView: "Key List View",
-    NormalView: "Normal View",
+    KeyListView: "Key: List View",
+    NormalView: "Key: Normal View",
     AddKey: "Add Key",
     ClearInput: "Clear Input",
     ClearDisabledKeys: "Clear Disabled Keys",

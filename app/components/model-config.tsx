@@ -146,7 +146,11 @@ export function ModelConfigList(props: {
 
   return (
     <>
-      <ListItem title={Locale.Settings.Model} vertical={true}>
+      <ListItem
+        title={Locale.Settings.Model}
+        className="mobile-vertical"
+        vertical={true}
+      >
         <Select
           aria-label={Locale.Settings.Model}
           value={chatModelValue}
@@ -182,6 +186,7 @@ export function ModelConfigList(props: {
       <ListItem
         title={Locale.Settings.CompressModel.Title}
         subTitle={Locale.Settings.CompressModel.SubTitle}
+        className="mobile-vertical"
         vertical={true}
       >
         <Select
@@ -222,6 +227,7 @@ export function ModelConfigList(props: {
       <ListItem
         title={Locale.Settings.TextProcessModel.Title}
         subTitle={Locale.Settings.TextProcessModel.SubTitle}
+        className="mobile-vertical"
         vertical={true}
       >
         <Select
@@ -261,6 +267,7 @@ export function ModelConfigList(props: {
       <ListItem
         title={Locale.Settings.OCRModel.Title}
         subTitle={Locale.Settings.OCRModel.SubTitle}
+        className="mobile-vertical"
         vertical={true}
       >
         <Select
@@ -607,19 +614,19 @@ export function ModelConfigList(props: {
         title={Locale.Settings.HistoryCount.Title}
         subTitle={Locale.Settings.HistoryCount.SubTitle}
       >
-        <InputRange
-          aria={Locale.Settings.HistoryCount.Title}
-          title={props.modelConfig.historyMessageCount.toString()}
+        <input
+          aria-label={Locale.Settings.HistoryCount.Title}
+          type="number"
+          min={0}
+          max={64}
           value={props.modelConfig.historyMessageCount}
-          min="0"
-          max="64"
-          step="1"
           onChange={(e) =>
             props.updateConfig(
-              (config) => (config.historyMessageCount = e.target.valueAsNumber),
+              (config) =>
+                (config.historyMessageCount = e.currentTarget.valueAsNumber),
             )
           }
-        ></InputRange>
+        />
       </ListItem>
 
       <ListItem
@@ -677,6 +684,7 @@ export function ModelConfigList(props: {
       <ListItem
         title={Locale.Settings.ParameterOverride.Title}
         subTitle={Locale.Settings.ParameterOverride.SubTitle}
+        className="mobile-vertical"
         vertical={true}
       >
         <div

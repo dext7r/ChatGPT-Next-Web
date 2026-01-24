@@ -440,7 +440,7 @@ const en: LocaleType = {
     },
     Avatar: "Avatar",
     FontSize: {
-      Title: "Base Font Size",
+      Title: "Base Font Size (px)",
       SubTitle:
         "Adjust base font size (1em) of app, which referenced in the chat title",
     },
@@ -598,8 +598,8 @@ const en: LocaleType = {
       },
       CustomEndpoint: {
         Title: "Custom Endpoint",
-        SubTitle: "Use custom Azure or OpenAI service",
-        Advanced: "Click to configure advanced settings",
+        SubTitle: "Use custom API endpoint service",
+        Advanced: "Advanced Custom Endpoint",
       },
       Provider: {
         Title: "Model Provider",
@@ -773,7 +773,8 @@ const en: LocaleType = {
     },
     Temperature: {
       Title: "Temperature",
-      SubTitle: "A larger value makes the more random output",
+      SubTitle:
+        "Controls the randomness of generated text (0-2). Higher values increase creativity, lower values reduce hallucinations",
     },
     TopP: {
       Title: "Top P",
@@ -781,7 +782,8 @@ const en: LocaleType = {
     },
     MaxTokens: {
       Title: "Max Tokens",
-      SubTitle: "Maximum length of input tokens and generated tokens",
+      SubTitle:
+        "Maximum length of generated text. Higher limits recommended for reasoning, visual dialogue, or code generation",
     },
     PresencePenalty: {
       Title: "Presence Penalty",
@@ -796,7 +798,7 @@ const en: LocaleType = {
     ReasoningEffort: {
       Title: "Reasoning Effort",
       SubTitle:
-        "Effort and thought time of the constrained inference model, only for models and vendors that support this parameter (currently only grok)",
+        "Effort and thought time of the constrained inference model, only for models and vendors that support this parameter",
     },
     ParameterOverride: {
       Title: "Parameter Override",

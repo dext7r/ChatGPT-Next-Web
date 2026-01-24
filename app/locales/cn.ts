@@ -416,7 +416,7 @@ const cn = {
     },
     Avatar: "头像",
     FontSize: {
-      Title: "本程序应用的字体基准",
+      Title: "字体基准 (px)",
       SubTitle:
         "整体程序风格的字体基准（1em）, 参考聊天标题的字体大小，如自定义css中有设置则以自定义css为准",
     },
@@ -573,8 +573,8 @@ const cn = {
       },
       CustomEndpoint: {
         Title: "自定义接口",
-        SubTitle: "是否使用自定义 Azure 或 OpenAI 服务",
-        Advanced: "点击前往高级自定义功能",
+        SubTitle: "是否使用自定义 API 接口服务",
+        Advanced: "高级自定义接口",
       },
       Provider: {
         Title: "模型服务商",
@@ -736,7 +736,8 @@ const cn = {
     },
     Temperature: {
       Title: "随机性",
-      SubTitle: "temperature，值越大，回复越随机",
+      SubTitle:
+        "temperature，控制生成文本的随机性 (0-2), 值越大创造性越高, 低温抑制知识幻觉",
     },
     TopP: {
       Title: "核采样",
@@ -744,7 +745,8 @@ const cn = {
     },
     MaxTokens: {
       Title: "单次回复限制",
-      SubTitle: "max_tokens，单次交互所用的最大 Token 数",
+      SubTitle:
+        "max_tokens，生成文本的最大长度, 思考模型、视觉对话、代码生成建议设置高回复限制",
     },
     PresencePenalty: {
       Title: "话题新鲜度",
@@ -757,7 +759,7 @@ const cn = {
     ReasoningEffort: {
       Title: "推理努力程度",
       SubTitle:
-        "reasoning_effort，约束推理模型的努力程度和思考时间，仅适用于支持该参数的模型和供应商（当前仅grok)",
+        "reasoning_effort，约束推理模型的努力程度和思考时间，仅适用于支持该参数的模型和供应商",
     },
     ParameterOverride: {
       Title: "参数覆盖",

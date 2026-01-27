@@ -1350,45 +1350,49 @@
 .keyListContainer {
   width: 100%;
   box-sizing: border-box;
-  padding: 0 24px;
+  padding: 0;
+  margin-top: 8px;
 }
 .keyInputContainer {
   display: flex;
   margin-bottom: 16px;
   width: 100%;
-  
+
   .keyInput {
-    max-width: unset;
+    max-width: unset !important;
+    min-width: 200px !important;
     flex-grow: 1;
     margin-right: 10px;
     padding: 10px 16px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     font-size: var(--text-sm);
-    
+
     &:focus {
       outline: none;
       border-color: #2563eb;
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
     }
   }
-  
+
   .actions {
     display: flex;
-    
+
     button:not(:last-child) {
       margin-right: 10px;
     }
   }
-  
+
   @media screen and (max-width: 768px) {
     flex-direction: column;
-    
+
     .keyInput {
       margin-right: 0;
       margin-bottom: 10px;
+      min-width: 0 !important;
+      width: 100% !important;
     }
-    
+
     .actions {
       display: flex;
       flex-wrap: wrap;
@@ -1559,7 +1563,7 @@
 
 @media screen and (max-width: 768px) {
   .keyListContainer {
-    padding: 0 2vw;
+    padding: 0;
   }
   .keyInputContainer {
     flex-direction: column;
@@ -1606,6 +1610,8 @@
   background-color: #f9fafb;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .testModelLabel {
@@ -1617,11 +1623,31 @@
 
 .testModelInput {
   flex: 1;
+  min-width: 120px !important;
+  max-width: unset !important;
   padding: 8px 10px;
   margin-right: 10px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: var(--text-sm);
+}
+
+@media screen and (max-width: 600px) {
+  .testConfigContainer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .testModelLabel {
+    margin-right: 0;
+    margin-bottom: 4px;
+  }
+
+  .testModelInput {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
 }
 // Update the test result styles in custom-provider.module.scss
 .testResult {
@@ -1680,5 +1706,53 @@
   .keyInputWrapper {
     margin-right: 0;
     margin-bottom: 10px;
+  }
+}
+
+// ===== 13. Provider Modal Form Inputs =====
+// 供应商模态框中的输入框样式 - 需要覆盖 ui-lib 中 .list-item input[type="text"] 的限制
+.providerFormInput {
+  width: 300px !important;
+  max-width: 100% !important;
+  min-width: 200px !important;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: var(--text-sm);
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  }
+}
+
+// 普通视图下的 API Key 输入容器
+.apiKeyNormalView {
+  width: 340px;
+  max-width: 100%;
+
+  // 覆盖全局 password-input 的宽度限制
+  :global(.password-input-container) {
+    width: 100%;
+
+    :global(.password-input) {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+    }
+  }
+}
+
+// 小屏响应式
+@media screen and (max-width: 600px) {
+  .providerFormInput {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .apiKeyNormalView {
+    width: 100%;
   }
 }

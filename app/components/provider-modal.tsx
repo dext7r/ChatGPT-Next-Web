@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { IconButton } from "./button";
 import styles from "./custom-provider.module.scss";
+import uiStyles from "./ui-lib.module.scss";
 import { useAccessStore } from "../store";
 import { Model, userCustomProvider, ApiPaths } from "../client/api";
 import Locale from "../locales";
@@ -1847,14 +1848,15 @@ export function ProviderModal(props: ProviderModalProps) {
       );
     } else {
       return (
-        <PasswordInput
-          style={{ width: "340px" }}
-          value={formData.apiKey}
-          type="text"
-          placeholder={Locale.CustomProvider.ApiKeyPlaceholder}
-          onChange={(e) => handleChange("apiKey", e.currentTarget.value)}
-          required
-        />
+        <div className={styles.apiKeyNormalView}>
+          <PasswordInput
+            value={formData.apiKey}
+            type="text"
+            placeholder={Locale.CustomProvider.ApiKeyPlaceholder}
+            onChange={(e) => handleChange("apiKey", e.currentTarget.value)}
+            required
+          />
+        </div>
       );
     }
   };
@@ -2236,9 +2238,10 @@ export function ProviderModal(props: ProviderModalProps) {
               <ListItem
                 title={Locale.CustomProvider.Name}
                 subTitle={Locale.CustomProvider.NameSubtitle}
+                vertical={isMobileScreen}
               >
                 <input
-                  style={{ width: "300px" }}
+                  className={styles.providerFormInput}
                   type="text"
                   value={formData.name}
                   placeholder={Locale.CustomProvider.NamePlaceholder}
@@ -2249,9 +2252,10 @@ export function ProviderModal(props: ProviderModalProps) {
               <ListItem
                 title={Locale.CustomProvider.CustomAPIService}
                 subTitle={Locale.CustomProvider.ApiUrlSubtitle}
+                vertical={isMobileScreen}
               >
                 <input
-                  style={{ width: "300px" }}
+                  className={styles.providerFormInput}
                   type="text"
                   value={formData.baseUrl}
                   placeholder={providerTypeDefaultUrls[formData.type]}
@@ -2276,10 +2280,11 @@ export function ProviderModal(props: ProviderModalProps) {
                   <ListItem
                     title={Locale.CustomProvider.chatPath.title}
                     subTitle={Locale.CustomProvider.chatPath.subtitle}
+                    vertical={isMobileScreen}
                   >
                     <input
                       type="text"
-                      style={{ width: "300px" }}
+                      className={styles.providerFormInput}
                       value={formData.paths?.ChatPath || ""}
                       placeholder="/v1/chat/completions"
                       onChange={(e) =>
@@ -2294,20 +2299,20 @@ export function ProviderModal(props: ProviderModalProps) {
                   >
                     <input
                       type="text"
-                      style={{ width: "300px" }}
+                      className={styles.providerFormInput}
                       value={formData.paths?.SpeechPath || ""}
                       placeholder="/v1/audio/speech"
                       onChange={(e) => handlePathChange("SpeechPath", e.target.value)}
                     />
                   </ListItem>
-                  
+
                   <ListItem
                     title={Locale.CustomProvider.imagePath.title}
                     subTitle={Locale.CustomProvider.imagePath.subtitle}
                   >
                     <input
                       type="text"
-                      style={{ width: "300px" }}
+                      className={styles.providerFormInput}
                       value={formData.paths?.ImagePath || ""}
                       placeholder="/v1/images/generations"
                       onChange={(e) => handlePathChange("ImagePath", e.target.value)}
@@ -2317,10 +2322,11 @@ export function ProviderModal(props: ProviderModalProps) {
                   <ListItem
                     title={Locale.CustomProvider.listModelPath.title}
                     subTitle={Locale.CustomProvider.listModelPath.subtitle}
+                    vertical={isMobileScreen}
                   >
                     <input
                       type="text"
-                      style={{ width: "300px" }}
+                      className={styles.providerFormInput}
                       value={formData.paths?.ListModelPath || ""}
                       placeholder="/v1/models"
                       onChange={(e) =>
@@ -2351,7 +2357,8 @@ export function ProviderModal(props: ProviderModalProps) {
               <ListItem
                 title="API Key"
                 subTitle={Locale.CustomProvider.ApiKeySubtitle}
-                vertical={isKeyListViewMode}
+                vertical={isKeyListViewMode || isMobileScreen}
+                className={isKeyListViewMode ? uiStyles["force-vertical"] : ""}
               >
                 {renderApiKeysSection()}
               </ListItem>

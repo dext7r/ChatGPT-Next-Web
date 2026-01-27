@@ -22,6 +22,17 @@ const en: LocaleType = {
   },
   ChatItem: {
     ChatItemCount: (count: number) => `${count} messages`,
+    Actions: {
+      Share: "Share",
+      Rename: "Rename",
+      Pin: "Pin Chat",
+      Unpin: "Unpin",
+      Delete: "Delete",
+    },
+    DeleteConfirm: {
+      Title: "Delete this chat?",
+      LastMessage: "Last message:",
+    },
   },
   Chat: {
     SubTitle: (count: number) => `${count} messages`,

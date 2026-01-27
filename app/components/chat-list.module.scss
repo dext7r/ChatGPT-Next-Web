@@ -1,0 +1,222 @@
+.chat-list {
+  // 容器样式（如需要可添加）
+}
+
+.chat-item {
+  padding: 10px 14px;
+  background-color: var(--white);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: var(--card-shadow);
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  border: 2px solid transparent;
+  position: relative;
+  content-visibility: auto;
+
+  &:hover {
+    background-color: var(--hover-color);
+  }
+}
+
+.chat-item-selected {
+  border-color: var(--primary);
+}
+
+.chat-item-title {
+  font-size: var(--text-sm);
+  font-weight: bolder;
+  display: block;
+  width: calc(100% - 15px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: slide-in ease 0.3s;
+}
+
+.chat-item-pinned {
+  background-color: #c9ddfe;
+}
+
+/* 右侧操作区域：与标题同行，靠右 */
+.chat-item-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.chat-item-actions-narrow {
+  top: 4px;
+  right: 4px;
+}
+
+/* 置顶图标指示器：和更多按钮占据相同位置 */
+.chat-item-pin-indicator {
+  position: absolute;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* hover 时隐藏置顶图标 */
+.chat-item:hover .chat-item-pin-indicator {
+  display: none;
+}
+
+/* 更多按钮：和置顶图标占据相同位置 */
+.chat-item-more {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.chat-item:hover .chat-item-more {
+  opacity: 0.7;
+}
+
+.chat-item:hover .chat-item-more:hover {
+  opacity: 1;
+}
+
+/* 下拉菜单 */
+.chat-item-dropdown {
+  position: fixed;
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  padding: 4px 0;
+  z-index: 1000;
+  animation: slide-in ease 0.15s;
+}
+
+.chat-item-dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  gap: 10px;
+  color: var(--black);
+  font-size: var(--text-xs);
+
+  &:hover {
+    background-color: var(--hover-color);
+  }
+
+  &.danger {
+    color: #dc2626;
+
+    &:hover {
+      background-color: rgba(220, 38, 38, 0.1);
+    }
+  }
+}
+
+.chat-item-dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.chat-item-dropdown-label {
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.chat-item-info {
+  display: flex;
+  justify-content: space-between;
+  color: rgb(166, 166, 166);
+  font-size: var(--text-xs);
+  margin-top: 8px;
+  animation: slide-in ease 0.3s;
+}
+
+.chat-item-count,
+.chat-item-date {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+}
+
+/* narrow 模式下的样式 */
+.chat-item-narrow-mode {
+  padding: 0;
+  min-height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all ease 0.3s;
+  overflow: visible;
+
+  &:hover {
+    .chat-item-narrow {
+      transform: scale(0.7) translateX(-50%);
+    }
+  }
+}
+
+.chat-item-narrow {
+  line-height: 0;
+  font-weight: lighter;
+  color: var(--black);
+  transform: translateX(0);
+  transition: all ease 0.3s;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.chat-item-avatar {
+  display: flex;
+  justify-content: center;
+  opacity: 0.2;
+  position: absolute;
+  transform: scale(4);
+}
+
+.chat-item-narrow-count {
+  font-size: var(--text-2xl);
+  font-weight: bolder;
+  text-align: center;
+  color: var(--primary);
+  opacity: 0.6;
+}

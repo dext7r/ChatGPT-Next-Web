@@ -20,6 +20,17 @@ const cn = {
   },
   ChatItem: {
     ChatItemCount: (count: number) => `${count} 条对话`,
+    Actions: {
+      Share: "分享",
+      Rename: "重命名",
+      Pin: "置顶聊天",
+      Unpin: "取消置顶",
+      Delete: "删除",
+    },
+    DeleteConfirm: {
+      Title: "确认删除此会话？",
+      LastMessage: "最后一条消息：",
+    },
   },
   Chat: {
     SubTitle: (count: number) => `共 ${count} 条对话`,

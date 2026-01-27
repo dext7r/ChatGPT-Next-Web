@@ -3840,7 +3840,9 @@ function ChatComponent() {
     return () => cancelAnimationFrame(id);
   }, [hitBottom, isStreaming, streamingContent, messages.length]);
 
-  const location = useLocation() as { state?: { jumpToIndex?: number } };
+  const location = useLocation() as {
+    state?: { jumpToIndex?: number; triggerShare?: boolean };
+  };
   const jumpToIndex =
     typeof location.state?.jumpToIndex === "number"
       ? Math.max(0, Math.min(location.state.jumpToIndex, messages.length - 1))
@@ -4181,6 +4183,15 @@ function ChatComponent() {
     const t = setTimeout(() => setHighlightIndex(null), 3000);
     return () => clearTimeout(t);
   }, [jumpToIndex, messages.length]);
+
+  // 处理从侧边栏触发的分享功能
+  useEffect(() => {
+    if (location.state?.triggerShare) {
+      setShowExport(true);
+      // 清除 state 避免重复触发
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.triggerShare]);
 
   // clear context index = context length + index in messages
   const clearContextIndex =

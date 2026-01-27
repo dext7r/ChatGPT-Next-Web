@@ -1231,6 +1231,14 @@ export const useChatStore = createPersistStore(
         updater(sessions[index]);
         set(() => ({ sessions }));
       },
+
+      updateSession(index: number, updater: (session: ChatSession) => void) {
+        const sessions = get().sessions;
+        if (index < 0 || index >= sessions.length) return;
+        updater(sessions[index]);
+        set(() => ({ sessions }));
+      },
+
       updateTargetSession(
         targetSession: ChatSession,
         updater: (session: ChatSession) => void,
